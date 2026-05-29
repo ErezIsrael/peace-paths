@@ -1,7 +1,4 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "peace-paths"
 compatibility_date = "2026-05-20"
-
-# Static site — no build step needed
-# Cloudflare Pages: set Build command to "echo No build needed"
-# and Production output directory to "app"
+pages_build_output_dir = "app"
