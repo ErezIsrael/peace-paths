@@ -70,6 +70,7 @@ LLAMA_API_KEY = os.getenv("LLAMA_API_KEY", "")  # optional
 
 CLOUDFLARE_PAGES_PROJECT = "peace-paths"
 CLOUDFLARE_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN", "")
+AI_MODEL = os.getenv("AI_MODEL", "Qwen3.6-27B")
 CLOUDFLARE_ACCOUNT = os.getenv("CLOUDFLARE_ACCOUNT_ID", "")
 
 # Output — write to local file, then push to Cloudflare
@@ -358,7 +359,7 @@ def propose_taxonomy(articles, core_cats=None):
     )
 
     body = {
-        "model": "Qwen3.6-27B",
+        "model": AI_MODEL,
         "messages": [
             {"role": "system", "content": "Middle East news taxonomy designer. Output ONLY valid JSON with keys: categories, assignments. No explanation."},
             {"role": "user", "content": prompt}
@@ -469,7 +470,7 @@ def _classify_article(article, system_prompt, valid_ids):
     )
 
     body = {
-        "model": "Qwen3.6-27B",
+        "model": AI_MODEL,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}

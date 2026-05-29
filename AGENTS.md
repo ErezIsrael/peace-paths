@@ -59,7 +59,7 @@ peace-paths/
 | Item | Value |
 |------|-------|
 | RSS feeds | 29 sources in `rss-feeds.json` (gitignored) |
-| LLM | llama.cpp at `192.168.2.121:8080` — set via `LLAMA_CPP_URL` env var |
+| LLM | llama.cpp at local network — set via `LLAMA_CPP_URL` env var |
 | AI model | Configurable via `AI_MODEL` env var (default: `Qwen3.6-27B`) |
 | Categories | Defined in `categories.json` (gitignored). Skeleton: `categories.example.json` |
 | Output | `app/solutions.json` — deployed via `wrangler pages deploy` |

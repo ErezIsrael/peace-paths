@@ -41,7 +41,7 @@ except ImportError:
 LLAMA_CPP_URL = os.environ.get("LLAMA_CPP_URL", "http://localhost:8080")  # set in .env — not hardcoded
 OLLAMA_URL = "http://localhost:11434"  # fallback
 AI_BACKEND = "ollama"  # "llamacpp" or "ollama"
-AI_MODEL = "qwen3.5:9b"  # fast model for classification (ollama)
+AI_MODEL = os.getenv("AI_MODEL", "qwen3.5:9b")  # fast model for classification
                          # or Qwen3.6-27B on llama.cpp for deeper analysis
 
 CLOUDFLARE_PAGES_PROJECT = "peace-paths"
