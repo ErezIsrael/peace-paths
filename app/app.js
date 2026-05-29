@@ -1,4 +1,4 @@
-/* ── Peace Room — Frontend App v3 ───────────────────── */
+/* ── Peace Room — Frontend App v4 ───────────────────── */
 
 // No hardcoded categories — solutions render dynamically from data.activeSolutions
 
