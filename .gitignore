@@ -1,1 +1,42 @@
-fatal: path 'peace-paths/.gitignore' does not exist in 'bd17cff'
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Runtime data files
+solutions.json
+ai_cache.json
+full_run.json
+tmp_cats.json
+ai-output.json
+data.json
+
+# Logs
+*.log
+deploy-log.txt
+server.log
+
+# Cloudflare Wrangler
+.wrangler/
+app/.wrangler/
+
+# Environment & private config
+.env
+rss-feeds.json
+
+# OS
+Thumbs.db
+DSKTOP.ini
+nul
+
+# Temp/debug files
+debug_*.txt
+tempfeedspot.html
+
+# Deployment/scheduler config — machine-specific
+schedule.xml
+auto-deploy.bat
+auto-deploy.sh
+install-scheduler.bat
+deploy.bat
+deploy.sh

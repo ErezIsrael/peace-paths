@@ -65,7 +65,7 @@ SCRIPT_VERSION = "1.0.0"
 
 # ─── Configuration ───────────────────────────────────────────────────
 
-LLAMA_CPP_URL = os.environ.get("LLAMA_CPP_URL", "http://localhost:8080")
+LLAMA_CPP_URL = os.environ.get("LLAMA_CPP_URL", "http://localhost:8080")  # set in .env — not hardcoded
 LLAMA_API_KEY = os.getenv("LLAMA_API_KEY", "")  # optional
 
 CLOUDFLARE_PAGES_PROJECT = "peace-paths"

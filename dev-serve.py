@@ -62,7 +62,7 @@ def run_analysis(mode="--fast"):
     """Run ai-analyze-prod.py in the background."""
     global analysis_status
     env = os.environ.copy()
-    env.setdefault("LLAMA_CPP_URL", "http://192.168.2.121:8080")
+    env.setdefault("LLAMA_CPP_URL", "http://localhost:8080")  # .env loaded at startup
     env["PYTHONUNBUFFERED"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
     cmd = [sys.executable, str(SCRIPT), mode]

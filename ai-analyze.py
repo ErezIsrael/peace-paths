@@ -38,7 +38,7 @@ except ImportError:
 
 # ─── Configuration ───────────────────────────────────────────────────
 
-LLAMA_CPP_URL = "http://localhost:8080"
+LLAMA_CPP_URL = os.environ.get("LLAMA_CPP_URL", "http://localhost:8080")  # set in .env — not hardcoded
 OLLAMA_URL = "http://localhost:11434"  # fallback
 AI_BACKEND = "ollama"  # "llamacpp" or "ollama"
 AI_MODEL = "qwen3.5:9b"  # fast model for classification (ollama)
