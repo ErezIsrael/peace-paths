@@ -1,0 +1,464 @@
+/* ── Peace Room — Styles v3 ─────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #0a0e14;
+  --card:       #111820;
+  --card-hover: #161f2a;
+  --border:     #1e2a38;
+  --text:       #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-dim:   #4a5568;
+  --accent:     #38bdf8;
+
+  --advancing:  #4ade80;
+  --stable:     #38bdf8;
+  --stalling:   #f87171;
+  --unknown:    #64748b;
+
+  --sentiment-pos: #4ade80;
+  --sentiment-neu: #94a3b8;
+  --sentiment-neg: #f87171;
+
+  --font-ui:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-head:  'Space Grotesk', sans-serif;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('./fonts/inter-variable.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal; font-weight: 300 700; font-display: swap;
+  src: url('./fonts/space-grotesk-variable.ttf') format('truetype');
+}
+
+html { font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.app {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+}
+
+/* ── Header ──────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 12px;
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 700;
+}
+.logo a { color: var(--text); }
+.logo a:hover { color: var(--accent); text-decoration: none; }
+.tagline { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.last-updated {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ── Activity Feed (global timeline) ─────────────────── */
+.activity-section {
+  margin-bottom: 24px;
+}
+.section-header {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  padding: 16px 0 8px;
+  margin-bottom: 10px;
+}
+.section-header .live-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--advancing);
+  margin-right: 6px;
+  animation: pulse-dot 2s ease-in-out infinite;
+  vertical-align: middle;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding-left: 20px;
+}
+.activity-feed::before {
+  content: '';
+  position: absolute;
+  left: 6px; top: 4px; bottom: 4px;
+  width: 1px;
+  background: var(--border);
+}
+.activity-item {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  align-items: baseline;
+  position: relative;
+}
+.activity-item::before {
+  content: '';
+  position: absolute;
+  left: -17px;
+  top: 11px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text-dim);
+}
+.activity-item.sentiment-positive::before { background: var(--sentiment-pos); }
+.activity-item.sentiment-negative::before { background: var(--sentiment-neg); }
+
+.activity-time {
+  font-family: var(--font-head);
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  min-width: 52px;
+}
+.activity-solution {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  background: rgba(56,189,248,0.1);
+  color: var(--accent);
+  white-space: nowrap;
+}
+.activity-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.activity-more {
+  text-align: center;
+  padding: 10px 0;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+/* ── Momentum Banner ────────────────────────────────── */
+.momentum-banner {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.momentum-icon { font-size: 28px; flex-shrink: 0; }
+.momentum-text h2 {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.momentum-text p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.momentum-advancing .momentum-icon { color: var(--advancing); }
+.momentum-advancing h2 { color: var(--advancing); }
+.momentum-stable .momentum-icon { color: var(--stable); }
+.momentum-stable h2 { color: var(--stable); }
+.momentum-stalling .momentum-icon { color: var(--stalling); }
+.momentum-stalling h2 { color: var(--stalling); }
+
+/* ── Solution Cards ──────────────────────────────────── */
+.category-group { margin-bottom: 6px; }
+
+.solution-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.solution-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 14px; bottom: 14px;
+  width: 3px;
+  border-radius: 2px;
+}
+.solution-card.advancing::before { background: var(--advancing); }
+.solution-card.stable::before  { background: var(--stable); }
+.solution-card.stalling::before { background: var(--stalling); }
+.solution-card:hover { background: var(--card-hover); }
+
+/* Card header */
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.card-icon { font-size: 20px; flex-shrink: 0; }
+.card-name {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  flex: 1;
+}
+.card-direction {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.card-direction.advancing { color: var(--advancing); background: rgba(74,222,128,0.1); }
+.card-direction.stable    { color: var(--stable);    background: rgba(56,189,248,0.1); }
+.card-direction.stalling  { color: var(--stalling);  background: rgba(248,113,113,0.1); }
+
+/* Phase bar */
+.phase-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+.phase-segment {
+  flex: 1; height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.phase-segment.filled { background: var(--accent); }
+.phase-segment.current { background: var(--accent); box-shadow: 0 0 5px rgba(56,189,248,0.4); }
+.phase-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+
+/* Metric + summary row */
+.card-row {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+}
+.card-metric {
+  flex-shrink: 0;
+  text-align: center;
+  min-width: 60px;
+}
+.card-metric .value {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.1;
+}
+.card-metric .label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.card-summary {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ── Recent Events (inline, not behind click) ───────── */
+.card-events {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.card-events-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+.card-event {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 12px;
+}
+.card-event-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.card-event-dot.positive { background: var(--sentiment-pos); }
+.card-event-dot.neutral  { background: var(--sentiment-neu); }
+.card-event-dot.negative { background: var(--sentiment-neg); }
+.card-event-time {
+  font-family: var(--font-head);
+  font-size: 10px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  min-width: 52px;
+}
+.card-event-text {
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.card-event-text:hover,
+.activity-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.card-event-text {
+  text-decoration: none;
+}
+.activity-link {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.card-events-toggle {
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 4px 0;
+  text-align: center;
+  border-top: 1px dashed var(--border);
+  margin-top: 4px;
+}
+
+/* ── Key Players ─────────────────────────────────────── */
+.card-players {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.card-players-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+.card-players-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px;
+  font-size: 12px;
+}
+.card-players-sep {
+  color: var(--text-dim);
+}
+.card-player-chip {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 12px;
+  transition: opacity 0.15s;
+}
+.card-player-chip:hover {
+  text-decoration: underline;
+  opacity: 1;
+}
+
+/* ── Footer ──────────────────────────────────────────── */
+.footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 24px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 24px;
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+.footer-link { font-size: 11px; color: var(--accent); opacity: 0.7; transition: opacity 0.15s; }
+.footer-link:hover { opacity: 1; text-decoration: underline; }
+
+/* ── Modal ───────────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  place-items: center;
+}
+.modal-overlay.active { display: grid; }
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 520px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal h2 { font-family: var(--font-head); font-size: 18px; margin-bottom: 12px; }
+.modal p, .modal li { font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-bottom: 8px; }
+.modal-close {
+  background: var(--card-hover);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 600px) {
+  .app { padding: 0 10px 20px; }
+  .solution-card { padding: 12px 12px; }
+  .card-row { flex-direction: column; gap: 4px; }
+  .card-metric { text-align: left; display: flex; align-items: baseline; gap: 6px; }
+  .momentum-banner { flex-direction: column; text-align: center; gap: 8px; }
+  .header { flex-wrap: wrap; gap: 8px; }
+  .activity-solution { display: none; }
+}

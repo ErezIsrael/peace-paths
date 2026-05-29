@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peace Meter Admin</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; min-height: 100vh; }
+
+  h1 { margin-bottom: 2px; font-size: 20px; color: #f0f6fc; }
+  .subtitle { color: #6e7681; margin-bottom: 16px; font-size: 12px; }
+
+  /* Toolbar */
+  .toolbar { display: flex; gap: 6px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+  .toolbar button {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 5px 12px;
+    border-radius: 6px; cursor: pointer; font-size: 12px;
+  }
+  .toolbar button:hover { background: #30363d; }
+  .toolbar button.primary { background: #1f6feb; border-color: #388bfd; color: #fff; }
+  .toolbar button.primary:hover { background: #388bfd; }
+  .toolbar button.deploy { background: #238636; border-color: #2ea043; color: #fff; }
+  .toolbar button.deploy:hover { background: #2ea043; }
+  .toolbar button.run { background: #6e40c9; border-color: #8957e5; color: #fff; }
+  .toolbar button.run:hover { background: #8957e5; }
+  .toolbar button:disabled { opacity: 0.4; cursor: default; }
+  .toolbar .sep { width: 1px; height: 22px; background: #30363d; margin: 0 2px; }
+
+  /* Progress bar */
+  .progress-bar {
+    display: none;
+    margin: 8px 0;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    overflow: hidden;
+    height: 6px;
+  }
+  .progress-bar.visible { display: block; }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #388bfd, #8957e5);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 6px;
+  }
+  .progress-label {
+    display: none;
+    font-size: 11px;
+    color: #8b949e;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .progress-label.visible { display: block; }
+
+  .toolbar .search-input {
+    background: #0d1117; border: 1px solid #30363d; padding: 5px 10px;
+    border-radius: 6px; color: #c9d1d9; font-size: 12px; width: 180px;
+  }
+  .toolbar .search-input:focus { outline: none; border-color: #388bfd; }
+
+  /* AI Health bar */
+  .ai-health-healthy { background: #1c2d1c; border: 1px solid #238636; color: #3fb950; }
+  .ai-health-warning { background: #2d2d1c; border: 1px solid #9e6a03; color: #d29922; }
+  .ai-health-critical { background: #2d1c1c; border: 1px solid #6e2a2a; color: #f85149; }
+
+  .status { margin-left: auto; font-size: 11px; color: #6e7681; }
+  .status.running { color: #d29922; }
+  .status.done { color: #3fb950; }
+  .status.error { color: #f85149; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; padding: 6px 8px; border-bottom: 1px solid #30363d; color: #8b949e; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 6px 8px; border-bottom: 1px solid #21262d; vertical-align: middle; }
+  tr:hover td { background: #161b22; }
+  tr.selected td { background: rgba(56,139,253,0.1); }
+  tr.suggested td { background: rgba(210,153,34,0.06); }
+  tr.suggested:hover td { background: rgba(210,153,34,0.12); }
+  .icon-cell { font-size: 18px; text-align: center; width: 34px; }
+  .sel-chk { width: 13px; height: 13px; cursor: pointer; accent-color: #388bfd; }
+  .badge {
+    font-size: 9px; padding: 1px 5px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.3px; display: inline-block;
+  }
+  .badge.current { background: #1c2d1c; color: #3fb950; border: 1px solid #238636; }
+  .badge.suggested { background: #2d2d1c; color: #d29922; border: 1px solid #9e6a03; }
+  .actions { display: flex; gap: 3px; }
+  .actions button {
+    background: #21262d; color: #8b949e; border: 1px solid #30363d; padding: 2px 6px;
+    border-radius: 3px; cursor: pointer; font-size: 10px;
+  }
+  .actions button:hover { background: #30363d; color: #c9d1d9; }
+  .actions button.del { color: #f85149; border-color: #6e2a2a; }
+
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.75); z-index: 100; align-items: center; justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+    padding: 20px; width: 500px; max-width: 90vw; max-height: 90vh; overflow-y: auto;
+  }
+  .modal h2 { margin-bottom: 12px; font-size: 15px; color: #f0f6fc; }
+  .modal label { display: block; margin-bottom: 2px; font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+  .modal input, .modal textarea, .modal select {
+    width: 100%; padding: 6px 10px; margin-bottom: 10px; background: #0d1117;
+    border: 1px solid #30363d; border-radius: 5px; color: #c9d1d9; font-size: 12px;
+  }
+  .modal input:focus, .modal textarea:focus { outline: none; border-color: #388bfd; }
+  .modal textarea { min-height: 48px; resize: vertical; font-family: inherit; }
+  .modal-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; }
+  .modal-actions button {
+    padding: 6px 16px; border-radius: 5px; border: 1px solid #30363d; cursor: pointer; font-size: 12px;
+  }
+  .modal-actions .save { background: #238636; border-color: #2ea043; color: #fff; }
+  .modal-actions .save:hover { background: #2ea043; }
+  .modal-actions .cancel { background: #21262d; color: #c9d1d9; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 16px; right: 16px; padding: 8px 14px;
+    border-radius: 6px; font-size: 12px; z-index: 200;
+    transform: translateY(80px); opacity: 0; transition: all 0.3s ease;
+  }
+  .toast.visible { transform: translateY(0); opacity: 1; }
+  .toast.success { background: #1c2d1c; color: #3fb950; border: 1px solid #238636; }
+  .toast.error { background: #2d1c1c; color: #f85149; border: 1px solid #6e2a2a; }
+  .toast.info { background: #1c2d3d; color: #58a6ff; border: 1px solid #1f6feb; }
+
+  /* Log */
+  .log-panel {
+    margin-top: 12px; background: #0d1117; border: 1px solid #30363d;
+    border-radius: 5px; padding: 10px; max-height: 160px; overflow-y: auto;
+    font-family: monospace; font-size: 11px; color: #6e7681; display: none;
+  }
+  .log-panel.visible { display: block; }
+</style>
+</head>
+<body>
+
+<h1>🕊 Peace Meter Admin</h1>
+<p class="subtitle">Manage categories · Local only</p>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <button class="primary" onclick="openModal()">+ Add</button>
+  <div class="sep"></div>
+  <button onclick="selectAllExisting()" title="Select all existing categories" style="font-size:11px">☑ Existing</button>
+  <button onclick="selectAllSuggested()" title="Select all suggested (non-existing)" style="font-size:11px">☑ Suggested</button>
+  <button onclick="clearSelection()" title="Deselect all" style="font-size:11px;opacity:0.7">☐ Clear</button>
+  <div class="sep"></div>
+  <button id="bulkDeleteBtn" onclick="bulkDeleteSelected()" style="background:#b62324;border-color:#d73a49;color:#fff;font-size:11px">🗑 Del Sel</button>
+  <button id="bulkCoreBtn" onclick="bulkToggleCore()" style="font-size:11px;background:#2d2d1c;border-color:#9e6a03;color:#d29922">⭐ Make Core</button>
+  <button onclick="bulkImportSelected()" style="font-size:11px;background:#1c2d1c;border-color:#238636;color:#3fb950">➕ Import Sel</button>
+  <div class="sep"></div>
+  <button class="run" id="runFastBtn" onclick="runAnalysis('--fast')">⚡ Run Fast</button>
+  <button class="run" id="runDailyBtn" onclick="runAnalysis('--daily')">📅 Run Daily</button>
+  <button class="run" id="runTaxonomyBtn" onclick="runAnalysis('--review-taxonomy')">🔍 Propose</button>
+  <div class="sep"></div>
+  <button class="deploy" id="deployTestBtn" onclick="deploy('test')">▶ Deploy Test</button>
+  <button class="deploy" id="deployLiveBtn" onclick="deploy('live')" style="background:#9e6a03;border-color:#d29922">🔴 Deploy Live</button>
+  <span class="badge" id="testBadge" style="display:none;margin-left:8px"></span>
+  <span class="badge" id="liveBadge" style="display:none;margin-left:4px"></span>
+  <div class="sep"></div>
+  <input type="text" class="search-input" id="searchInput" placeholder="Search…" oninput="filterTable()">
+  <span class="status" id="analysisStatus"></span>
+  <button class="run" id="stopAnalysisBtn" onclick="cancelAnalysis()" style="display:none;background:#b62324">⏹ Stop</button>
+</div>
+
+<!-- AI Health indicator -->
+<div id="aiHealthBar" style="display:none;padding:6px 10px;margin:6px 0;border-radius:6px;font-size:11px;align-items:center;gap:8px;">
+  <span id="aiHealthIcon"></span>
+  <span id="aiHealthText"></span>
+</div>
+
+<!-- Progress bar -->
+<div class="progress-label" id="progressLabel">Analyzing… 0%</div>
+<div class="progress-bar" id="progressBar">
+  <div class="progress-fill" id="progressFill"></div>
+</div>
+
+<!-- Combined table: current + suggested -->
+<div class="table-wrap" style="overflow-x:auto">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:24px;text-align:center">☑</th>
+        <th style="width:34px;text-align:center">🎯</th>
+        <th style="width:34px;text-align:center">⭐</th>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Phases</th>
+        <th>Keywords</th>
+        <th style="width:110px">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="catTable"></tbody>
+  </table>
+</div>
+
+<!-- Log panel -->
+<div class="log-panel" id="logPanel"></div>
+
+<!-- Edit/Add Modal -->
+<div class="modal-overlay" id="editModalOverlay">
+  <div class="modal">
+    <h2 id="editModalTitle">Add Category</h2>
+    <input type="hidden" id="editId">
+    <input type="hidden" id="editSource">
+    <label>ID (kebab-case)</label>
+    <input id="fId" placeholder="e.g. yemen-war" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'-')">
+    <label>Icon (emoji)</label>
+    <input id="fIcon" placeholder="e.g. 🌍" style="width:70px">
+    <label>Name</label>
+    <input id="fName" placeholder="e.g. Yemen Conflict">
+    <label>Description</label>
+    <textarea id="fDesc" placeholder="What this category covers…"></textarea>
+    <label>Phases (comma-separated)</label>
+    <input id="fPhases" placeholder="e.g. Fighting, Ceasefire, Rebuilding">
+    <label>Keywords (comma-separated)</label>
+    <input id="fKeywords" placeholder="e.g. yemen, houthi, aden">
+    <label style="display:flex;align-items:center;gap:6px;margin-top:6px">
+      <input type="checkbox" id="fCore" style="width:14px;height:14px;accent-color:#388bfd">
+      <span style="font-size:11px;color:#8b949e">Core category (used as base for AI taxonomy suggestions)</span>
+    </label>
+    <div class="modal-actions">
+      <button class="cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="save" onclick="saveCategory()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/admin';
+let categories = [];     // from categories.json
+let taxonomy = [];       // suggested from taxonomy.json
+let selectedIds = new Set();  // selected row ids (for bulk ops)
+
+/* ── Load ──────────────────────────────────────────── */
+async function loadData() {
+  try {
+    const [resC, resT, resH] = await Promise.all([
+      fetch(`${API}/categories`),
+      fetch(`${API}/taxonomy`),
+fetch(`${API}/ai-health`).catch(() => ({ok:true, json:()=>Promise.resolve({status:'unknown',refusals:0,refusalRate:0})}))
+    ]);
+    categories = await resC.json();
+    taxonomy = await resT.json();
+    const health = await resH.json();
+    renderTable();
+    renderAIHealth(health);
+  } catch(e) { showToast('Failed to load data', 'error'); }
+}
+
+/* ── AI Health Indicator ─────────────────────────── */
+function renderAIHealth(h) {
+  const bar = document.getElementById('aiHealthBar');
+  const icon = document.getElementById('aiHealthIcon');
+  const text = document.getElementById('aiHealthText');
+  if (!h || h.status === 'unknown') {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+  bar.className = `ai-health-${h.status === 'healthy' ? 'healthy' : h.refusalRate > 10 ? 'critical' : 'warning'}`;
+  if (h.status === 'healthy') {
+    icon.textContent = '✅';
+    text.textContent = `AI healthy — ${h.totalClassified} classified, ${h.refusals} refusals (${h.refusalRate}%) — ${new Date(h.lastRun).toLocaleTimeString()}`;
+  } else {
+    icon.textContent = h.refusalRate > 10 ? '🚨' : '⚠️';
+    text.textContent = `AI content filter triggered ${h.refusals} times (${h.refusalRate}% of ${h.totalClassified} articles) — ${new Date(h.lastRun).toLocaleTimeString()}`;
+  }
+}
+
+/* ── Selection ─────────────────────────────────────── */
+function selectAllExisting() {
+  selectedIds.clear();
+  categories.forEach(c => selectedIds.add(c.id));
+  renderTable(document.getElementById('searchInput').value);
+  showToast(`Selected ${selectedIds.size} existing`, 'info');
+}
+
+function selectAllSuggested() {
+  selectedIds.clear();
+  const existingIds = new Set(categories.map(c => c.id));
+  taxonomy.filter(c => !existingIds.has(c.id)).forEach(c => selectedIds.add(c.id));
+  renderTable(document.getElementById('searchInput').value);
+  showToast(`Selected ${selectedIds.size} suggested`, 'info');
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  renderTable(document.getElementById('searchInput').value);
+}
+
+function toggleSelect(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  renderTable(document.getElementById('searchInput').value);
+}
+
+function getSelectedCategories() {
+  return categories.filter(c => selectedIds.has(c.id));
+}
+
+function getSelectedSuggested() {
+  const existingIds = new Set(categories.map(c => c.id));
+  return taxonomy.filter(c => selectedIds.has(c.id) && !existingIds.has(c.id));
+}
+
+/* ── Toast ─────────────────────────────────────────── */
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} visible`;
+  setTimeout(() => t.classList.remove('visible'), 3000);
+}
+
+/* ── Table Render ──────────────────────────────────── */
+function renderTable(filter='') {
+  const tbody = document.getElementById('catTable');
+  tbody.innerHTML = '';
+  const f = filter.toLowerCase();
+  const existingIds = new Set(categories.map(c => c.id));
+
+  // Render categories from categories.json
+  categories.filter(c => !f || c.id.toLowerCase().includes(f) || c.name.toLowerCase().includes(f))
+    .forEach(c => {
+      const tr = document.createElement('tr');
+      const sel = selectedIds.has(c.id);
+      if (sel) tr.classList.add('selected');
+      tr.innerHTML = `
+        <td style="text-align:center;cursor:pointer"><input type="checkbox" class="sel-chk" ${sel?'checked':''} onclick="toggleSelect('${c.id}')"></td>
+        <td class="icon-cell">${c.icon}</td>
+        <td class="icon-cell" style="cursor:pointer" onclick="toggleCore('${c.id}')" title="${c.core?'Remove from core':'Make core'}">${c.core?'⭐':'☆'}</td>
+        <td style="color:#8b949e;font-family:monospace;font-size:11px">${c.id}</td>
+        <td>${c.name}</td>
+        <td style="color:#8b949e;font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.description)}">${c.description}</td>
+        <td style="font-size:10px;color:#6e7681">${(c.phases||[]).join(' → ')}</td>
+        <td style="font-size:10px;color:#6e7681">${(c.keywords||[]).join(', ')}</td>
+        <td><div class="actions">
+          <button onclick="editCategory('${c.id}')">Edit</button>
+          <button class="toggle-core" onclick="toggleCore('${c.id}')" title="${c.core?'Remove from core':'Make core'}" style="background:${c.core?'#2d2d1c;border-color:#9e6a03;color:#d29922':'#0d1117;border-color:#30363d;color:#6e7681'}">${c.core?'⭐':'☆'}</button>
+          <button class="del" onclick="deleteCategory('${c.id}')">Del</button>
+        </div></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  // Render suggested (taxonomy-only) categories
+  const suggestedOnly = taxonomy.filter(c => !existingIds.has(c.id));
+  suggestedOnly.filter(c => !f || c.id.toLowerCase().includes(f) || c.name.toLowerCase().includes(f))
+    .forEach(c => {
+      const tr = document.createElement('tr');
+      tr.classList.add('suggested');
+      const sel = selectedIds.has(c.id);
+      if (sel) tr.classList.add('selected');
+      tr.innerHTML = `
+        <td style="text-align:center;cursor:pointer"><input type="checkbox" class="sel-chk" ${sel?'checked':''} onclick="toggleSelect('${c.id}')"></td>
+        <td class="icon-cell">${c.icon}</td>
+        <td class="icon-cell"><span style="color:#30363d">·</span></td>
+        <td style="color:#8b949e;font-family:monospace;font-size:11px">${c.id}</td>
+        <td>${c.name}</td>
+        <td style="color:#8b949e;font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.description)}">${c.description}</td>
+        <td style="font-size:10px;color:#6e7681">${(c.phases||[]).join(' → ')}</td>
+        <td style="font-size:10px;color:#6e7681">${(c.keywords||[]).join(', ')}</td>
+        <td><div class="actions">
+          <button onclick="editCategory('${c.id}','suggested')">Edit</button>
+          <button onclick="importFromTaxonomy('${c.id}')" style="color:#3fb950;border-color:#238636">➕ Import</button>
+          <button class="del" onclick="deleteTaxonomy('${c.id}')">Del</button>
+        </div></td>
+      `;
+      tbody.appendChild(tr);
+    });
+}
+
+function filterTable() {
+  renderTable(document.getElementById('searchInput').value);
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+/* ── Add / Edit ────────────────────────────────────── */
+function openModal(id, source) {
+  document.getElementById('editModalOverlay').classList.add('active');
+  if (id) {
+    const cat = categories.find(x => x.id === id);
+    if (!cat) {
+      alert('Category not found');
+      return;
+    }
+    document.getElementById('editId').value = cat.id;
+    document.getElementById('editSource').value = 'current';
+    document.getElementById('fId').value = cat.id;
+    document.getElementById('fId').disabled = true;
+    document.getElementById('fIcon').value = cat.icon;
+    document.getElementById('fName').value = cat.name;
+    document.getElementById('fDesc').value = cat.description || '';
+    document.getElementById('fPhases').value = (cat.phases||[]).join(', ');
+    document.getElementById('fKeywords').value = (cat.keywords||[]).join(', ');
+    document.getElementById('fCore').checked = cat.core || false;
+    document.getElementById('editModalTitle').textContent = `Edit: ${cat.name}`;
+  } else {
+    document.getElementById('editId').value = '';
+    document.getElementById('editSource').value = '';
+    document.getElementById('fId').value = '';
+    document.getElementById('fId').disabled = false;
+    document.getElementById('fIcon').value = '';
+    document.getElementById('fName').value = '';
+    document.getElementById('fDesc').value = '';
+    document.getElementById('fPhases').value = '';
+    document.getElementById('fKeywords').value = '';
+    document.getElementById('fCore').checked = false;
+    document.getElementById('editModalTitle').textContent = 'Add Category';
+  }
+  setTimeout(() => document.getElementById('fId').focus(), 100);
+}
+
+function closeEditModal() {
+  document.getElementById('editModalOverlay').classList.remove('active');
+}
+
+async function saveCategory() {
+  const existing = document.getElementById('editId').value;
+  const payload = {
+    id: document.getElementById('fId').value.trim().toLowerCase().replace(/\s+/g,'-'),
+    icon: document.getElementById('fIcon').value.trim(),
+    name: document.getElementById('fName').value.trim(),
+    description: document.getElementById('fDesc').value.trim(),
+    phases: document.getElementById('fPhases').value.split(',').map(s=>s.trim()).filter(Boolean),
+    keywords: document.getElementById('fKeywords').value.split(',').map(s=>s.trim()).filter(Boolean),
+    core: document.getElementById('fCore').checked,
+  };
+  if (!payload.id || !payload.name) { alert('ID and Name are required'); return; }
+
+  if (existing) {
+    const res = await fetch(`${API}/categories/${existing}`, {
+      method: 'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const j = await res.json();
+    if (!res.ok) { alert(j.error); return; }
+    showToast(`"${payload.id}" updated`, 'success');
+  } else {
+    const res = await fetch(`${API}/categories`, {
+      method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const j = await res.json();
+    if (!res.ok) { alert(j.error); return; }
+    showToast(`"${payload.id}" added`, 'success');
+  }
+  closeEditModal();
+  await loadData();
+}
+
+function editCategory(id, source) { openModal(id, source || 'current'); }
+
+/* ── Import from Taxonomy ──────────────────────────── */
+async function importFromTaxonomy(id) {
+  const taxCat = taxonomy.find(c => c.id === id);
+  if (!taxCat) return;
+  // Immediate: move to local categories + re-render
+  taxCat.phases = taxCat.phases || ['Emerged', 'Developing', 'Gaining Traction', 'Maturing', 'Resolved'];
+  taxCat.keywords = taxCat.keywords || [];
+  taxCat.core = false;
+  categories.push({ ...taxCat });
+  taxonomy = taxonomy.filter(c => c.id !== id);
+  renderTable(document.getElementById('searchInput').value);
+  // Then persist
+  try {
+    const res = await fetch(`${API}/categories/move`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ id })
+    });
+    const j = await res.json();
+    if (!res.ok) { alert(j.error); await loadData(); return; }
+  } catch(e) { await loadData(); return; }
+  showToast(`"${id}" imported`, 'success');
+}
+
+/* ── Toggle Core ───────────────────────────────────── */
+async function toggleCore(id) {
+  const cat = categories.find(c => c.id === id);
+  if (!cat) return;
+  const newCore = !cat.core;
+  // Immediate: update local state + re-render
+  cat.core = newCore;
+  renderTable(document.getElementById('searchInput').value);
+  // Then persist
+  try {
+    const res = await fetch(`${API}/categories/${id}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ ...cat, core: newCore })
+    });
+    const j = await res.json();
+    if (!res.ok) { alert(j.error); await loadData(); return; }
+  } catch(e) { await loadData(); return; }
+  showToast(`"${id}" ${newCore ? 'made core' : 'removed from core'}`, 'success');
+}
+
+/* ── Delete ────────────────────────────────────────── */
+async function deleteCategory(id) {
+  if (!confirm(`Delete "${id}"?`)) return;
+  // Immediate: remove from local array + re-render
+  const idx = categories.findIndex(c => c.id === id);
+  if (idx !== -1) categories.splice(idx, 1);
+  selectedIds.delete(id);
+  renderTable(document.getElementById('searchInput').value);
+  // Then persist
+  try {
+    const res = await fetch(`${API}/categories/${id}`, { method: 'DELETE' });
+    const j = await res.json();
+    if (!res.ok) { alert(j.error); await loadData(); return; }
+  } catch(e) { await loadData(); return; }
+  showToast(`"${id}" deleted`, 'success');
+}
+
+/* ── Bulk Operations ───────────────────────────────── */
+
+async function bulkDeleteSelected() {
+  const selCats = getSelectedCategories();
+  const selSug = getSelectedSuggested();
+  if (selCats.length === 0 && selSug.length === 0) { showToast('No categories selected', 'error'); return; }
+
+  let msg = `Delete ${selectedIds.size} selected?\n\n`;
+  if (selCats.length) msg += `Existing (${selCats.length}): ${selCats.map(c=>c.id).join(', ')}\n`;
+  if (selSug.length) msg += `Suggested (${selSug.length}): ${selSug.map(c=>c.id).join(', ')}\n`;
+  msg += '\nThis cannot be undone.';
+  if (!confirm(msg)) return;
+
+  // Immediate: remove from local arrays + re-render
+  const selSet = new Set(selectedIds);
+  categories = categories.filter(c => !selSet.has(c.id));
+  const existingIds = new Set(categories.map(c => c.id));
+  taxonomy = taxonomy.filter(c => selSet.has(c.id) ? false : true);
+  selectedIds.clear();
+  renderTable(document.getElementById('searchInput').value);
+
+  // Persist
+  try {
+    if (selCats.length) {
+      const res = await fetch(`${API}/categories/bulk-delete`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ ids: selCats.map(c => c.id) })
+      });
+      const j = await res.json();
+      if (!res.ok) { showToast(`Delete failed: ${j.error}`, 'error'); await loadData(); return; }
+    }
+    showToast(`Deleted ${selCats.length + selSug.length} categories`, 'success');
+  } catch(e) { showToast(`Delete failed: ${e}`, 'error'); await loadData(); }
+}
+
+async function bulkToggleCore() {
+  const selCats = getSelectedCategories();
+  if (selCats.length === 0) { showToast('No existing categories selected', 'error'); return; }
+
+  const anyNonCore = selCats.some(c => !c.core);
+  const action = anyNonCore ? 'Make Core' : 'Remove from Core';
+  const setCore = anyNonCore;
+  if (!confirm(`${action} ${selCats.length} categories?`)) return;
+
+  // Immediate: update local state + re-render
+  selCats.forEach(c => c.core = setCore);
+  renderTable(document.getElementById('searchInput').value);
+
+  // Persist via bulk endpoint
+  try {
+    const res = await fetch(`${API}/categories/bulk-core-toggle`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ ids: selCats.map(c => c.id), setCore })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Failed: ${j.error}`, 'error'); await loadData(); return; }
+    showToast(`${action} ${j.updated} categories`, 'success');
+  } catch(e) { showToast(`Failed: ${e}`, 'error'); await loadData(); }
+}
+
+async function bulkImportSelected() {
+  const selSug = getSelectedSuggested();
+  if (selSug.length === 0) { showToast('No suggested categories selected', 'error'); return; }
+
+  // Immediate: move to local categories + re-render
+  selSug.forEach(c => {
+    c.phases = c.phases || ['Emerged', 'Developing', 'Gaining Traction', 'Maturing', 'Resolved'];
+    c.keywords = c.keywords || [];
+    c.core = false;
+    categories.push(c);
+  });
+  const selSet = new Set(selSug.map(c => c.id));
+  taxonomy = taxonomy.filter(c => !selSet.has(c.id));
+  selectedIds.clear();
+  renderTable(document.getElementById('searchInput').value);
+
+  // Persist
+  try {
+    const res = await fetch(`${API}/categories/bulk-import`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ categories: selSug })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Import failed: ${j.error}`, 'error'); await loadData(); return; }
+    showToast(`Imported ${selSug.length} categories`, 'success');
+  } catch(e) { showToast(`Import failed: ${e}`, 'error'); await loadData(); }
+}
+
+/* ── Delete from taxonomy ──────────────────────────── */
+async function deleteTaxonomy(id) {
+  if (!confirm(`Remove "${id}" from suggested categories?`)) return;
+  try {
+    const res = await fetch(`${API}/taxonomy/bulk-delete`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ ids: [id] })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Delete failed: ${j.error}`, 'error'); return; }
+    showToast(`"${id}" removed from taxonomy`, 'success');
+    await loadData();
+  } catch(e) { showToast(`Delete failed: ${e}`, 'error'); }
+}
+
+/* ── Deploy ─────────────────────────────────────────── */
+async function deploy(target) {
+  const label = target === 'live' ? 'LIVE' : 'test';
+  if (target === 'live' && !confirm(`⚠️ Deploy latest analysis to LIVE (Cloudflare Pages)?\n\nThis uploads the entire site via wrangler.\n\nContinue?`)) return;
+
+  const btnId = target === 'live' ? 'deployLiveBtn' : 'deployTestBtn';
+  const btn = document.getElementById(btnId);
+  btn.disabled = true;
+  btn.textContent = '⏳…';
+
+  try {
+    const res = await fetch(`${API}/deploy`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ target })
+    });
+    const j = await res.json();
+    if (!res.ok) { alert(j.error); showToast(`Deploy failed: ${j.error}`, 'error'); return; }
+    showToast(`Deployed ${j.deployed} solutions to ${label}`, 'success');
+    const ts = new Date().toLocaleTimeString();
+    const badgeId = target === 'live' ? 'liveBadge' : 'testBadge';
+    const badge = document.getElementById(badgeId);
+    badge.textContent = `🟢 ${label}: ${j.deployed} sols @ ${ts}`;
+    badge.style.display = 'inline';
+    badge.style.background = target === 'live' ? '#3b2200' : '#1a3a2a';
+    badge.style.color = target === 'live' ? '#d29922' : '#56d364';
+    badge.style.border = `1px solid ${target === 'live' ? '#d29922' : '#56d364'}`;
+    badge.style.borderRadius = '6px';
+    badge.style.padding = '2px 8px';
+    badge.style.fontSize = '11px';
+  } catch(e) { showToast(`Deploy failed: ${e}`, 'error'); }
+  btn.disabled = false;
+  btn.textContent = target === 'live' ? '🔴 Deploy Live' : '▶ Deploy Test';
+}
+
+/* ── AI Analysis ───────────────────────────────────── */
+async function runAnalysis(mode) {
+  const btn = document.getElementById('analysisStatus');
+  const log = document.getElementById('logPanel');
+  const fill = document.getElementById('progressFill');
+  const bar = document.getElementById('progressBar');
+  const label = document.getElementById('progressLabel');
+  const buttons = ['runFastBtn','runDailyBtn','runTaxonomyBtn'].map(id=>document.getElementById(id));
+
+  buttons.forEach(b => b.disabled = true);
+  document.getElementById('stopAnalysisBtn').style.display = 'inline-block';
+  btn.textContent = 'Running…';
+  btn.className = 'status running';
+  log.textContent = '';
+  log.classList.add('visible');
+  bar.classList.add('visible');
+  label.classList.add('visible');
+  fill.style.width = '0%';
+  label.textContent = 'Starting analysis…';
+
+  const res = await fetch(`/api/analysis/run?mode=${mode}`);
+  const j = await res.json();
+  if (j.error) {
+    document.getElementById('stopAnalysisBtn').style.display = 'none';
+    bar.classList.remove('visible');
+    label.classList.remove('visible');
+    btn.textContent = j.error;
+    btn.className = 'status error';
+    buttons.forEach(b => b.disabled = false);
+    return;
+  }
+  pollStatus(buttons, fill, bar, label);
+}
+
+async function pollStatus(buttons, fill, bar, label) {
+  const btn = document.getElementById('analysisStatus');
+  const log = document.getElementById('logPanel');
+
+  const check = async () => {
+    const res = await fetch(`/api/analysis/status`);
+    const s = await res.json();
+    if (s.log) {
+      log.textContent = s.log;
+      log.scrollTop = log.scrollHeight;
+      // Parse progress from log lines like [20/170 (12%)]
+      const lines = s.log.split('\n');
+      for (const l of lines.reverse()) {
+        const m = l.match(/\[(\d+)\/(\d+)\s+\((\d+)%\)/);
+        if (m) {
+          const pct = parseInt(m[3]);
+          fill.style.width = `${pct}%`;
+          label.textContent = `Analyzing… ${pct}% (${m[1]}/${m[2]})`;
+          btn.textContent = `Running… ${pct}% (PID ${s.pid})`;
+          break;
+        }
+      }
+    }
+    if (!s.running) {
+      fill.style.width = '100%';
+      label.textContent = 'Analysis complete ✓';
+      btn.textContent = 'Done';
+      btn.className = 'status done';
+      buttons.forEach(b => b.disabled = false);
+      document.getElementById('stopAnalysisBtn').style.display = 'none';
+      setTimeout(() => { bar.classList.remove('visible'); label.classList.remove('visible'); }, 3000);
+      showToast('Analysis complete', 'success');
+      loadData();
+      return;
+    }
+    btn.textContent = `Running… (PID ${s.pid})`;
+    setTimeout(check, 2000);
+  };
+  check();
+}
+
+async function cancelAnalysis() {
+  try {
+    const res = await fetch('/api/analysis/cancel', { method: 'POST' });
+    const j = await res.json();
+    if (res.ok) {
+      document.getElementById('analysisStatus').textContent = 'Cancelled';
+      document.getElementById('analysisStatus').className = 'status error';
+      document.getElementById('stopAnalysisBtn').style.display = 'none';
+      document.getElementById('progressBar').classList.remove('visible');
+      document.getElementById('progressLabel').classList.remove('visible');
+      ['runFastBtn','runDailyBtn','runTaxonomyBtn'].forEach(id =>
+        document.getElementById(id).disabled = false
+      );
+      showToast('Analysis cancelled', 'error');
+    }
+  } catch(e) { showToast(`Cancel failed: ${e}`, 'error'); }
+}
+
+/* ── Keyboard Shortcuts ────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'n') { e.preventDefault(); openModal(); }
+  if (e.key === 'Escape') closeEditModal();
+});
+
+document.getElementById('editModalOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeEditModal();
+});
+
+/* ── Boot ──────────────────────────────────────────── */
+(async function() {
+  await loadData();
+})();
+</script>
+
+</body>
+</html>

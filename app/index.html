@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peace Room — Which Paths to Peace Are Working?</title>
+    <meta name="description" content="Tracking progress on concrete peace initiatives in the Middle East with live event updates.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛤</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app" role="main" aria-label="Peace Room dashboard">
+
+        <!-- ── Header ──────────────────────────────── -->
+        <header class="header" aria-label="Header">
+            <div>
+                <h1 class="logo"><a href="#">🕊 Peace Room</a></h1>
+                <div class="tagline">Where the peace efforts are headed</div>
+            </div>
+            <div class="header-right">
+                <span class="last-updated" id="lastUpdated"></span>
+                <span class="refresh-badge" id="refreshBadge" title="Auto-refreshes every 15 min">↻</span>
+            </div>
+        </header>
+
+        <!-- ── Classification Warning ──────────────── -->
+        <div id="classificationWarning" style="display:none;padding:10px 16px;margin:8px 0;border-radius:8px;background:#2d2d1c;border:1px solid #9e6a03;color:#d29922;gap:8px;align-items:flex-start"></div>
+
+        <!-- ── Momentum Banner ─────────────────────── -->
+        <div class="momentum-banner" id="momentumBanner">
+            <div class="momentum-icon" id="momentumIcon">↗</div>
+            <div class="momentum-text">
+                <h2 id="momentumLabel">—</h2>
+                <p id="momentumSummary">Loading...</p>
+            </div>
+        </div>
+
+        <!-- ── Live Activity Feed ──────────────────── -->
+        <div class="activity-section">
+            <div class="section-header"><span class="live-dot"></span>Recent Activity</div>
+            <div class="activity-feed" id="activityFeed"></div>
+            <div class="activity-more" id="showMoreActivity">Show more events…</div>
+        </div>
+
+        <!-- ── Solutions Grid (dynamic) ────────────── -->
+        <div class="category-group">
+            <div class="section-header">Solutions</div>
+            <div id="solutionsGrid"></div>
+        </div>
+
+        <!-- ── Footer ──────────────────────────────── -->
+        <footer class="footer">
+            <p>Peace Room is an experimental project for informational purposes only.</p>
+            <p>Assessments are algorithmic and AI-assisted, not predictions.</p>
+            <nav class="footer-links" aria-label="Footer links">
+              <span id="versionTag" class="footer-link"></span>
+              <a href="https://github.com/ErezIsrael/peace-paths/issues" target="_blank" rel="noopener" class="footer-link">🐛 Report a Bug</a>
+              <a href="https://ko-fi.com/erezse" target="_blank" rel="noopener" class="footer-link">☕ Buy Me Coffee</a>
+              <a href="https://peace-meter.pages.dev" target="_blank" rel="noopener" class="footer-link">☮️ Peace Meter</a>
+            </nav>
+        </footer>
+    </div>
+
+    <!-- ── Modal ───────────────────────────────────── -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div id="modalContent"></div>
+            <button class="modal-close" id="modalClose">Close</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

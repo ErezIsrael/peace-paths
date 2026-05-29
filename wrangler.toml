@@ -1,0 +1,5 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "peace-paths"
+compatibility_date = "2026-05-20"
+pages_build_output_dir = "app"
+# Local dev: npx wrangler pages dev app --compatibility-date=2026-05-20
