@@ -1,0 +1,39 @@
+[
+  {
+    "id": "example-category-1",
+    "icon": "🔥",
+    "name": "Example Category One",
+    "description": "Description of this category",
+    "phases": [
+      "Emerged",
+      "Developing",
+      "Gaining Traction",
+      "Maturing",
+      "Resolved"
+    ],
+    "keywords": [
+      "keyword1",
+      "keyword2",
+      "keyword3"
+    ],
+    "core": true
+  },
+  {
+    "id": "example-category-2",
+    "icon": "🕊️",
+    "name": "Example Category Two",
+    "description": "Another category description",
+    "phases": [
+      "Emerged",
+      "Developing",
+      "Gaining Traction",
+      "Maturing",
+      "Resolved"
+    ],
+    "keywords": [
+      "keywordA",
+      "keywordB"
+    ],
+    "core": false
+  }
+]

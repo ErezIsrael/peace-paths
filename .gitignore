@@ -3,13 +3,16 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Runtime data files
+# Runtime data files — uploaded to Cloudflare, never committed
+categories.json
 solutions.json
 ai_cache.json
 full_run.json
 tmp_cats.json
 ai-output.json
 data.json
+app/solutions.json
+app/data.json
 
 # Logs
 *.log

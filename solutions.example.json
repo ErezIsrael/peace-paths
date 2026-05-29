@@ -1,0 +1,57 @@
+{
+  "solutions": [
+    {
+      "id": "example-category-1",
+      "icon": "🔥",
+      "name": "Example Category One",
+      "phases": ["Emerged", "Developing", "Gaining Traction", "Maturing", "Resolved"],
+      "phaseIndex": 2,
+      "direction": "advancing",
+      "keyMetric": {
+        "label": "Events (7d)",
+        "value": "5"
+      },
+      "summary": "Example summary text from the most recent article.",
+      "events": [
+        {
+          "text": "Example event 1 — article headline or excerpt.",
+          "source": "BBC ME",
+          "type": "media",
+          "url": "https://example.com/article-1",
+          "published": "2026-01-01T12:00:00Z",
+          "meRelevance": 0.8,
+          "category": "example-category-1",
+          "sentiment": "positive"
+        },
+        {
+          "text": "Example event 2.",
+          "source": "Al Jazeera",
+          "type": "media",
+          "url": "https://example.com/article-2",
+          "published": "2026-01-02T14:00:00Z",
+          "meRelevance": 0.9,
+          "category": "example-category-1",
+          "sentiment": "neutral"
+        }
+      ],
+      "confidence": "medium",
+      "core": true
+    }
+  ],
+  "activeSolutions": ["example-category-1"],
+  "overallMomentum": {
+    "direction": "advancing",
+    "label": "Net Positive",
+    "summary": "1 advancing, 1 stable, 0 stalling (1 active). 2 ME articles from 29 feeds."
+  },
+  "lastUpdated": "2026-01-01T12:00:00+00:00",
+  "source": "ai-analyzer-prod",
+  "feedCount": 2,
+  "aiVersion": "1.0.0",
+  "aiHealth": {
+    "status": "healthy",
+    "classificationMethod": "ai",
+    "llmResponse": "success",
+    "feedCount": 29
+  }
+}
