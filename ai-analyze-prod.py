@@ -962,8 +962,7 @@ def main():
                         help="Daily full run: fetch 7 days, overwrite solutions.json")
     parser.add_argument("--categories", type=str, nargs="*",
                         help="Inject custom categories (id:name:description). E.g., --categories \"armistice:Ceasefire Talks:Truce negotiations\"")
-    parser.add_argument("--skip-upload", action="store_true", help="Skip Cloudflare API upload")
-    parser.add_argument("--deploy", action="store_true", help="Deploy to Cloudflare Pages via wrangler after analysis")
+    parser.add_argument("--skip-upload", action="store_true", help="Skip Cloudflare deploy")
     parser.add_argument("--dry-run", action="store_true", help="Print output JSON to stdout")
     parser.add_argument("--fetch-only", action="store_true", help="Only fetch RSS, skip AI")
     parser.add_argument("--review-taxonomy", action="store_true",
@@ -1134,14 +1133,13 @@ def main():
                 existing_map[cid] = cdata
         save_categories(existing_map)
 
-    # 7. Upload to Cloudflare
-    if args.deploy:
+    # 7. Deploy to Cloudflare
+    if not args.skip_upload:
         # Deploy via wrangler (preferred)
         print(f"\n\U0001f4a9 Deploying to Cloudflare Pages via wrangler...")
-        # Go up from DATA_FILE (app/peace-room/solutions.json) to repo root (peace-meter)
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(DATA_FILE)))
+        project_root = os.path.dirname(os.path.abspath(__file__))
         import subprocess
-        cmd = "npx wrangler pages deploy app --project-name=peace-meter --skip-caching --commit-dirty=true"
+        cmd = "npx wrangler pages deploy app --project-name=peace-paths --skip-caching --commit-dirty=true"
         result = subprocess.run(
             cmd, shell=True,
             cwd=project_root,
@@ -1161,8 +1159,6 @@ def main():
         else:
             print(f"  \u26a0 Wrangler deploy failed: {result.stderr[:300]}")
             print("  Fallback: writing data.json locally")
-    elif not args.skip_upload:
-        upload_to_cloudflare(data)
     else:
         print(f"\n\u2139\ufe0f Cloudflare upload skipped. Data written to {DATA_FILE} and {DATA_JSON}")
 
