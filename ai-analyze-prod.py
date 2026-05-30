@@ -1117,7 +1117,7 @@ def main():
     with open(DATA_JSON, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
     # Also write app/data.json for GitHub-deployed frontend
-    APP_DATA_JSON = os.path.join(os.path.dirname(DATA_FILE), "app", "data.json")
+    APP_DATA_JSON = os.path.join(os.path.dirname(DATA_FILE), "data.json")
     with open(APP_DATA_JSON, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
