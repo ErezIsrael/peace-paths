@@ -12,7 +12,7 @@ AI-powered tracker of concrete peace initiatives across the Middle East.
 29 RSS Feeds → ai-analyze-prod.py → llama.cpp (AI) → solutions.json → Cloudflare Pages
 ```
 
-- **AI Pipeline** (`ai-analyze-prod.py`): Fetches 29 RSS feeds → LLM classifies articles → groups by category → computes phases, momentum, confidence → writes `app/solutions.json` → deploys via `wrangler`.
+- **AI Pipeline** (`ai-analyze-prod.py`): Fetches 29 RSS feeds → LLM classifies articles → groups by category → computes phases, momentum, confidence → writes `app/data.json` → deploys via `wrangler`.
 - **Frontend** (`app/`): Static HTML/JS/CSS. Dynamic solution cards with phase bars, momentum banner, activity feed, and keyword-fallback warning.
 - **Admin Panel** (`admin/`): Local-only UI to manage categories in `categories.json`.
 
@@ -25,7 +25,7 @@ This site has **2 major components**:
 | Component | Storage | Deployment |
 |-----------|---------|------------|
 | Pages (frontend: `app/`, `admin/`) | **GitHub repo** | Commit to Git → GitHub → Cloudflare auto-deploy |
-| Data (`solutions.json`, `categories.json`) | **NOT in Git** | Generated locally → uploaded via `wrangler pages deploy` |
+| Data (`app/data.json`) | **NOT in Git** | Generated locally → uploaded via `wrangler pages deploy app` |
 
 **NEVER** use `wrangler` to upload files tracked in Git. **NEVER** commit data files to Git.
 
@@ -35,7 +35,7 @@ This site has **2 major components**:
 
 ```
 peace-paths/
-├── ai-analyze-prod.py    # RSS → AI → solutions.json → wrangler deploy
+├── ai-analyze-prod.py    # RSS → AI → app/data.json → wrangler deploy
 ├── ai-analyze.py         # Dev/test — per-solution meta-analysis
 ├── dev-serve.py          # Local dev server (:8765) + admin (:8766)
 ├── categories.json       # AI categories — gitignored, uploaded via wrangler
@@ -47,7 +47,7 @@ peace-paths/
 │   ├── styles.css        # Styling
 │   ├── _headers          # CSP, HSTS
 │   ├── solutions.json    # Generated data — gitignored
-│   └── data.json         # Synced copy for dev server
+│   └── data.json         # Generated data — gitignored, uploaded via wrangler
 └── admin/                # Admin panel (local only, committed to Git)
     └── index.html
 ```
@@ -62,7 +62,7 @@ peace-paths/
 | LLM | llama.cpp at local network — set via `LLAMA_CPP_URL` env var |
 | AI model | Configurable via `AI_MODEL` env var (default: `Qwen3.6-27B`) |
 | Categories | Defined in `categories.json` (gitignored). Skeleton: `categories.example.json` |
-| Output | `app/solutions.json` — deployed via `wrangler pages deploy` |
+| Output | `app/data.json` — deployed via `wrangler pages deploy app` |
 | Env vars | `LLAMA_CPP_URL`, `AI_MODEL`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` |
 
 ---
@@ -84,7 +84,7 @@ python dev-serve.py --port 8766 --no-sync
 ## Running the AI Pipeline
 
 ```bash
-# Daily — full 7-day window, overwrite solutions.json, auto-deploy
+# Daily — full 7-day window, overwrite app/data.json, auto-deploy
 python ai-analyze-prod.py --daily
 
 # Fast — last 2h, merge into existing data, auto-deploy
@@ -97,7 +97,10 @@ python ai-analyze-prod.py --fast --skip-upload
 python ai-analyze-prod.py --fast --fetch-only
 ```
 
-All deploys are automatic via GitHub → Cloudflare Pages. No `wrangler` needed.
+Deploy data manually:
+```bash
+npx wrangler pages deploy app --project-name=peace-paths --skip-caching
+```
 
 ---
 
@@ -116,9 +119,9 @@ Copy `.env.example` → `.env` and fill in:
 
 ## Debug Checklist
 
-1. **No data on page?** Check `app/data.json` exists and is committed. Run `dev-serve.py` to sync.
+1. **No data on page?** Check `app/data.json` exists. Run `wrangler pages deploy app` to upload.
 2. **AI failing?** Verify `LLAMA_CPP_URL` in `.env` → reachable llama.cpp server.
-3. **Deploy fails?** Make sure GitHub repo is connected to Cloudflare Pages. Output dir = `app`.
+3. **Deploy fails?** Check `CLOUDFLARE_API_TOKEN` has `pages_edit` permission.
 4. **Wrong categories?** Edit `categories.json` directly or use `/admin/`.
 5. **Missing feeds?** Copy `rss-feeds.example.json` → `rss-feeds.json`.
 6. **Frontend broken?** Commit changes to Git, push to GitHub → auto-deploys. Never `wrangler` deploy frontend files.
