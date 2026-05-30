@@ -148,6 +148,7 @@
 <!-- Toolbar -->
 <div class="toolbar">
   <button class="primary" onclick="openModal()">+ Add</button>
+  <button class="primary" onclick="openGenerate()">🤖 Generate</button>
   <div class="sep"></div>
   <button onclick="selectAllExisting()" title="Select all existing categories" style="font-size:11px">☑ Existing</button>
   <button onclick="selectAllSuggested()" title="Select all suggested (non-existing)" style="font-size:11px">☑ Suggested</button>
@@ -231,6 +232,23 @@
     <div class="modal-actions">
       <button class="cancel" onclick="closeEditModal()">Cancel</button>
       <button class="save" onclick="saveCategory()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generate Modal -->
+<div class="modal-overlay" id="generateModalOverlay">
+  <div class="modal">
+    <h2>🤖 AI Generate Category</h2>
+    <label>Category name</label>
+    <input id="genName" placeholder="e.g. Yemen Conflict" onkeydown="if(event.key==='Enter')generateCategory()">
+    <div style="margin-top:8px">
+      <div id="genResult" style="display:none;padding:8px;background:#0d1117;border:1px solid #30363d;border-radius:6px;font-size:11px;white-space:pre-wrap"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" onclick="closeGenerateModal()">Cancel</button>
+      <button class="save" id="genFillBtn" onclick="fillModalFromGenerate()" style="display:none">✏️ Fill Form</button>
+      <button class="save" id="genGenBtn" onclick="generateCategory()">🤖 Generate</button>
     </div>
   </div>
 </div>
@@ -387,6 +405,59 @@ function filterTable() {
 }
 
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+/* ── AI Generate ───────────────────────────────────── */
+let lastGenerated = null;
+
+function openGenerate() {
+  document.getElementById('generateModalOverlay').classList.add('active');
+  document.getElementById('genName').value = '';
+  document.getElementById('genResult').style.display = 'none';
+  document.getElementById('genFillBtn').style.display = 'none';
+  document.getElementById('genGenBtn').style.display = 'inline-block';
+  setTimeout(() => document.getElementById('genName').focus(), 100);
+}
+
+function closeGenerateModal() {
+  document.getElementById('generateModalOverlay').classList.remove('active');
+}
+
+async function generateCategory() {
+  const name = document.getElementById('genName').value.trim();
+  if (!name) { alert('Enter a category name'); return; }
+  const btn = document.getElementById('genGenBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating…';
+  try {
+    const res = await fetch(`${API}/generate`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name })
+    });
+    const result = await res.json();
+    if (!res.ok) { alert(result.error); return; }
+    lastGenerated = result;
+    const out = document.getElementById('genResult');
+    out.style.display = 'block';
+    out.textContent = `ID: ${result.id}\nIcon: ${result.icon}\nDescription: ${result.description}\nPhases: ${(result.phases||[]).join(' → ')}\nKeywords: ${(result.keywords||[]).join(', ')}` + (result._fallback ? '\n\n(fallback — AI unavailable)' : '');
+    document.getElementById('genFillBtn').style.display = 'inline-block';
+    btn.textContent = '🤖 Regenerate';
+  } catch(e) { alert(`Generation failed: ${e}`); }
+  btn.disabled = false;
+}
+
+function fillModalFromGenerate() {
+  if (!lastGenerated) return;
+  closeGenerateModal();
+  openModal();
+  document.getElementById('fId').value = lastGenerated.id;
+  document.getElementById('fId').disabled = true;
+  document.getElementById('fIcon').value = lastGenerated.icon;
+  document.getElementById('fName').value = lastGenerated.name;
+  document.getElementById('fDesc').value = lastGenerated.description;
+  document.getElementById('fPhases').value = lastGenerated.phases.join(', ');
+  document.getElementById('fKeywords').value = lastGenerated.keywords.join(', ');
+  document.getElementById('editModalTitle').textContent = `Add: ${lastGenerated.name}`;
+}
 
 /* ── Add / Edit ────────────────────────────────────── */
 function openModal(id, source) {
@@ -761,7 +832,7 @@ async function cancelAnalysis() {
 /* ── Keyboard Shortcuts ────────────────────────────── */
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'n') { e.preventDefault(); openModal(); }
-  if (e.key === 'Escape') closeEditModal();
+  if (e.key === 'Escape') { closeEditModal(); closeGenerateModal(); }
 });
 
 document.getElementById('editModalOverlay').addEventListener('click', e => {

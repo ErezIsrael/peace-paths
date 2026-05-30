@@ -130,6 +130,61 @@ def infer_keywords(name, description):
             result.append(clean)
     return result
 
+def generate_category(name):
+    """Ask the LLM to generate description, phases, keywords, and icon for a category name."""
+    url = os.environ.get("LLAMA_CPP_URL", "http://localhost:8080")
+    model = os.environ.get("AI_MODEL", "Qwen3.6-27B")
+    api_key = os.environ.get("LLAMA_API_KEY", "")
+
+    prompt = (
+        f"Generate a category definition for a Middle East peace initiative tracker.\n"
+        f"The category is about: '{name}'\n\n"
+        f"Output exactly this JSON format (no markdown, no extra text):\n"
+        f'{{"description": "...", "icon": "...emoji...", "phases": ["phase1", "phase2", "phase3", "phase4", "phase5"], "keywords": ["kw1", "kw2", "kw3", "kw4", "kw5"]}}'
+    )
+
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "You are an expert on Middle East politics and peace initiatives. Generate concise, accurate category metadata."},
+            {"role": "user", "content": prompt},
+        ],
+        "max_tokens": 500,
+        "temperature": 0.1,
+    }
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    from urllib.request import Request, urlopen
+    req = Request(f"{url}/v1/chat/completions", data=json.dumps(body).encode(), headers=headers)
+    try:
+        with urlopen(req, timeout=30) as f:
+            response = json.loads(f.read().decode())
+        text = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+        # Strip markdown fences
+        if text.startswith("```"):
+            lines = text.split("\n")
+            text = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
+        result = json.loads(text)
+        # Validate required fields
+        if "phases" not in result or not isinstance(result.get("phases"), list):
+            raise ValueError("Missing phases")
+        if "keywords" not in result or not isinstance(result.get("keywords"), list):
+            raise ValueError("Missing keywords")
+        return result
+    except Exception as e:
+        # Fallback to keyword inference
+        kws = infer_keywords(name, "")
+        return {
+            "description": f"Articles related to {name}",
+            "icon": "📊",
+            "phases": ["Emerged", "Developing", "Gaining Traction", "Maturing", "Resolved"],
+            "keywords": kws[:8],
+            "_fallback": True,
+        }
+
+
 def load_taxonomy():
     """Load AI-proposed categories from taxonomy.json."""
     if not TAXONOMY_FILE.exists():
@@ -300,6 +355,23 @@ class DevHandler(http.server.BaseHTTPRequestHandler):
             else:
                 analysis_status["running"] = False
                 self._json_response({"ok": True, "message": "No analysis running"})
+            return
+        if self.path == "/api/admin/generate":
+            data = self._read_json()
+            name = data.get("name", "").strip()
+            if not name:
+                self._json_error("Name is required")
+                return
+            try:
+                result = generate_category(name)
+                # Generate kebab-case ID from name
+                import re as _re
+                cat_id = _re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
+                result["id"] = cat_id
+                result["name"] = name
+                self._json_response(result)
+            except Exception as e:
+                self._json_error(f"Generation failed: {e}")
             return
         if self.path == "/api/admin/categories":
             data = self._read_json()
