@@ -634,7 +634,7 @@ async function deleteTaxonomy(id) {
 /* ── Deploy ─────────────────────────────────────────── */
 async function deploy(target) {
   const label = target === 'live' ? 'LIVE' : 'test';
-  if (target === 'live' && !confirm(`⚠️ Deploy latest analysis to LIVE (Cloudflare Pages)?\n\nThis uploads the entire site via wrangler.\n\nContinue?`)) return;
+  if (target === 'live' && !confirm(`⚠️ Deploy latest analysis to LIVE?\n\nThis uploads data.json to Cloudflare KV.\nThe site will show updated data at peace-paths.pages.dev.\n\nContinue?`)) return;
 
   const btnId = target === 'live' ? 'deployLiveBtn' : 'deployTestBtn';
   const btn = document.getElementById(btnId);

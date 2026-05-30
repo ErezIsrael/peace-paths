@@ -493,30 +493,27 @@ def deploy_categories(target, selected_ids=None):
         return {"ok": True, "deployed": count, "target": "test"}
 
     elif target == "live":
-        # Deploy to Cloudflare Pages via wrangler
-        print("  [Deploy] Uploading to Cloudflare Pages...")
+        # Upload data.json to Cloudflare KV (served via Pages Function)
+        print("  [Deploy] Uploading data.json to Cloudflare KV...")
         project_root = str(PROJECT_ROOT)
-        cmd = "npx wrangler pages deploy app --project-name=peace-paths --skip-caching --commit-dirty=true"
+        kv_id = "badf4fb7acfe4d1c905db77ed8d5e70f"
+        cmd = f'npx wrangler kv key put "data.json" --namespace-id={kv_id} --path="{LIVE_DATA_JSON}" --remote'
         result = subprocess.run(
             cmd, shell=True,
             cwd=project_root,
             capture_output=True
         )
-        # Decode bytes output (wrangler uses non-ASCII chars)
         try:
             result.stdout = result.stdout.decode('utf-8', errors='replace')
             result.stderr = result.stderr.decode('utf-8', errors='replace')
         except Exception:
             pass
         if result.returncode == 0:
-            for line in result.stdout.split("\n"):
-                if "Deploying" in line or ".pages.dev" in line:
-                    print(f"  [Deploy] {line.strip()}")
-            print("  [Deploy] Success — Cloudflare Pages updated")
+            print("  [Deploy] Success — data.json uploaded to KV")
             return {"ok": True, "deployed": count, "target": "live", "url": "https://peace-paths.pages.dev"}
         else:
-            print(f"  [Deploy] Wrangler failed: {result.stderr[:200]}")
-            return {"ok": False, "error": "Wrangler deploy failed", "stderr": result.stderr[:200]}
+            print(f"  [Deploy] KV upload failed: {result.stderr[:200]}")
+            return {"ok": False, "error": "KV upload failed", "stderr": result.stderr[:200]}
 
     return {"error": f"Unknown target: {target}"}
 
