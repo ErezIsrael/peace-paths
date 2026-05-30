@@ -65,7 +65,7 @@ def run_analysis(mode="--fast"):
     env.setdefault("LLAMA_CPP_URL", "http://localhost:8080")  # .env loaded at startup
     env["PYTHONUNBUFFERED"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
-    cmd = [sys.executable, str(SCRIPT), mode]
+    cmd = [sys.executable, str(SCRIPT), mode, "--skip-upload"]
     log_lines = []
     try:
         print(f"\n  [Analysis] Starting: {' '.join(cmd)}")
@@ -198,8 +198,8 @@ def load_taxonomy():
             "icon": cat.get("icon", "📊"),
             "name": cat["name"],
             "description": cat.get("description", ""),
-            "phases": cat.get("phases") or ["Emerged", "Developing", "Gaining Traction", "Maturing", "Resolved"],
-            "keywords": kws,
+            "phases": cat.get("phases") if cat.get("phases") else ["Emerged", "Developing", "Gaining Traction", "Maturing", "Resolved"],
+            "keywords": kws if kws else [],
         })
     return result
 
