@@ -189,7 +189,7 @@ function createSolutionCard(solution) {
     <span class="card-direction ${solution.direction}">${DIRECTION_LABELS[solution.direction] || solution.direction}</span>
   `;
 
-  // Phase bar
+  // Phase bar with hover tooltips
   const phaseBar = document.createElement('div');
   phaseBar.className = 'phase-bar';
   const phases = solution.phases || [];
@@ -197,6 +197,7 @@ function createSolutionCard(solution) {
   phases.forEach((p, i) => {
     const seg = document.createElement('div');
     seg.className = 'phase-segment' + (i < idx ? ' filled' : '') + (i === idx ? ' current' : '');
+    seg.title = p;  // hover tooltip
     phaseBar.appendChild(seg);
   });
   const plabel = document.createElement('span');

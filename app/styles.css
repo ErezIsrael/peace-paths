@@ -292,6 +292,27 @@ a:hover { text-decoration: underline; }
   flex: 1; height: 3px;
   border-radius: 2px;
   background: var(--border);
+  position: relative;
+  cursor: default;
+}
+.phase-segment:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 .phase-segment.filled { background: var(--accent); }
 .phase-segment.current { background: var(--accent); box-shadow: 0 0 5px rgba(56,189,248,0.4); }

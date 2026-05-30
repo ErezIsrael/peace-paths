@@ -338,13 +338,21 @@ def propose_taxonomy(articles, core_cats=None):
         "\n"
         "- Propose 6-14 categories total (core + new). No fewer than 4."
         "\n"
-        "- Each category must have: id (lowercase-hyphen), name (title case),"
-        " description (one sentence), icon (one emoji)"
+        "- Each category must have:"
+        "  id (lowercase-hyphen), name (title case),"
+        "  description (one clear sentence), icon (one emoji),"
+        "  phases (5 progressive stages from emergence to resolution),"
+        "  keywords (5-8 relevant search terms)"
         "\n"
         "- Categories should reflect the ACTUAL TOPICS in the articles."
         " Do not force-fit articles into generic buckets."
         "\n"
         "- Be specific: 'iran-nuclear' not 'regional'. 'west-bank' not 'palestine'."
+        "\n"
+        "- Phases should be meaningful for the topic (e.g. for conflict:"
+        " 'Escalation' → 'Peak Fighting' → 'Ceasefire Talks' → 'Agreement' → 'Rebuilding')"
+        "\n"
+        "- Keywords should be specific terms that appear in relevant articles."
         "\n"
         "- If articles span many countries without a clear theme, use 'regional'."
         "\n"
@@ -352,7 +360,7 @@ def propose_taxonomy(articles, core_cats=None):
         "\n\n"
         "Output ONLY a JSON object:"
         "\n"
-        '{"categories": [{"id": "...", "name": "...", "description": "...", "icon": "..."}], "assignments": {"1": "cat-id", "2": "cat-id"}}'
+        '{"categories": [{"id": "...", "name": "...", "description": "...", "icon": "...", "phases": [...], "keywords": [...]}], "assignments": {"1": "cat-id", "2": "cat-id"}}'
         "\n\n"
         "Articles:"
         f"\n{articles_text}"
@@ -422,12 +430,21 @@ def _build_taxonomy_prompt(categories):
 # Phase 2: AI Classification via llama.cpp (single-article inference)
 # ═══════════════════════════════════════════════════════════════════════
 
-def _make_classifier_prompt(cat_map):
-    """Build the system prompt from the loaded category map."""
+def _make_classifier_prompt(cat_map, solution_contexts=None):
+    """Build the system prompt from the loaded category map.
+
+    solution_contexts: optional dict {cat_id: short_context_string}
+      Provides up-to-date context per solution so the AI can better place articles.
+    """
     cat_ids = list(cat_map.keys())
-    block = "\n".join(
-        f"  {cid}: {cat_map[cid]['description']}" for cid in cat_ids
-    )
+    lines = []
+    for cid in cat_ids:
+        c = cat_map[cid]
+        line = f"  {cid}: {c['name']} — {c['description']}"
+        if solution_contexts and cid in solution_contexts:
+            line += f"\n    [Context: {solution_contexts[cid]}]"
+        lines.append(line)
+    block = "\n".join(lines)
     cat_list = ", ".join(cat_ids)
     return (
         "You are a precise Middle East news classifier. "
@@ -453,6 +470,9 @@ def _classify_article(article, system_prompt, valid_ids):
     snippet = article.get("snippet", "")
     context = snippet if snippet else article["title"]
 
+    # Include source in prompt to help AI distinguish regional coverage
+    source_line = f"\n<source>{article['source']}</source>" if article.get("source") else ""
+
     user_prompt = (
         "Analyze this specific article and determine its category, sentiment, risk (1-10), and Middle East relevance."
         "\n\n"
@@ -461,6 +481,7 @@ def _classify_article(article, system_prompt, valid_ids):
         f"<title>{article['title']}</title>"
         "\n"
         f"<snippet>{context}</snippet>"
+        f"{source_line}"
         "\n"
         "</article>"
         "\n\n"
@@ -666,6 +687,7 @@ def compute_direction(events):
 
 
 def compute_phase(events):
+    """Heuristic phase computation (used as fallback when AI is unavailable)."""
     if not events:
         return 0
     total = len(events)
@@ -685,6 +707,105 @@ def compute_phase(events):
     if neg / total > 0.6:
         phase = min(phase, 1)
     return phase
+
+
+def determine_phases_ai(solution_events, cat_map):
+    """Ask the LLM to determine the current phase for each solution based on recent events.
+
+    Returns dict {solution_id: phase_index} or None on failure.
+    Uses the last 8 events per solution to keep the prompt short.
+    """
+    # Build per-solution context: name, phases, recent event summaries
+    blocks = []
+    for sol_id, events in solution_events.items():
+        cat = cat_map.get(sol_id)
+        if not cat:
+            continue
+        phases = cat.get("phases", [])
+        if not phases:
+            continue
+        # Last 8 events, newest first
+        recent = sorted(events, key=lambda e: e["date"], reverse=True)[:8]
+        event_lines = "\n".join(
+            f"    - [{e['sentiment']}] {e['text']}" for e in recent
+        )
+        phase_names = "\n".join(f"  {i}: {p}" for i, p in enumerate(phases))
+        blocks.append(
+            f"<solution id=\"{sol_id}\">\n"
+            f"  Name: {cat['name']}\n"
+            f"  Phases:\n{phase_names}\n"
+            f"  Recent events:\n{event_lines}\n"
+            f"</solution>"
+        )
+
+    if not blocks:
+        return None
+
+    solutions_text = "\n\n".join(blocks)
+
+    prompt = (
+        "You are a Middle East peace analyst. For each solution below, determine which phase it is currently in."
+        "\n\n"
+        "Read the recent events and match them to the phase that best describes the current state."
+        "\n\n"
+        "Rules:"
+        "\n"
+        "- If recent events show escalation/violence, the phase should be earlier (crisis/fighting)."
+        "\n"
+        "- If recent events show negotiations/agreements, the phase should advance."
+        "\n"
+        "- Weight RECENT events more than older ones."
+        "\n"
+        "- Be realistic — don't over-advance a phase based on one positive article."
+        "\n\n"
+        f"{solutions_text}"
+        "\n\n"
+        "Output ONLY a JSON object:"
+        "\n"
+        '{"phases": {"solution-id": 2, "another-id": 0}}'  # phase index (0-based)
+    )
+
+    body = {
+        "model": AI_MODEL,
+        "messages": [
+            {"role": "system", "content": "Middle East analyst. Output ONLY valid JSON with key 'phases'. No explanation."},
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 4000,
+        "temperature": 0.0,
+    }
+
+    headers = {"Content-Type": "application/json"}
+    if LLAMA_API_KEY:
+        headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
+
+    req = Request(
+        f"{LLAMA_CPP_URL}/v1/chat/completions",
+        data=json.dumps(body).encode(),
+        headers=headers,
+    )
+    try:
+        with urlopen(req, timeout=60) as f:
+            response = json.loads(f.read().decode())
+    except Exception as e:
+        print(f"  AI unavailable for phase determination: {e}")
+        return None
+
+    result_text = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+    if result_text.startswith("```"):
+        lines = result_text.split("\n")
+        result_text = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
+
+    first_brace = result_text.find('{')
+    last_brace = result_text.rfind('}')
+    if first_brace != -1 and last_brace > first_brace:
+        try:
+            obj = json.loads(result_text[first_brace:last_brace+1])
+            if "phases" in obj:
+                return obj["phases"]
+        except json.JSONDecodeError:
+            pass
+    return None
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -877,12 +998,13 @@ def _load_existing_data():
         return None
 
 
-def _merge_with_existing(data, existing):
+def _merge_with_existing(data, existing, ai_phases=None):
     """Merge new events into existing solutions, preserving history.
 
     - Deduplicates events by text content within each category
     - Adds new solution categories discovered by AI
     - Recomputes phases, directions, confidence for all solutions
+    - Uses AI-determined phases when available, falls back to heuristic
     """
     for sol in existing.get("solutions", []):
         sol_id = sol["id"]
@@ -902,7 +1024,11 @@ def _merge_with_existing(data, existing):
     # Recompute for all solutions — compute on ALL events, exclude summary from stored events
     for sol in existing["solutions"]:
         sol["events"].sort(key=lambda e: e["date"], reverse=True)
-        sol["phaseIndex"] = compute_phase(sol["events"])
+        # Use AI-determined phase if available, else heuristic
+        if ai_phases and sol["id"] in ai_phases:
+            sol["phaseIndex"] = min(ai_phases[sol["id"]], len(sol["phases"]) - 1)
+        else:
+            sol["phaseIndex"] = compute_phase(sol["events"])
         sol["direction"] = compute_direction(sol["events"])
         sol["keyMetric"] = {"label": "Events (7d)", "value": str(len(sol["events"]))}
         sol["summary"] = sol["events"][0]["text"] if sol["events"] else ""
@@ -1014,6 +1140,20 @@ def main():
 
     start = time.time()
 
+    # 0. Load existing data for solution context (helps AI classify better)
+    existing_data = _load_existing_data()
+    solution_contexts = {}
+    if existing_data:
+        for sol in existing_data.get("solutions", []):
+            events = sol.get("events", [])
+            if events:
+                # Short context: current phase + last 3 event titles
+                phase_name = sol["phases"][sol["phaseIndex"]] if sol.get("phaseIndex", 0) < len(sol.get("phases", [])) else "Unknown"
+                recent = [e["text"] for e in events[:3]]
+                solution_contexts[sol["id"]] = f"Phase: {phase_name}. Recent: {'; '.join(recent)}"
+        if solution_contexts:
+            print(f"  \\U0001f4c4 Loaded context for {len(solution_contexts)} existing solutions")
+
     # 1. Fetch RSS
     if age_hours is not None:
         print(f"  [fast mode] fetching articles from last {age_hours}h")
@@ -1025,7 +1165,7 @@ def main():
         return
 
     # ── Phase 1: Taxonomy Proposal (uses core categories as base) ──
-    system_prompt, valid_ids = _make_classifier_prompt(cat_map)
+    system_prompt, valid_ids = _make_classifier_prompt(cat_map, solution_contexts=solution_contexts if not args.review_taxonomy else None)
     if args.review_taxonomy:
         core_cats = [c for c in cat_map.values() if c.get("core", False)]
         print(f"\n\U0001f50d Phase 1: Proposing taxonomy from {len(articles)} articles ({len(core_cats)} core categories as base)...")
@@ -1074,12 +1214,37 @@ def main():
     # 3. Build output
     data = build_output(articles, classified_pairs, cat_map)
 
+    # 3.5 AI Phase Determination — ask LLM for current phase of each solution
+    if not args.fetch_only:
+        solution_events_for_ai = {cid: [] for cid in cat_map}
+        for article, classification in classified_pairs:
+            sol = classification.get("solution", "ceasefire")
+            if sol not in solution_events_for_ai:
+                sol = "ceasefire"
+            solution_events_for_ai[sol].append({
+                "date": article["date"],
+                "text": article["title"],
+                "sentiment": classification.get("sentiment", "neutral"),
+            })
+        print("\n🧠 Determining phases via AI...")
+        ai_phases = determine_phases_ai(solution_events_for_ai, cat_map)
+        if ai_phases:
+            print(f"  ✓ AI determined phases for {len(ai_phases)} solutions")
+            for sol in data["solutions"]:
+                if sol["id"] in ai_phases:
+                    sol["phaseIndex"] = ai_phases[sol["id"]]
+                    # Clamp to valid range
+                    sol["phaseIndex"] = min(sol["phaseIndex"], len(sol["phases"]) - 1)
+        else:
+            print("  ⚠ AI phase determination failed, using heuristic")
+    else:
+        ai_phases = None
+
     # 4. Merge with existing data (fast mode) or overwrite (daily mode)
     if mode == "fast":
-        existing = _load_existing_data()
-        if existing:
+        if existing_data:
             print(f"\u2192 Merging {len(classified_pairs)} new events into existing data")
-            data = _merge_with_existing(data, existing)
+            data = _merge_with_existing(data, existing_data, ai_phases=ai_phases)
         else:
             print("  \u26a0 No existing data found, falling back to daily mode")
     # daily mode: data already overwrites
