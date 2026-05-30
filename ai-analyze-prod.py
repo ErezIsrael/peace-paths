@@ -441,6 +441,9 @@ def _make_classifier_prompt(cat_map, solution_contexts=None):
     for cid in cat_ids:
         c = cat_map[cid]
         line = f"  {cid}: {c['name']} — {c['description']}"
+        phases = c.get("phases", [])
+        if phases:
+            line += f"\n    Phases: {' → '.join(phases)}"
         if solution_contexts and cid in solution_contexts:
             line += f"\n    [Context: {solution_contexts[cid]}]"
         lines.append(line)
@@ -709,6 +712,45 @@ def compute_phase(events):
     return phase
 
 
+def _llm_chat(messages, max_tokens=4000, temperature=0.0, timeout=60):
+    """Generic LLM chat call. Returns parsed JSON or None on failure."""
+    body = {
+        "model": AI_MODEL,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+    }
+    headers = {"Content-Type": "application/json"}
+    if LLAMA_API_KEY:
+        headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
+
+    req = Request(
+        f"{LLAMA_CPP_URL}/v1/chat/completions",
+        data=json.dumps(body).encode(),
+        headers=headers,
+    )
+    try:
+        with urlopen(req, timeout=timeout) as f:
+            response = json.loads(f.read().decode())
+    except Exception as e:
+        print(f"  AI unavailable: {e}")
+        return None
+
+    result_text = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+    if result_text.startswith("```"):
+        lines = result_text.split("\n")
+        result_text = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
+
+    first_brace = result_text.find('{')
+    last_brace = result_text.rfind('}')
+    if first_brace != -1 and last_brace > first_brace:
+        try:
+            return json.loads(result_text[first_brace:last_brace+1])
+        except json.JSONDecodeError:
+            pass
+    return None
+
+
 def determine_phases_ai(solution_events, cat_map):
     """Ask the LLM to determine the current phase for each solution based on recent events.
 
@@ -765,47 +807,94 @@ def determine_phases_ai(solution_events, cat_map):
         '{"phases": {"solution-id": 2, "another-id": 0}}'  # phase index (0-based)
     )
 
-    body = {
-        "model": AI_MODEL,
-        "messages": [
-            {"role": "system", "content": "Middle East analyst. Output ONLY valid JSON with key 'phases'. No explanation."},
-            {"role": "user", "content": prompt}
-        ],
-        "max_tokens": 4000,
-        "temperature": 0.0,
-    }
+    result = _llm_chat([
+        {"role": "system", "content": "Middle East analyst. Output ONLY valid JSON with key 'phases'. No explanation."},
+        {"role": "user", "content": prompt}
+    ], max_tokens=4000, timeout=60)
 
-    headers = {"Content-Type": "application/json"}
-    if LLAMA_API_KEY:
-        headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
-
-    req = Request(
-        f"{LLAMA_CPP_URL}/v1/chat/completions",
-        data=json.dumps(body).encode(),
-        headers=headers,
-    )
-    try:
-        with urlopen(req, timeout=60) as f:
-            response = json.loads(f.read().decode())
-    except Exception as e:
-        print(f"  AI unavailable for phase determination: {e}")
-        return None
-
-    result_text = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
-    if result_text.startswith("```"):
-        lines = result_text.split("\n")
-        result_text = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
-
-    first_brace = result_text.find('{')
-    last_brace = result_text.rfind('}')
-    if first_brace != -1 and last_brace > first_brace:
-        try:
-            obj = json.loads(result_text[first_brace:last_brace+1])
-            if "phases" in obj:
-                return obj["phases"]
-        except json.JSONDecodeError:
-            pass
+    if result and "phases" in result:
+        return result["phases"]
     return None
+
+
+def research_category(cat, articles):
+    """Research a single category: rewrite description, phases, and keywords
+    based on actual articles in the corpus.
+
+    Returns dict with keys: description, phases, keywords (or None on failure).
+    """
+    # Sample up to 15 relevant-appearing articles for context
+    sample = []
+    for a in articles:
+        if len(sample) >= 15:
+            break
+        sample.append(a["title"])
+    articles_text = "\n".join(f"  - {t}" for t in sample)
+
+    prompt = (
+        f"You are a Middle East news analyst. Research and improve the definition of this category.\n\n"
+        f"Current category:\n"
+        f"  ID: {cat['id']}\n"
+        f"  Name: {cat['name']}\n"
+        f"  Description: {cat.get('description', 'N/A')}\n"
+        f"  Current phases: {', '.join(cat.get('phases', []))}\n"
+        f"  Current keywords: {', '.join(cat.get('keywords', []))}\n\n"
+        f"Here are recent news articles related to this topic:\n{articles_text}\n\n"
+        f"TASK:\n"
+        f"1. Rewrite the description to be precise and specific (1-2 sentences).\n"
+        f"   - Be concrete: mention the actual countries, agreements, or mechanisms.\n"
+        f"   - Avoid generic language like 'diplomatic efforts' without specifics.\n"
+        f"\n"
+        f"2. Redesign the phases (exactly 5) to reflect the REAL progression of this topic.\n"
+        f"   - Each phase should be a specific milestone or stage name.\n"
+        f"   - Phases should go from earliest state to final resolution.\n"
+        f"   - Make them meaningful and distinct from other categories.\n"
+        f"\n"
+        f"3. Suggest 6-10 specific keywords that appear in articles about this topic.\n"
+        f"   - Use terms that actually appear in the articles above.\n"
+        f"   - Include proper nouns, acronyms, and specific terminology.\n\n"
+        f"Output ONLY a JSON object:\n"
+        f'{{"description": "...", "phases": ["...", "...", "...", "...", "..."], "keywords": ["...", "..."]}}'  
+    )
+
+    result = _llm_chat([
+        {"role": "system", "content": "Middle East analyst. Output ONLY valid JSON with keys: description, phases, keywords. No explanation."},
+        {"role": "user", "content": prompt}
+    ], max_tokens=2000, timeout=60)
+
+    return result
+
+
+def research_all_categories(articles, cat_map):
+    """Research all categories sequentially. Returns list of research results.
+
+    Each result: {id, icon, name, core, description, phases, keywords}
+    """
+    results = []
+    cat_ids = list(cat_map.keys())
+    print(f"  Researching {len(cat_ids)} categories...")
+
+    for i, cid in enumerate(cat_ids):
+        cat = cat_map[cid]
+        print(f"  [{i+1}/{len(cat_ids)}] Researching: {cat['name']}...")
+        researched = research_category(cat, articles)
+        if researched:
+            results.append({
+                "id": cid,
+                "icon": cat.get("icon", "📌"),
+                "name": cat["name"],
+                "description": researched["description"],
+                "phases": researched["phases"],
+                "keywords": researched["keywords"],
+                "core": cat.get("core", False),
+            })
+            print(f"    ✓ description: {researched['description'][:80]}...")
+            print(f"    ✓ phases: {', '.join(researched['phases'])}")
+        else:
+            print(f"    ✗ Failed for {cat['name']}, keeping existing")
+            results.append(cat.copy())
+
+    return results
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -1098,6 +1187,10 @@ def main():
                         help="[deprecated] Use approved taxonomy from file. Categories now come from categories.json.")
     parser.add_argument("--recent", type=int, default=0,
                         help="[deprecated] Only process articles from last N hours")
+    parser.add_argument("--research-categories", action="store_true",
+                        help="Research each category: rewrite description, phases, and keywords via AI")
+    parser.add_argument("--apply-research", action="store_true",
+                        help="Apply research results directly to categories.json (use with --research-categories)")
     args = parser.parse_args()
 
     # Load categories from categories.json (source of truth)
@@ -1106,6 +1199,50 @@ def main():
 
     if args.use_taxonomy:
         print("  \u26a0 --use-taxonomy is deprecated. Categories are now in categories.json.")
+
+    # ── Research mode: rewrite descriptions, phases, keywords ──
+    if args.research_categories:
+        print("\n🔬 Researching categories from RSS articles...")
+        articles = fetch_all_feeds(age_hours=None)  # 7-day window for best context
+        if not articles:
+            print("No articles found, aborting.")
+            return
+        print(f"  Fetched {len(articles)} articles for research context")
+
+        researched = research_all_categories(articles, cat_map)
+
+        # Show diff: old vs new
+        print("\n--- RESEARCH RESULTS ---")
+        for r in researched:
+            old = cat_map.get(r["id"], {})
+            desc_changed = old.get("description") != r["description"]
+            phases_changed = old.get("phases") != r["phases"]
+            kws_changed = old.get("keywords") != r["keywords"]
+            changed = desc_changed or phases_changed or kws_changed
+            status = "🔄" if changed else "✓"
+            print(f"\n  {status} {r['icon']} {r['name']}")
+            if desc_changed:
+                print(f"     desc: {old.get('description', 'N/A')}")
+                print(f"    →    {r['description']}")
+            if phases_changed:
+                print(f"     phases: {', '.join(old.get('phases', []))}")
+                print(f"    →      {', '.join(r['phases'])}")
+            if kws_changed:
+                print(f"     kws:    {', '.join(old.get('keywords', []))}")
+                print(f"    →      {', '.join(r['keywords'])}")
+
+        # Save to file
+        if args.apply_research:
+            with open(CATEGORIES_FILE, "w", encoding="utf-8") as f:
+                json.dump(researched, f, indent=2, ensure_ascii=False)
+            print(f"\n✓ Applied research results to {CATEGORIES_FILE}")
+        else:
+            preview_file = CATEGORIES_FILE.replace(".json", "-researched.json")
+            with open(preview_file, "w", encoding="utf-8") as f:
+                json.dump(researched, f, indent=2, ensure_ascii=False)
+            print(f"\n✓ Saved preview to {preview_file}")
+            print(f"  Review it, then run with --apply-research to apply to categories.json")
+        return
 
     # Determine mode
     if args.fast:

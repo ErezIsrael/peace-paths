@@ -5,6 +5,7 @@ __pycache__/
 
 # Runtime data files — uploaded to Cloudflare, never committed
 categories.json
+categories-researched.json
 solutions.json
 ai_cache.json
 full_run.json
