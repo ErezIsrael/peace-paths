@@ -97,10 +97,7 @@ python ai-analyze-prod.py --fast --skip-upload
 python ai-analyze-prod.py --fast --fetch-only
 ```
 
-Deploy manually:
-```bash
-npx wrangler pages deploy app --project-name=peace-paths --skip-caching
-```
+All deploys are automatic via GitHub → Cloudflare Pages. No `wrangler` needed.
 
 ---
 
@@ -119,9 +116,9 @@ Copy `.env.example` → `.env` and fill in:
 
 ## Debug Checklist
 
-1. **No data on page?** Check `app/solutions.json` exists. Run `dev-serve.py` to sync.
+1. **No data on page?** Check `app/data.json` exists and is committed. Run `dev-serve.py` to sync.
 2. **AI failing?** Verify `LLAMA_CPP_URL` in `.env` → reachable llama.cpp server.
-3. **Deploy fails?** Check `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` in `.env`.
+3. **Deploy fails?** Make sure GitHub repo is connected to Cloudflare Pages. Output dir = `app`.
 4. **Wrong categories?** Edit `categories.json` directly or use `/admin/`.
 5. **Missing feeds?** Copy `rss-feeds.example.json` → `rss-feeds.json`.
 6. **Frontend broken?** Commit changes to Git, push to GitHub → auto-deploys. Never `wrangler` deploy frontend files.
