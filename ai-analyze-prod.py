@@ -1144,7 +1144,7 @@ def main():
         project_root = os.path.dirname(os.path.abspath(__file__))
         import subprocess
         kv_id = "badf4fb7acfe4d1c905db77ed8d5e70f"
-        cmd = f'npx wrangler kv key put "data.json" --binding=peace_data --namespace-id={kv_id} < "{APP_DATA_JSON}"'
+        cmd = f'npx wrangler kv key put "data.json" --namespace-id={kv_id} --path="{APP_DATA_JSON}" --remote'
         result = subprocess.run(cmd, shell=True, cwd=project_root, capture_output=True)
         try:
             result.stdout = result.stdout.decode('utf-8', errors='replace')
