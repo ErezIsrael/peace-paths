@@ -20,14 +20,14 @@ AI-powered tracker of concrete peace initiatives across the Middle East.
 
 ## ⚠️ Deployment Rules
 
-This site has **2 major components**:
+All deploys go through `wrangler` (GitHub is for version control only).
 
 | Component | Storage | Deployment |
 |-----------|---------|------------|
-| Pages (frontend: `app/`, `admin/`) | **GitHub repo** | Commit to Git → GitHub → Cloudflare auto-deploy |
-| Data (`app/data.json`) | **NOT in Git** | Generated locally → uploaded via `wrangler pages deploy app` |
+| Frontend + Data (`app/`) | **GitHub repo** (vcs) | AI pipeline deploys via `wrangler` |
+| Config (`categories.json`, `rss-feeds.json`) | **NOT in Git** | Local only |
 
-**NEVER** use `wrangler` to upload files tracked in Git. **NEVER** commit data files to Git.
+**NEVER** commit `app/data.json` to Git. It is deployed via `wrangler` alongside the frontend.
 
 ---
 
