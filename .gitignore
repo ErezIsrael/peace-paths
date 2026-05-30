@@ -12,7 +12,7 @@ tmp_cats.json
 ai-output.json
 data.json
 app/solutions.json
-app/data.json
+# app/data.json is tracked — deployed with frontend via GitHub
 
 # Logs
 *.log

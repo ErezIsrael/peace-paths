@@ -1116,6 +1116,10 @@ def main():
     DATA_JSON = os.path.join(os.path.dirname(DATA_FILE), "data.json")
     with open(DATA_JSON, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+    # Also write app/data.json for GitHub-deployed frontend
+    APP_DATA_JSON = os.path.join(os.path.dirname(DATA_FILE), "app", "data.json")
+    with open(APP_DATA_JSON, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
     # Back-propagate new category IDs to categories.json
     # (e.g., keyword fallback created a solution for a category not in categories.json)
@@ -1136,32 +1140,28 @@ def main():
 
     # 7. Deploy to Cloudflare
     if not args.skip_upload:
-        # Deploy via wrangler (preferred)
-        print(f"\n\U0001f4a9 Deploying to Cloudflare Pages via wrangler...")
+        print(f"\n\U0001f4a9 Committing app/data.json for GitHub deploy...")
         project_root = os.path.dirname(os.path.abspath(__file__))
         import subprocess
-        cmd = "npx wrangler pages deploy app --project-name=peace-paths --skip-caching --commit-dirty=true"
+        # Stage app/data.json, commit, and push — triggers GitHub → Cloudflare Pages deploy
+        subprocess.run("git add app/data.json", shell=True, cwd=project_root)
         result = subprocess.run(
-            cmd, shell=True,
-            cwd=project_root,
-            capture_output=True
+            'git commit -m "Update data (AI analysis)"', shell=True,
+            cwd=project_root, capture_output=True
         )
-        # Decode bytes output (wrangler uses non-ASCII chars)
-        try:
-            result.stdout = result.stdout.decode('utf-8', errors='replace')
-            result.stderr = result.stderr.decode('utf-8', errors='replace')
-        except Exception:
-            pass
-        if result.returncode == 0:
-            for line in result.stdout.split("\n"):
-                if "Deploying" in line or ".pages.dev" in line or "Success" in line:
-                    print(f"  {line.strip()}")
-            print("  \u2713 Cloudflare Pages deployed successfully")
+        # If nothing to commit (data unchanged), that's fine
+        if "nothing committed" in result.stderr.decode('utf-8', errors='replace').lower():
+            print("  ℹ Data unchanged, skipping commit")
+        elif result.returncode == 0:
+            push = subprocess.run("git push origin main", shell=True, cwd=project_root, capture_output=True)
+            if push.returncode == 0:
+                print("  ✓ Pushed — Cloudflare Pages will deploy automatically")
+            else:
+                print(f"  ⚠ Push failed: {push.stderr.decode('utf-8', errors='replace')[:200]}")
         else:
-            print(f"  \u26a0 Wrangler deploy failed: {result.stderr[:300]}")
-            print("  Fallback: writing data.json locally")
+            print(f"  ⚠ Commit failed: {result.stderr.decode('utf-8', errors='replace')[:200]}")
     else:
-        print(f"\n\u2139\ufe0f Cloudflare upload skipped. Data written to {DATA_FILE} and {DATA_JSON}")
+        print(f"\n\u2139\ufe0f Deploy skipped. Data written to {DATA_FILE}, {DATA_JSON}, and app/data.json")
 
     elapsed = time.time() - start
     _print_summary(data, len(classified_pairs), elapsed)
