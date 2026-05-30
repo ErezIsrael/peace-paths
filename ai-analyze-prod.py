@@ -1142,13 +1142,14 @@ def main():
     if not args.skip_upload:
         print(f"\n\U0001f4a9 Deploying data.json to Cloudflare Pages via wrangler...")
         project_root = os.path.dirname(os.path.abspath(__file__))
-        import subprocess
-        cmd = 'npx wrangler pages deploy app --project-name=peace-paths --skip-caching --commit-dirty=true'
-        result = subprocess.run(
-            cmd, shell=True,
-            cwd=project_root,
-            capture_output=True
-        )
+        import subprocess, shutil, tempfile
+        # wrangler skips .gitignored files, so deploy data.json from a temp dir
+        deploy_dir = os.path.join(project_root, 'data-deploy')
+        os.makedirs(deploy_dir, exist_ok=True)
+        shutil.copy2(APP_DATA_JSON, os.path.join(deploy_dir, 'data.json'))
+        cmd = f'npx wrangler pages deploy "{deploy_dir}" --project-name=peace-paths --skip-caching'
+        result = subprocess.run(cmd, shell=True, cwd=project_root, capture_output=True)
+        shutil.rmtree(deploy_dir, ignore_errors=True)
         try:
             result.stdout = result.stdout.decode('utf-8', errors='replace')
             result.stderr = result.stderr.decode('utf-8', errors='replace')
