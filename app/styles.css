@@ -1,4 +1,4 @@
-/* ── Peace Room — Styles v3 ─────────────────────────── */
+/* ── Peace Paths — Styles v4 ────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -68,6 +68,19 @@ a:hover { text-decoration: underline; }
 .logo a { color: var(--text); }
 .logo a:hover { color: var(--accent); text-decoration: none; }
 .tagline { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.info-link {
+  font-size: 12px;
+  margin-top: 4px;
+}
+.info-link a {
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.info-link a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
 .header-right { display: flex; align-items: center; gap: 8px; }
 .last-updated {
   font-size: 11px;
@@ -76,7 +89,7 @@ a:hover { text-decoration: underline; }
 
 /* ── Activity Feed (global timeline) ─────────────────── */
 .activity-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 .section-header {
   font-family: var(--font-head);
@@ -234,6 +247,27 @@ a:hover { text-decoration: underline; }
   font-weight: 700;
   flex: 1;
 }
+/* Metric inline in header */
+.card-metric {
+  flex-shrink: 0;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1;
+}
+.card-metric-value {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.card-metric-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
 .card-direction {
   font-size: 10px;
   font-weight: 600;
@@ -267,35 +301,7 @@ a:hover { text-decoration: underline; }
   margin-left: 6px;
 }
 
-/* Metric + summary row */
-.card-row {
-  display: flex;
-  gap: 14px;
-  align-items: baseline;
-}
-.card-metric {
-  flex-shrink: 0;
-  text-align: center;
-  min-width: 60px;
-}
-.card-metric .value {
-  font-family: var(--font-head);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--accent);
-  line-height: 1.1;
-}
-.card-metric .label {
-  font-size: 10px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-.card-summary {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
+
 
 /* ── Recent Events (inline, not behind click) ───────── */
 .card-events {
@@ -329,6 +335,18 @@ a:hover { text-decoration: underline; }
 .card-event-dot.positive { background: var(--sentiment-pos); }
 .card-event-dot.neutral  { background: var(--sentiment-neu); }
 .card-event-dot.negative { background: var(--sentiment-neg); }
+
+.card-event-sentiment {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+.card-event-sentiment.sentiment-positive { color: var(--sentiment-pos); }
+.card-event-sentiment.sentiment-neutral  { color: var(--sentiment-neu); }
+.card-event-sentiment.sentiment-negative { color: var(--sentiment-neg); }
 .card-event-time {
   font-family: var(--font-head);
   font-size: 10px;
@@ -347,6 +365,11 @@ a:hover { text-decoration: underline; }
 }
 .card-event-text {
   text-decoration: none;
+}
+.card-event-source {
+  font-size: 10px;
+  color: var(--text-dim);
+  flex-shrink: 0;
 }
 .activity-link {
   color: var(--text-muted);
@@ -440,7 +463,9 @@ a:hover { text-decoration: underline; }
   overflow-y: auto;
 }
 .modal h2 { font-family: var(--font-head); font-size: 18px; margin-bottom: 12px; }
-.modal p, .modal li { font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-bottom: 8px; }
+.modal h3 { font-family: var(--font-head); font-size: 14px; margin: 16px 0 6px; color: var(--text); }
+.modal p, .modal li { font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-bottom: 6px; }
+.modal ul { padding-left: 20px; margin-bottom: 8px; }
 .modal-close {
   background: var(--card-hover);
   border: 1px solid var(--border);

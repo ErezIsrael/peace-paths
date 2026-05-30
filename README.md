@@ -8,7 +8,7 @@ An AI-powered tracker of concrete peace initiatives across the Middle East.
 
 ## What is Peace Paths?
 
-Peace Paths monitors ~29 RSS feeds across the Middle East, classifies articles with AI, and groups them into solution categories. You see a dashboard showing which peace initiatives are advancing, stalling, or emerging — in real time.
+Peace Paths monitors 60 RSS feeds across the Middle East, classifies articles with AI, and groups them into solution categories. You see a dashboard showing which peace initiatives are advancing, stalling, or emerging — in real time.
 
 Each category tracks a phase progression (e.g., Active Fighting → Ceasefire Talks → Draft Agreement → Signed → Holding), a momentum direction (advancing / stable / stalling), and an event count.
 

@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peace Room — AI-Powered Peace Paths Tracker v4</title>
+    <title>Peace Paths — AI-Powered Peace Tracker v4</title>
     <meta name="description" content="Tracking progress on concrete peace initiatives in the Middle East with live event updates.">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛤</text></svg>">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="app" role="main" aria-label="Peace Room dashboard">
+    <div class="app" role="main" aria-label="Peace Paths dashboard">
 
         <!-- ── Header ──────────────────────────────── -->
         <header class="header" aria-label="Header">
             <div>
-                <h1 class="logo"><a href="#">🕊 Peace Room</a></h1>
+                <h1 class="logo"><a href="#">🕊 Peace Paths</a></h1>
                 <div class="tagline">Where the peace efforts are headed</div>
+                <div class="info-link"><a href="#" id="infoBtn">ℹ How it works</a></div>
             </div>
             <div class="header-right">
                 <span class="last-updated" id="lastUpdated"></span>
@@ -50,8 +51,9 @@
 
         <!-- ── Footer ──────────────────────────────── -->
         <footer class="footer">
-            <p>Peace Room is an experimental project for informational purposes only.</p>
-            <p>Assessments are algorithmic and AI-assisted, not predictions.</p>
+            <p>Peace Paths is an experimental project for informational purposes only.</p>
+            <p>Data from <span id="feedCount">60</span> RSS feeds · AI-assisted classification</p>
+            <p>Assessments are algorithmic, not predictions.</p>
             <nav class="footer-links" aria-label="Footer links">
               <span id="versionTag" class="footer-link"></span>
               <a href="https://github.com/ErezIsrael/peace-paths/issues" target="_blank" rel="noopener" class="footer-link">🐛 Report a Bug</a>

@@ -1,4 +1,4 @@
-/* ── Peace Room — Frontend App v4 ───────────────────── */
+/* ── Peace Paths — Frontend App v4 ──────────────────── */
 
 // No hardcoded categories — solutions render dynamically from data.activeSolutions
 
@@ -56,7 +56,8 @@ function formatEventTime(dateStr) {
 /* ── Data Loading ────────────────────────────────────── */
 let data = null;
 let activityFeedEvents = [];
-let feedShowing = 12;
+const FEED_MAX = 5;
+let feedShowing = FEED_MAX;
 
 async function loadData() {
   // Load AI-generated data.json (deployed with the site)
@@ -158,8 +159,13 @@ function renderActivityFeed() {
 }
 
 document.getElementById('showMoreActivity')?.addEventListener('click', () => {
-  feedShowing += 12;
-  renderActivityFeed();
+  if (feedShowing < activityFeedEvents.length) {
+    feedShowing += 12;
+    renderActivityFeed();
+  } else if (feedShowing === FEED_MAX) {
+    feedShowing = activityFeedEvents.length;
+    renderActivityFeed();
+  }
 });
 
 /* ── Solution Cards ──────────────────────────────────── */
@@ -167,12 +173,19 @@ function createSolutionCard(solution) {
   const card = document.createElement('div');
   card.className = `solution-card ${solution.direction}`;
 
-  // Top row
+  // Top row: icon, name, metric, direction
   const top = document.createElement('div');
   top.className = 'card-top';
+  const kv = solution.keyMetric || {};
+  const eventsCount = (solution.events || []).length;
+  let valHtml = eventsCount ? `${eventsCount}` : `${kv.value || '—'}`;
+  if (kv.total && !eventsCount) valHtml += ` / ${kv.total}`;
+  if (kv.unit && !eventsCount) valHtml += `<small style="font-size:11px;color:var(--text-muted)"> ${kv.unit}</small>`;
+  const metricHtml = `<span class="card-metric"><span class="card-metric-value">${valHtml}</span><span class="card-metric-label">${kv.label || ''}</span></span>`;
   top.innerHTML = `
     <span class="card-icon">${solution.icon}</span>
     <span class="card-name">${solution.name}</span>
+    ${metricHtml}
     <span class="card-direction ${solution.direction}">${DIRECTION_LABELS[solution.direction] || solution.direction}</span>
   `;
 
@@ -191,46 +204,34 @@ function createSolutionCard(solution) {
   plabel.textContent = phases[idx] ? `"${phases[idx]}"` : '';
   phaseBar.appendChild(plabel);
 
-  // Metric + summary
-  const row = document.createElement('div');
-  row.className = 'card-row';
-  const kv = solution.keyMetric || {};
-  const metric = document.createElement('div');
-  metric.className = 'card-metric';
-  let valHtml = `${kv.value || '—'}`;
-  if (kv.total) valHtml += ` / ${kv.total}`;
-  if (kv.unit) valHtml += `<small style="font-size:11px;color:var(--text-muted)"> ${kv.unit}</small>`;
-  metric.innerHTML = `<span class="value">${valHtml}</span><span class="label">${kv.label || ''}</span>`;
-
-  const summary = document.createElement('div');
-  summary.className = 'card-summary';
-  summary.textContent = solution.summary || '';
-  row.appendChild(metric);
-  row.appendChild(summary);
-
   card.appendChild(top);
   card.appendChild(phaseBar);
-  card.appendChild(row);
 
-  // Recent Events (inline list)
-  const events = solution.events || [];
+  // Events list (sorted newest-first)
+  const events = (solution.events || []).slice().sort((a, b) => {
+    const da = parseDate(a.date) || new Date(0);
+    const db = parseDate(b.date) || new Date(0);
+    return db - da;
+  });
+
   if (events.length) {
     const evDiv = document.createElement('div');
     evDiv.className = 'card-events';
-    const evTitle = document.createElement('div');
-    evTitle.className = 'card-events-title';
-    evTitle.textContent = `Recent Events (${events.length})`;
-    evDiv.appendChild(evTitle);
 
     // Show top 3, with toggle for more
+    const SENTIMENT_LABELS = { positive: 'Peace', neutral: 'Neutral', negative: 'War' };
     const show = 3;
     events.slice(0, show).forEach(ev => {
+      const src = ev.source ? ` <span class="card-event-source">(${ev.source})</span>` : '';
+      const sentLabel = ev.sentiment ? SENTIMENT_LABELS[ev.sentiment] || ev.sentiment : '';
       const item = document.createElement('div');
       item.className = 'card-event';
       item.innerHTML = `
         <span class="card-event-dot sentiment-${ev.sentiment || 'neutral'}"></span>
+        ${sentLabel ? `<span class="card-event-sentiment sentiment-${ev.sentiment}">${sentLabel}</span>` : ''}
         <span class="card-event-time">${formatTime(ev.date)}</span>
         ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="card-event-text">${ev.text}</a>` : `<span class="card-event-text">${ev.text}</span>`}
+        ${src}
       `;
       evDiv.appendChild(item);
     });
@@ -241,22 +242,24 @@ function createSolutionCard(solution) {
       toggle.className = 'card-events-toggle';
       toggle.textContent = `Show ${events.length - show} more…`;
       toggle.addEventListener('click', () => {
-        // Render all events
         evDiv.querySelectorAll('.card-event, .card-events-toggle').forEach(el => el.remove());
         events.forEach(ev => {
+          const src = ev.source ? ` <span class="card-event-source">(${ev.source})</span>` : '';
+          const sentLabel = ev.sentiment ? SENTIMENT_LABELS[ev.sentiment] || ev.sentiment : '';
           const item = document.createElement('div');
           item.className = 'card-event';
           item.innerHTML = `
             <span class="card-event-dot sentiment-${ev.sentiment || 'neutral'}"></span>
+            ${sentLabel ? `<span class="card-event-sentiment sentiment-${ev.sentiment}">${sentLabel}</span>` : ''}
             <span class="card-event-time">${formatTime(ev.date)}</span>
             ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="card-event-text">${ev.text}</a>` : `<span class="card-event-text">${ev.text}</span>`}
+            ${src}
           `;
           evDiv.appendChild(item);
         });
         evDiv.appendChild(toggle);
         toggle.textContent = 'Show less';
         toggle.addEventListener('click', () => {
-          // Re-render with limit (reload approach)
           loadData();
         });
       });
@@ -335,13 +338,72 @@ function renderAll(data) {
     });
 }
 
+/* ── Info Modal ──────────────────────────────────────── */
+document.getElementById('infoBtn')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  content.innerHTML = `
+    <h2>How Peace Paths Works</h2>
+
+    <h3>📡 Data Collection</h3>
+    <p>We monitor <strong>60 RSS feeds</strong> across the Middle East — a curated selection of news outlets, think tanks, and human rights organizations. Sources include:</p>
+    <ul>
+      <li><strong>News agencies:</strong> BBC, Al Jazeera, France24, Reuters, The Guardian, NYT, Le Monde, Haaretz, JPost, and more</li>
+      <li><strong>Think tanks:</strong> Crisis Group, MERIP, The Diplomat, The Conversation, Global Policy Forum</li>
+      <li><strong>Human rights:</strong> Amnesty International, Iran Human Rights, Center for Human Rights in Iran</li>
+      <li><strong>Regional outlets:</strong> PNN, 972mag, Radio Free Europe, Iran International, Global Voices</li>
+    </ul>
+    <p>Feeds are fetched daily. Articles are collected from a 7-day rolling window.</p>
+
+    <h3>🤖 AI Classification</h3>
+    <p>Each article is analyzed by a large language model (LLM) that:</p>
+    <ul>
+      <li><strong>Classifies</strong> it into a relevant peace initiative category (e.g., "Ceasefire Negotiations", "Humanitarian Aid")</li>
+      <li><strong>Assigns a sentiment:</strong></li>
+    </ul>
+    <div style="display:flex;gap:16px;margin:8px 0 12px;font-size:13px">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block"></span> <strong>Peace</strong> — positive/constructive</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block"></span> <strong>Neutral</strong> — factual/status quo</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#f87171;display:inline-block"></span> <strong>War</strong> — negative/escalating</span>
+    </div>
+    <p>When the AI is unavailable, articles are classified by keyword matching (lower accuracy).</p>
+
+    <h3>📊 Phase & Momentum Scoring</h3>
+    <p>Each peace initiative has a <strong>phase progression model</strong> (e.g., "Crisis" → "Negotiations" → "Agreement" → "Implementation"). The current phase is determined by the AI based on article content.</p>
+    <p><strong>Momentum</strong> (Advancing / Stable / Stalling) is computed from the balance of positive vs. negative events across all initiatives.</p>
+    <p>Event counts reflect actual articles classified in each category — not AI estimates.</p>
+
+    <h3>⚠️ Limitations</h3>
+    <ul>
+      <li>Classification is automated and may misclassify articles</li>
+      <li>Sentiment labels reflect article tone, not ground truth</li>
+      <li>Phase progressions are heuristic, not verified</li>
+      <li>This tool is experimental and for informational purposes only</li>
+    </ul>
+  `;
+  overlay.classList.add('active');
+});
+
+// Close modal on close button click
+document.getElementById('modalClose')?.addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.remove('active');
+});
+
+// Close modal when clicking outside the content
+document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) {
+    document.getElementById('modalOverlay').classList.remove('active');
+  }
+});
+
 /* ── Boot ────────────────────────────────────────────── */
 loadData();
 
 // Auto-refresh every 15 minutes (browser caches 3h, so this catches new data)
 const REFRESH_INTERVAL = 15 * 60 * 1000;
 setInterval(() => {
-  console.log('[Peace Room] Auto-refreshing…');
+  console.log('[Peace Paths] Auto-refreshing…');
   loadData();
 }, REFRESH_INTERVAL);
 
