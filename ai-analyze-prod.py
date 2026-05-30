@@ -1138,41 +1138,24 @@ def main():
                 existing_map[cid] = cdata
         save_categories(existing_map)
 
-    # 7. Deploy app/ + data.json to Cloudflare Pages via wrangler
-    # wrangler skips .gitignored files, so copy app/ to temp dir, inject data.json
+    # 7. Upload data.json to Cloudflare KV (served via Pages Function)
     if not args.skip_upload:
-        print(f"\n\U0001f4a9 Deploying to Cloudflare Pages via wrangler...")
+        print(f"\n\U0001f4a9 Uploading data.json to Cloudflare KV...")
         project_root = os.path.dirname(os.path.abspath(__file__))
-        import subprocess, shutil, tempfile
-        deploy_dir = tempfile.mkdtemp(prefix='peace-deploy-')
-        app_dir = os.path.join(project_root, 'app')
+        import subprocess
+        kv_id = "badf4fb7acfe4d1c905db77ed8d5e70f"
+        cmd = f'npx wrangler kv key put "data.json" --binding=peace_data --namespace-id={kv_id} < "{APP_DATA_JSON}"'
+        result = subprocess.run(cmd, shell=True, cwd=project_root, capture_output=True)
         try:
-            for item in os.listdir(app_dir):
-                src = os.path.join(app_dir, item)
-                dst = os.path.join(deploy_dir, item)
-                if os.path.isdir(src) and not item.startswith('.'):
-                    shutil.copytree(src, dst)
-                elif os.path.isfile(src):
-                    shutil.copy2(src, dst)
-            # Inject data.json (gitignored, so wrangler would skip it)
-            shutil.copy2(APP_DATA_JSON, os.path.join(deploy_dir, 'data.json'))
-            cmd = f'npx wrangler pages deploy "{deploy_dir}" --project-name=peace-paths --skip-caching'
-            result = subprocess.run(cmd, shell=True, cwd=project_root, capture_output=True)
-            try:
-                result.stdout = result.stdout.decode('utf-8', errors='replace')
-                result.stderr = result.stderr.decode('utf-8', errors='replace')
-            except Exception:
-                pass
-            if result.returncode == 0:
-                for line in result.stdout.split("\n"):
-                    if "Deploying" in line or ".pages.dev" in line or "Success" in line:
-                        print(f"  {line.strip()}")
-                print("  \u2713 Cloudflare Pages deployed successfully")
-            else:
-                print(f"  \u26a0 Wrangler deploy failed: {result.stderr[:300]}")
-                print("  Fallback: data.json written locally")
-        finally:
-            shutil.rmtree(deploy_dir, ignore_errors=True)
+            result.stdout = result.stdout.decode('utf-8', errors='replace')
+            result.stderr = result.stderr.decode('utf-8', errors='replace')
+        except Exception:
+            pass
+        if result.returncode == 0:
+            print("  \u2713 data.json uploaded to KV")
+        else:
+            print(f"  \u26a0 KV upload failed: {result.stderr[:300]}")
+            print("  Fallback: data.json written locally")
     else:
         print(f"\n\u2139\ufe0f Deploy skipped. Data written to {DATA_FILE} and {DATA_JSON}")
 

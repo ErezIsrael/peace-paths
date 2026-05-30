@@ -20,14 +20,12 @@ AI-powered tracker of concrete peace initiatives across the Middle East.
 
 ## ⚠️ Deployment Rules
 
-All deploys go through `wrangler` (GitHub is for version control only).
-
 | Component | Storage | Deployment |
 |-----------|---------|------------|
-| Frontend + Data (`app/`) | **GitHub repo** (vcs) | AI pipeline deploys via `wrangler` |
-| Config (`categories.json`, `rss-feeds.json`) | **NOT in Git** | Local only |
+| Frontend (`app/`) | **GitHub repo** | Commit to Git → GitHub → Cloudflare auto-deploy |
+| Data (`app/data.json`) | **NOT in Git** | Written locally → uploaded to KV via `wrangler kv key put` |
 
-**NEVER** commit `app/data.json` to Git. It is deployed via `wrangler` alongside the frontend.
+**NEVER** commit `app/data.json` to Git. It is served via a Pages Function reading from KV.
 
 ---
 
@@ -119,9 +117,9 @@ Copy `.env.example` → `.env` and fill in:
 
 ## Debug Checklist
 
-1. **No data on page?** Check `app/data.json` exists. Run `wrangler pages deploy app` to upload.
+1. **No data on page?** Upload data.json to KV: `wrangler kv key put data.json --binding peace_data --namespace-id <ID>`
 2. **AI failing?** Verify `LLAMA_CPP_URL` in `.env` → reachable llama.cpp server.
-3. **Deploy fails?** Check `CLOUDFLARE_API_TOKEN` has `pages_edit` permission.
+3. **Deploy fails?** Check `CLOUDFLARE_API_TOKEN` has `kv_edit` permission.
 4. **Wrong categories?** Edit `categories.json` directly or use `/admin/`.
 5. **Missing feeds?** Copy `rss-feeds.example.json` → `rss-feeds.json`.
-6. **Frontend broken?** Commit changes to Git, push to GitHub → auto-deploys. Never `wrangler` deploy frontend files.
+6. **Frontend broken?** Commit changes to Git, push to GitHub → auto-deploys.

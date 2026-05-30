@@ -2,3 +2,7 @@
 name = "peace-paths"
 compatibility_date = "2026-05-20"
 pages_build_output_dir = "app"
+
+[[kv_namespaces]]
+binding = "peace_data"
+id = "badf4fb7acfe4d1c905db77ed8d5e70f"
