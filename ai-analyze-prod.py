@@ -308,9 +308,13 @@ def propose_taxonomy(articles, core_cats=None):
     Returns dict {categories: [{id, name, description, icon}], assignments: {idx: cat_id}}
     or None on failure.
     """
+    # Sample articles to keep prompt manageable — use up to 100
+    sample = articles[:100]
+    if len(articles) > 100:
+        print(f"  Sampling {len(sample)} of {len(articles)} articles for taxonomy proposal")
     # Build numbered list of titles (no snippets — too many tokens)
     lines = []
-    for i, a in enumerate(articles):
+    for i, a in enumerate(sample):
         lines.append(f"{i+1}. {a['title']}")
     articles_text = "\n".join(lines)
 
@@ -366,46 +370,12 @@ def propose_taxonomy(articles, core_cats=None):
         f"\n{articles_text}"
     )
 
-    body = {
-        "model": AI_MODEL,
-        "messages": [
-            {"role": "system", "content": "Middle East news taxonomy designer. Output ONLY valid JSON with keys: categories, assignments. No explanation."},
-            {"role": "user", "content": prompt}
-        ],
-        "max_tokens": 16000,
-        "temperature": 0.0,
-    }
+    result = _llm_chat([
+        {"role": "system", "content": "Middle East news taxonomy designer. Output ONLY valid JSON with keys: categories, assignments. No explanation."},
+        {"role": "user", "content": prompt}
+    ], max_tokens=16000, timeout=300)
 
-    headers = {"Content-Type": "application/json"}
-    if LLAMA_API_KEY:
-        headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
-
-    req = Request(
-        f"{LLAMA_CPP_URL}/v1/chat/completions",
-        data=json.dumps(body).encode(),
-        headers=headers,
-    )
-    try:
-        with urlopen(req, timeout=180) as f:
-            response = json.loads(f.read().decode())
-    except Exception as e:
-        print(f"  AI unavailable for taxonomy proposal: {e}")
-        return None
-
-    result_text = response.get("choices", [{}])[0].get("message", {}).get("content", "")
-    result_text = result_text.strip()
-    if result_text.startswith("```"):
-        lines = result_text.split("\n")
-        result_text = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
-
-    first_brace = result_text.find('{')
-    last_brace = result_text.rfind('}')
-    if first_brace != -1 and last_brace > first_brace:
-        try:
-            return json.loads(result_text[first_brace:last_brace+1])
-        except json.JSONDecodeError:
-            pass
-    return None
+    return result
 
 
 def _build_taxonomy_prompt(categories):
