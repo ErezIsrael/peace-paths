@@ -1150,11 +1150,10 @@ def _merge_with_existing(data, existing, ai_phases=None):
     # Recompute for all solutions — compute on ALL events, exclude summary from stored events
     for sol in existing["solutions"]:
         sol["events"].sort(key=lambda e: e["date"], reverse=True)
-        # Use AI-determined phase if available, else default to 0
+        # Use AI-determined phase if available (daily mode), else preserve existing phase (fast mode)
         if ai_phases and sol["id"] in ai_phases:
             sol["phaseIndex"] = min(ai_phases[sol["id"]], len(sol["phases"]) - 1)
-        else:
-            sol["phaseIndex"] = 0
+        # else: keep existing phaseIndex — fast mode doesn't re-evaluate phases
         sol["direction"] = compute_direction(sol["events"])
         sol["keyMetric"] = {"label": "Events (7d)", "value": str(len(sol["events"]))}
         sol["summary"] = sol["events"][0]["text"] if sol["events"] else ""
@@ -1392,8 +1391,10 @@ def main():
     # 3. Build output
     data = build_output(articles, classified_pairs, cat_map)
 
-    # 3.5 AI Phase Determination — ask LLM for current phase of each solution
-    if not args.fetch_only:
+    # 3.5 AI Phase Determination — only in daily mode (full article corpus)
+    # Fast mode preserves existing phases from the last daily run
+    ai_phases = None
+    if mode == "daily" and not args.fetch_only:
         solution_events_for_ai = {cid: [] for cid in cat_map}
         for article, classification in classified_pairs:
             sol = classification.get("solution", "ceasefire")
@@ -1404,19 +1405,18 @@ def main():
                 "text": article["title"],
                 "sentiment": classification.get("sentiment", "neutral"),
             })
-        print("\n🧠 Determining phases via AI...")
+        print("\n🧠 Determining phases via AI (daily only)...")
         ai_phases = determine_phases_ai(solution_events_for_ai, cat_map)
         if ai_phases:
             print(f"  ✓ AI determined phases for {len(ai_phases)} solutions")
             for sol in data["solutions"]:
                 if sol["id"] in ai_phases:
                     sol["phaseIndex"] = ai_phases[sol["id"]]
-                    # Clamp to valid range
                     sol["phaseIndex"] = min(sol["phaseIndex"], len(sol["phases"]) - 1)
         else:
-            print("  ⚠ AI phase determination failed, using heuristic")
+            print("  ⚠ AI phase determination failed, defaulting to phase 0")
     else:
-        ai_phases = None
+        print("\n⏩ Skipping AI phase determination (fast mode — preserving existing phases)")
 
     # 4. Merge with existing data (fast mode) or overwrite (daily mode)
     if mode == "fast":

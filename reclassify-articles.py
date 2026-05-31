@@ -467,67 +467,6 @@ def compute_direction(events):
     return "stable"
 
 
-def determine_phases_ai(solution_events, cat_map):
-    """Ask the LLM to determine the current phase for each solution based on recent events.
-
-    Returns dict {solution_id: phase_index} or None on failure.
-    Uses the last 8 events per solution to keep the prompt short.
-    """
-    blocks = []
-    for sol_id, events in solution_events.items():
-        cat = cat_map.get(sol_id)
-        if not cat:
-            continue
-        phases = cat.get("phases", [])
-        if not phases:
-            continue
-        recent = sorted(events, key=lambda e: e.get("date", ""), reverse=True)[:8]
-        event_lines = "\n".join(
-            f"    - [{e['sentiment']}] {e['text']}" for e in recent
-        )
-        phase_names = "\n".join(f"  {i}: {p}" for i, p in enumerate(phases))
-        blocks.append(
-            f"<solution id=\"{sol_id}\">\n"
-            f"  Name: {cat['name']}\n"
-            f"  Phases:\n{phase_names}\n"
-            f"  Recent events:\n{event_lines}\n"
-            f"</solution>"
-        )
-
-    if not blocks:
-        return None
-
-    solutions_text = "\n\n".join(blocks)
-
-    prompt = (
-        "You are a Middle East peace analyst. For each solution below, determine which phase it is currently in.\n\n"
-        "Read the recent events and match them to the phase that best describes the current state.\n\n"
-        "Rules:\n"
-        "- If recent events show escalation/violence, the phase should be earlier (crisis/fighting).\n"
-        "- If recent events show negotiations/agreements, the phase should advance.\n"
-        "- Be realistic — don't over-advance a phase based on one positive article.\n\n"
-        f"{solutions_text}\n\n"
-        'Output ONLY a JSON object:\n'
-        '{"phases": {"solution-id": 2, "another-id": 0}}'
-    )
-
-    result = _llm_chat([
-        {"role": "system", "content": "Middle East analyst. Output ONLY valid JSON with key 'phases'. No explanation."},
-        {"role": "user", "content": prompt}
-    ], max_tokens=4000, timeout=180)
-
-    if result and "phases" in result:
-        # Normalize: values may be strings, convert to int
-        phases = {}
-        for sid, val in result["phases"].items():
-            try:
-                phases[sid] = int(val)
-            except (ValueError, TypeError):
-                pass
-        return phases
-    return None
-
-
 def build_output(classified, event_lookup, cat_map, moves=None, refused_articles=None):
     """Build the final data.json structure from classified articles."""
     if moves is None:
@@ -628,19 +567,13 @@ def build_output(classified, event_lookup, cat_map, moves=None, refused_articles
     solutions = solutions[:8]
     active_solutions = [s["id"] for s in solutions]
 
-    # AI-determine phases for each solution
-    solution_events = {}
+    # Preserve phases from original data — phase is determined by daily AI run only
+    orig_phases = {s["id"]: s.get("phaseIndex", 0) for s in original_data.get("solutions", [])}
     for sol in solutions:
-        all_events = sol["events"] + ([{"text": sol["summary"], "sentiment": "neutral"}] if sol["summary"] else [])
-        solution_events[sol["id"]] = all_events
-    ai_phases = determine_phases_ai(solution_events, cat_map)
-    if ai_phases:
-        print(f"\n  🧠 AI phases: {ai_phases}")
-        for sol in solutions:
-            if sol["id"] in ai_phases:
-                sol["phaseIndex"] = min(ai_phases[sol["id"]], len(sol["phases"]) - 1)
-    else:
-        print("\n  ⚠ AI phase determination failed, defaulting to phase 0")
+        if sol["id"] in orig_phases:
+            sol["phaseIndex"] = orig_phases[sol["id"]]
+        else:
+            sol["phaseIndex"] = 0  # new category, default to 0
 
     # Momentum
     if counts["advancing"] > counts["stalling"]:
