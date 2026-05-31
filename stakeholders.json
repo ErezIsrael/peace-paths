@@ -3,6 +3,7 @@
     {
       "name": "S. Jaishankar",
       "role": "External Affairs Minister, India",
+      "email": "wtm@mea.gov.in",
       "contact": "https://www.mea.gov.in/write-to-the-minister.htm"
     },
     {
@@ -13,7 +14,8 @@
     {
       "name": "IMEC Secretariat",
       "role": "Corridor Coordination",
-      "contact": "info@imec.international"
+      "email": "info@imec.international",
+      "contact": "https://www.imec.international/contact-us/"
     },
     {
       "name": "EU Commission — Transport",
@@ -94,7 +96,8 @@
     {
       "name": "NCAG Press Office",
       "role": "National Committee for Admin of Gaza",
-      "contact": "press@ncag.ps"
+      "email": "press@ncag.ps",
+      "contact": "https://www.ncag.ps"
     },
     {
       "name": "UNSCO Media",
@@ -126,7 +129,7 @@
     {
       "name": "Peace Now",
       "role": "Israeli Peace Organization",
-      "contact": "https://peacenow.org.il/en/"
+      "contact": "https://peacenow.org.il/en/contact-us/"
     },
     {
       "name": "UN OCHA oPt",

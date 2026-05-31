@@ -546,6 +546,27 @@ a:hover { text-decoration: underline; }
   text-decoration: underline;
   opacity: 1;
 }
+.card-player-email {
+  font-size: 10px;
+  color: var(--accent);
+  text-decoration: none;
+  margin-left: 3px;
+  opacity: 0.8;
+}
+.card-player-email:hover {
+  text-decoration: underline;
+  opacity: 1;
+}
+.card-player-contact {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-decoration: none;
+  margin-left: 2px;
+  cursor: pointer;
+}
+.card-player-contact:hover {
+  color: var(--accent);
+}
 
 /* ── Footer ──────────────────────────────────────────── */
 .footer {

@@ -341,21 +341,37 @@ function createSolutionCard(solution) {
         comma.textContent = ',';
         playersRow.appendChild(comma);
       }
-      const link = document.createElement('a');
-      link.className = 'card-player-chip';
-      // Contact can be email, URL, or webform
-      if (p.contact.startsWith('mailto:')) {
-        link.href = p.contact;
-      } else if (p.contact.includes('@')) {
-        link.href = `mailto:${p.contact}`;
-      } else {
-        link.href = p.contact;
-        link.target = '_blank';
-        link.rel = 'noopener';
+      const chip = document.createElement('span');
+      chip.className = 'card-player-chip';
+
+      // Name
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = p.name;
+      chip.appendChild(nameSpan);
+
+      // Email badge
+      if (p.email) {
+        const emailLink = document.createElement('a');
+        emailLink.className = 'card-player-email';
+        emailLink.href = `mailto:${p.email}`;
+        emailLink.textContent = p.email;
+        chip.appendChild(emailLink);
       }
-      link.title = `${p.name} — ${p.role}`;
-      link.textContent = p.name;
-      playersRow.appendChild(link);
+
+      // Contact link (webform/URL) — shown as icon
+      if (p.contact) {
+        const contactLink = document.createElement('a');
+        contactLink.className = 'card-player-contact';
+        contactLink.href = p.contact;
+        contactLink.target = '_blank';
+        contactLink.rel = 'noopener';
+        contactLink.title = `${p.role} — Contact`;
+        contactLink.textContent = '✉';
+        chip.appendChild(contactLink);
+      }
+
+      chip.title = `${p.name} — ${p.role}`;
+      playersRow.appendChild(chip);
     });
     playersDiv.appendChild(playersRow);
     card.appendChild(playersDiv);
