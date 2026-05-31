@@ -15,7 +15,7 @@
   "phases": {
     "description": "LLM determines current phase for each solution based on recent events",
     "system": "Middle East analyst. Output ONLY valid JSON with key 'phases'. No explanation.",
-    "user": "You are a Middle East peace analyst. For each solution below, determine which phase it is currently in.\n\nRead the recent events and match them to the phase that best describes the current state.\n\nRules:\n- If recent events show escalation/violence, the phase should be earlier (crisis/fighting).\n- If recent events show negotiations/agreements, the phase should advance.\n- Weight RECENT events more than older ones.\n- Be realistic — don't over-advance a phase based on one positive article.\n\n{SOLUTIONS_TEXT}\n\nOutput ONLY a JSON object:\n{{\"phases\": {{\"solution-id\": 2, \"another-id\": 0}}}}"
+    "user": "You are a Middle East peace analyst. For each solution below, determine which phase it is currently in.\n\nRead the recent events and match them to the phase that best describes the current state.\n\nRules:\n- Match events to the phase label that best describes the current real-world situation.\n- If a phase label contains '(Complete)' or similar, that phase is DONE — do NOT assign it. Pick the next phase.\n- Violence or escalation during a later phase means the process is stalled, not that it regressed to an earlier completed phase.\n- Weight RECENT events more than older ones.\n- Be realistic — don't over-advance a phase based on one positive article.\n\n{SOLUTIONS_TEXT}\n\nOutput ONLY a JSON object:\n{{\"phases\": {{\"solution-id\": 2, \"another-id\": 0}}}}"
   },
   "research": {
     "description": "Research mode — AI rewrites category description, phases, and keywords",
