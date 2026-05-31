@@ -322,7 +322,7 @@ function createSolutionCard(solution) {
     card.appendChild(evDiv);
   }
 
-  // Key Players
+  // Key Players / Stakeholders
   if (solution.stakeholders && solution.stakeholders.length) {
     const playersDiv = document.createElement('div');
     playersDiv.className = 'card-players';
@@ -331,7 +331,6 @@ function createSolutionCard(solution) {
     pTitle.textContent = 'Key Players';
     playersDiv.appendChild(pTitle);
 
-    // Render as comma-separated inline list
     const playersRow = document.createElement('div');
     playersRow.className = 'card-players-row';
 
@@ -344,8 +343,17 @@ function createSolutionCard(solution) {
       }
       const link = document.createElement('a');
       link.className = 'card-player-chip';
-      link.href = `mailto:${p.email}`;
-      link.title = `${p.name} — ${p.org}`;
+      // Contact can be email, URL, or webform
+      if (p.contact.startsWith('mailto:')) {
+        link.href = p.contact;
+      } else if (p.contact.includes('@')) {
+        link.href = `mailto:${p.contact}`;
+      } else {
+        link.href = p.contact;
+        link.target = '_blank';
+        link.rel = 'noopener';
+      }
+      link.title = `${p.name} — ${p.role}`;
       link.textContent = p.name;
       playersRow.appendChild(link);
     });

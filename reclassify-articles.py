@@ -42,6 +42,7 @@ LLAMA_API_KEY = os.getenv("LLAMA_API_KEY", "")
 AI_MODEL = os.getenv("AI_MODEL", "Qwen3.6-27B")
 
 CATEGORIES_FILE = os.path.join(ROOT, "categories.json")
+STAKEHOLDERS_FILE = os.path.join(ROOT, "stakeholders.json")
 PROMPTS_FILE = os.path.join(ROOT, "prompts.json")
 DATA_FILE = os.path.join(ROOT, "app", "data.json")
 RESEARCH_DIR = os.path.join(ROOT, "research")
@@ -467,7 +468,7 @@ def compute_direction(events):
     return "stable"
 
 
-def build_output(classified, event_lookup, cat_map, moves=None, refused_articles=None):
+def build_output(classified, event_lookup, cat_map, moves=None, refused_articles=None, stakeholders=None):
     """Build the final data.json structure from classified articles."""
     if moves is None:
         moves = {}
@@ -552,13 +553,14 @@ def build_output(classified, event_lookup, cat_map, moves=None, refused_articles
             "icon": cat.get("icon", "📌"),
             "name": cat["name"],
             "phases": cat.get("phases", ["Emerged", "Developing", "Maturing", "Resolved"]),
-            "phaseIndex": 0,  # placeholder — will be set by AI below
+            "phaseIndex": 0,  # placeholder — will be set from original data
             "direction": direction,
             "keyMetric": {"label": "Events", "value": str(len(events))},
             "summary": summary_text,
             "events": stored_events,
             "confidence": "high" if len(events) > 5 else "medium" if len(events) > 2 else "low",
             "core": cat.get("core", False),
+            "stakeholders": stakeholders.get(cat_id, []) if stakeholders else [],
         })
         active_solutions.append(cat_id)
 
@@ -685,6 +687,10 @@ def main():
     # ─── Layer 2: AI Classify ───
     prompts = load_prompts()
     cat_map = load_categories()
+    stakeholders = {}
+    if os.path.exists(STAKEHOLDERS_FILE):
+        with open(STAKEHOLDERS_FILE, "r", encoding="utf-8") as f:
+            stakeholders = json.load(f)
     system_prompt = build_system_prompt(cat_map, prompts)
     valid_ids = list(cat_map.keys())
 
@@ -716,7 +722,7 @@ def main():
     print("BUILDING OUTPUT")
     print("=" * 60)
 
-    data = build_output(classified, event_lookup, cat_map, moves, refused)
+    data = build_output(classified, event_lookup, cat_map, moves, refused, stakeholders)
 
     # Print summary
     print("\n--- RECLASSIFICATION RESULTS ---")

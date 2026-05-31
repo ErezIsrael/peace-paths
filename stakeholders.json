@@ -1,0 +1,191 @@
+{
+  "india-middle-east-europe-economic-corridor": [
+    {
+      "name": "S. Jaishankar",
+      "role": "External Affairs Minister, India",
+      "contact": "https://www.mea.gov.in/write-to-the-minister.htm"
+    },
+    {
+      "name": "UAE Ministry of Economy",
+      "role": "IMEC Lead Agency (UAE)",
+      "contact": "https://www.moe.gov.ae/en/contact-us"
+    },
+    {
+      "name": "IMEC Secretariat",
+      "role": "Corridor Coordination",
+      "contact": "info@imec.international"
+    },
+    {
+      "name": "EU Commission — Transport",
+      "role": "European Corridor Planning",
+      "contact": "https://transport.ec.europa.eu/contact-us_en"
+    },
+    {
+      "name": "White House — National Economic Council",
+      "role": "US IMEC Sponsor",
+      "contact": "https://www.whitehouse.gov/contact/"
+    }
+  ],
+  "geneva-initiative": [
+    {
+      "name": "Tor Wennesland",
+      "role": "UN Special Coordinator for Middle East Peace Process",
+      "contact": "https://unsco.unmissions.org/en/contact-us"
+    },
+    {
+      "name": "Geneva Initiative",
+      "role": "Two-State Solution Framework Authors",
+      "contact": "https://genevainitiative.palnet.net/"
+    },
+    {
+      "name": "Palestinian Ministry of Foreign Affairs",
+      "role": "State of Palestine",
+      "contact": "https://www.mofa.pna.ps"
+    },
+    {
+      "name": "Israeli Ministry of Foreign Affairs",
+      "role": "State of Israel",
+      "contact": "https://mfa.gov.il/MFA/ContactingTheMinistry/ContactUs/index.html"
+    },
+    {
+      "name": "EU Special Representative for the Middle East",
+      "role": "European Mediator",
+      "contact": "https://neighbourhood-enlargement.ec.europa.eu/contact-us_en"
+    }
+  ],
+  "abraham-accords": [
+    {
+      "name": "Mashal J. Jabari",
+      "role": "US Ambassador to UAE",
+      "contact": "https://ae.usembassy.gov/ask-the-ambassador/"
+    },
+    {
+      "name": "State Dept — Bureau of Near Eastern Affairs",
+      "role": "Abraham Accords Coordination Cell",
+      "contact": "https://www.state.gov/bureau-of-near-eastern-affairs/contact-us/"
+    },
+    {
+      "name": "Saudi Ministry of Foreign Affairs",
+      "role": "Kingdom of Saudi Arabia",
+      "contact": "https://mofa.gov.sa"
+    },
+    {
+      "name": "Israeli PM Office — Ceasefire & Diplomacy",
+      "role": "Normalization Negotiations",
+      "contact": "https://www.gov.il/en/departments/prime_ministers_office"
+    },
+    {
+      "name": "Bahrain Ministry of Foreign Affairs",
+      "role": "Accords Signatory",
+      "contact": "https://www.mofa.bh"
+    }
+  ],
+  "20-point-gaza-peace-plan": [
+    {
+      "name": "Nickolay Mladenov",
+      "role": "Board of Peace High Representative",
+      "contact": "https://boardofpeace.org"
+    },
+    {
+      "name": "Steve Witkoff",
+      "role": "Special Presidential Envoy to the Middle East",
+      "contact": "https://www.whitehouse.gov"
+    },
+    {
+      "name": "NCAG Press Office",
+      "role": "National Committee for Admin of Gaza",
+      "contact": "press@ncag.ps"
+    },
+    {
+      "name": "UNSCO Media",
+      "role": "UN Coordination for Gaza",
+      "contact": "https://unsco.unmissions.org"
+    },
+    {
+      "name": "Qatar Ministry of Foreign Affairs",
+      "role": "Mediator & Host",
+      "contact": "https://www.mofa.gov.qa"
+    }
+  ],
+  "israeli-annexation-of-the-west-bank": [
+    {
+      "name": "Bezalel Smotrich",
+      "role": "Minister of Finance / Settlements Oversight",
+      "contact": "https://main.knesset.gov.il/mk/Pages/MKPersonalDetails.aspx?mkid=1571"
+    },
+    {
+      "name": "Coordination of Gov Activities in the Territories (COGAT)",
+      "role": "Area C Administration",
+      "contact": "https://www.gov.il/en/departments/coordination-of-government-activities-in-the-territories"
+    },
+    {
+      "name": "Al-Haq",
+      "role": "Palestinian Human Rights Org — West Bank",
+      "contact": "https://www.al-haq.org/contact-us"
+    },
+    {
+      "name": "Peace Now",
+      "role": "Israeli Peace Organization",
+      "contact": "https://peacenow.org.il/en/"
+    },
+    {
+      "name": "UN OCHA oPt",
+      "role": "UN Office for Palestinian Popul. Territories",
+      "contact": "https://www.ochaopt.org"
+    }
+  ],
+  "iran-us-peace-process": [
+    {
+      "name": "Hassan Rowhani",
+      "role": "Iran's Chief Nuclear Negotiator",
+      "contact": "https://www.khamenei.ir"
+    },
+    {
+      "name": "Vali Sebbah",
+      "role": "Iran Foreign Ministry Spokesperson",
+      "contact": "https://www.mfa.gov.ir"
+    },
+    {
+      "name": "State Dept — Bureau of Near Eastern Affairs",
+      "role": "US Iran Desk",
+      "contact": "https://www.state.gov/bureau-of-near-eastern-affairs/contact-us/"
+    },
+    {
+      "name": "Pakistan Foreign Ministry",
+      "role": "Ceasefire Mediator",
+      "contact": "https://www.mofa.gov.pk/contact-us"
+    },
+    {
+      "name": "Qatar Ministry of Foreign Affairs",
+      "role": "Diplomatic Mediator",
+      "contact": "https://www.mofa.gov.qa"
+    }
+  ],
+  "lebanon-hezbollah-conflict": [
+    {
+      "name": "UNIFIL",
+      "role": "UN Interim Force in Lebanon",
+      "contact": "https://unifil.unmissions.org/en/contact-us"
+    },
+    {
+      "name": "Lebanese Ministry of Foreign Affairs",
+      "role": "Government of Lebanon",
+      "contact": "http://www.mfa.gov.lb"
+    },
+    {
+      "name": "Israeli PM Office — Ceasefire",
+      "role": "Israel Negotiations Team",
+      "contact": "https://www.gov.il/en/pages/spoke-ceasefire080126"
+    },
+    {
+      "name": "France — President's Office",
+      "role": "Historic Guarantor of Lebanon Sovereignty",
+      "contact": "https://www.elysee.fr"
+    },
+    {
+      "name": "UNHCR Lebanon",
+      "role": "Displaced Persons Coordination",
+      "contact": "https://www.unhcr.org/lb/about-unhcr/contact-us"
+    }
+  ]
+}

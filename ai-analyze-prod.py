@@ -102,6 +102,15 @@ def load_rss_feeds():
 
 CATEGORIES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "categories.json")
 PROMPTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts.json")
+STAKEHOLDERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stakeholders.json")
+
+
+def load_stakeholders():
+    """Load stakeholder contacts from stakeholders.json."""
+    if not os.path.exists(STAKEHOLDERS_FILE):
+        return {}
+    with open(STAKEHOLDERS_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 def load_categories():
@@ -938,7 +947,7 @@ def research_all_categories(articles, cat_map):
 # Build Output Data
 # ═══════════════════════════════════════════════════════════════════════
 
-def build_output(articles, classifications, cat_map):
+def build_output(articles, classifications, cat_map, stakeholders=None):
     """Build the final JSON structure for the Peace Room frontend.
 
     arguments: If 'classifications' is a list of (article, classification) tuples,
@@ -1003,6 +1012,7 @@ def build_output(articles, classifications, cat_map):
                 "events": events[1:],  # exclude summary event to avoid duplicate
                 "confidence": "high" if len(events) > 5 else "medium" if len(events) > 2 else "low",
                 "core": cat.get("core", False),
+                "stakeholders": stakeholders.get(sol_id, []) if stakeholders else [],
             })
         else:
             # Unknown category — generate default (shouldn't happen with enforcement)
@@ -1124,7 +1134,7 @@ def _load_existing_data():
         return None
 
 
-def _merge_with_existing(data, existing, ai_phases=None):
+def _merge_with_existing(data, existing, ai_phases=None, stakeholders=None):
     """Merge new events into existing solutions, preserving history.
 
     - Deduplicates events by text content within each category
@@ -1159,6 +1169,9 @@ def _merge_with_existing(data, existing, ai_phases=None):
         sol["summary"] = sol["events"][0]["text"] if sol["events"] else ""
         sol["events"] = sol["events"][1:]  # exclude summary event to avoid duplicate
         sol["confidence"] = "high" if len(sol["events"]) >= 5 else "medium" if len(sol["events"]) >= 3 else "low"
+        # Inject stakeholders if available
+        if stakeholders and sol["id"] in stakeholders:
+            sol["stakeholders"] = stakeholders[sol["id"]]
 
     # Recompute momentum
     all_solutions = existing["solutions"]
@@ -1232,6 +1245,9 @@ def main():
     # Load categories from categories.json (source of truth)
     cat_map, all_ids, core_ids, all_kws = load_categories()
     print(f"\U0001f4c5 Loaded {len(all_ids)} categories ({len(core_ids)} core) from categories.json")
+    stakeholders = load_stakeholders()
+    if stakeholders:
+        print(f"\U0001f464 Loaded {len(stakeholders)} stakeholder groups")
 
     # Load AI prompts (from prompts.json or hardcoded defaults)
     global PROMPTS
@@ -1389,7 +1405,7 @@ def main():
             ai_refusals = 0
 
     # 3. Build output
-    data = build_output(articles, classified_pairs, cat_map)
+    data = build_output(articles, classified_pairs, cat_map, stakeholders)
 
     # 3.5 AI Phase Determination — only in daily mode (full article corpus)
     # Fast mode preserves existing phases from the last daily run
@@ -1422,7 +1438,7 @@ def main():
     if mode == "fast":
         if existing_data:
             print(f"\u2192 Merging {len(classified_pairs)} new events into existing data")
-            data = _merge_with_existing(data, existing_data, ai_phases=ai_phases)
+            data = _merge_with_existing(data, existing_data, ai_phases=ai_phases, stakeholders=stakeholders)
         else:
             print("  \u26a0 No existing data found, falling back to daily mode")
     # daily mode: data already overwrites
