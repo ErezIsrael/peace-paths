@@ -281,45 +281,148 @@ a:hover { text-decoration: underline; }
 .card-direction.stable    { color: var(--stable);    background: rgba(56,189,248,0.1); }
 .card-direction.stalling  { color: var(--stalling);  background: rgba(248,113,113,0.1); }
 
-/* Phase bar */
-.phase-bar {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-bottom: 8px;
-}
-.phase-segment {
-  flex: 1; height: 3px;
-  border-radius: 2px;
-  background: var(--border);
+/* ── Peace Path Progress Track ─────────────────────── */
+.peace-path {
   position: relative;
-  cursor: default;
+  margin: 10px 0 4px;
+  padding: 14px 4px 10px;
 }
-.phase-segment:hover::after {
-  content: attr(title);
+
+/* The horizontal rail */
+.peace-path__rail {
   position: absolute;
-  bottom: 110%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--card);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: var(--font-head);
-  font-size: 10px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  top: 22px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
 }
-.phase-segment.filled { background: var(--accent); }
-.phase-segment.current { background: var(--accent); box-shadow: 0 0 5px rgba(56,189,248,0.4); }
+
+/* Filled portion of the rail */
+.peace-path__rail-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--advancing), var(--accent));
+  border-radius: 1px;
+  transition: width 0.8s ease;
+  box-shadow: 0 0 6px rgba(74,222,128,0.25);
+}
+
+/* Dashed future portion */
+.peace-path__rail-dash {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--border) 0px,
+    var(--border) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+/* Milestone nodes along the rail */
+.peace-path__nodes {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+/* Individual milestone node */
+.peace-path__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: default;
+  flex: 1;
+}
+
+/* The circle dot */
+.peace-path__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  transition: all 0.4s ease;
+  position: relative;
+}
+
+/* Completed milestone */
+.peace-path__dot.done {
+  background: var(--advancing);
+  border-color: var(--advancing);
+  box-shadow: 0 0 8px rgba(74,222,128,0.4);
+}
+
+/* Current milestone (pulsing) */
+.peace-path__dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(56,189,248,0.5);
+  animation: pulse-node 2s ease-in-out infinite;
+}
+
+@keyframes pulse-node {
+  0%, 100% { box-shadow: 0 0 6px rgba(56,189,248,0.3); }
+  50% { box-shadow: 0 0 14px rgba(56,189,248,0.6); }
+}
+
+/* Future milestone */
+.peace-path__dot.future {
+  background: var(--bg);
+  border-color: var(--text-dim);
+  opacity: 0.5;
+}
+
+/* Phase label below the dot */
+.peace-path__label {
+  font-family: var(--font-head);
+  font-size: 9px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 100px;
+  transition: color 0.3s;
+}
+.peace-path__label.done { color: var(--advancing); }
+.peace-path__label.active { color: var(--accent); font-weight: 600; }
+.peace-path__label.future { color: var(--text-dim); opacity: 0.5; }
+
+/* Tooltip on hover */
+.peace-path__node:hover .peace-path__label {
+  color: var(--text);
+  opacity: 1;
+}
+
+/* Progress percentage badge */
+.peace-path__pct {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(56,189,248,0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.3px;
+}
+
+/* Old phase-bar (kept for backward compat, unused) */
+.phase-bar {
+  display: none;
+}
 .phase-label {
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-left: 6px;
+  display: none;
 }
 
 
@@ -507,4 +610,13 @@ a:hover { text-decoration: underline; }
   .momentum-banner { flex-direction: column; text-align: center; gap: 8px; }
   .header { flex-wrap: wrap; gap: 8px; }
   .activity-solution { display: none; }
+  .peace-path__label { font-size: 7px; max-width: 60px; }
+  .peace-path__dot { width: 11px; height: 11px; }
+  .peace-path__rail { top: 18px; }
+}
+
+/* ── Accessibility ───────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .peace-path__dot.active { animation: none; }
+  .peace-path__rail-fill { transition: none; }
 }

@@ -168,6 +168,74 @@ document.getElementById('showMoreActivity')?.addEventListener('click', () => {
   }
 });
 
+/* ── Peace Path Progress Track ───────────────────────── */
+function buildPeacePath(solution) {
+  const phases = solution.phases || [];
+  const idx = solution.phaseIndex || 0;
+  const total = phases.length;
+  if (total === 0) return null;
+
+  const pct = Math.round(((idx + 1) / total) * 100);
+
+  const track = document.createElement('div');
+  track.className = 'peace-path';
+
+  // Rail (horizontal line)
+  const rail = document.createElement('div');
+  rail.className = 'peace-path__rail';
+
+  const fill = document.createElement('div');
+  fill.className = 'peace-path__rail-fill';
+  fill.style.width = `${(idx / (total - 1)) * 100}%`;
+
+  const dash = document.createElement('div');
+  dash.className = 'peace-path__rail-dash';
+  dash.style.width = `${(1 - idx / (total - 1)) * 100}%`;
+
+  rail.appendChild(fill);
+  rail.appendChild(dash);
+  track.appendChild(rail);
+
+  // Milestone nodes
+  const nodes = document.createElement('div');
+  nodes.className = 'peace-path__nodes';
+
+  phases.forEach((p, i) => {
+    const node = document.createElement('div');
+    node.className = 'peace-path__node';
+
+    const dot = document.createElement('div');
+    if (i < idx) dot.className = 'peace-path__dot done';
+    else if (i === idx) dot.className = 'peace-path__dot active';
+    else dot.className = 'peace-path__dot future';
+
+    const label = document.createElement('div');
+    label.className = 'peace-path__label';
+    if (i < idx) label.classList.add('done');
+    else if (i === idx) label.classList.add('active');
+    else label.classList.add('future');
+
+    // Truncate long phase names for display
+    const short = p.length > 28 ? p.slice(0, 26) + '…' : p;
+    label.textContent = `${i + 1}. ${short}`;
+    label.title = p; // full name on hover
+
+    node.appendChild(dot);
+    node.appendChild(label);
+    nodes.appendChild(node);
+  });
+
+  track.appendChild(nodes);
+
+  // Percentage badge
+  const pctBadge = document.createElement('div');
+  pctBadge.className = 'peace-path__pct';
+  pctBadge.textContent = `${pct}%`;
+  track.appendChild(pctBadge);
+
+  return track;
+}
+
 /* ── Solution Cards ──────────────────────────────────── */
 function createSolutionCard(solution) {
   const card = document.createElement('div');
@@ -189,24 +257,9 @@ function createSolutionCard(solution) {
     <span class="card-direction ${solution.direction}">${DIRECTION_LABELS[solution.direction] || solution.direction}</span>
   `;
 
-  // Phase bar with hover tooltips
-  const phaseBar = document.createElement('div');
-  phaseBar.className = 'phase-bar';
-  const phases = solution.phases || [];
-  const idx = solution.phaseIndex || 0;
-  phases.forEach((p, i) => {
-    const seg = document.createElement('div');
-    seg.className = 'phase-segment' + (i < idx ? ' filled' : '') + (i === idx ? ' current' : '');
-    seg.title = p;  // hover tooltip
-    phaseBar.appendChild(seg);
-  });
-  const plabel = document.createElement('span');
-  plabel.className = 'phase-label';
-  plabel.textContent = phases[idx] ? `"${phases[idx]}"` : '';
-  phaseBar.appendChild(plabel);
-
+  // Peace Path progress track
   card.appendChild(top);
-  card.appendChild(phaseBar);
+  card.appendChild(buildPeacePath(solution));
 
   // Events list (sorted newest-first)
   const events = (solution.events || []).slice().sort((a, b) => {
@@ -369,6 +422,10 @@ document.getElementById('infoBtn')?.addEventListener('click', (e) => {
       <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#f87171;display:inline-block"></span> <strong>War</strong> — negative/escalating</span>
     </div>
     <p>When the AI is unavailable, articles are classified by keyword matching (lower accuracy).</p>
+
+    <h3>🛤️ Peace Path Progress Track</h3>
+    <p>Each initiative shows a <strong>milestone roadmap</strong> — like a bridge being built. Green dots are completed phases, the pulsing blue dot is the current phase, and faded dots are future milestones yet to reach.</p>
+    <p>The percentage badge shows overall progress. Hover over any milestone to see its full name.</p>
 
     <h3>📊 Phase & Momentum Scoring</h3>
     <p>Each peace initiative has a <strong>phase progression model</strong> (e.g., "Crisis" → "Negotiations" → "Agreement" → "Implementation"). The current phase is determined by the AI based on article content.</p>
