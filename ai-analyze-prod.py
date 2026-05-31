@@ -55,7 +55,7 @@ try:
     from dotenv import load_dotenv
     _env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
     if os.path.exists(_env_path):
-        load_dotenv(_env_path)
+        load_dotenv(_env_path, override=True)
         print(f"  .env loaded from {_env_path}")
 except ImportError:
     pass  # python-dotenv optional
@@ -101,6 +101,7 @@ def load_rss_feeds():
 # ─── Categories (loaded from categories.json) ────────────────────────
 
 CATEGORIES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "categories.json")
+PROMPTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts.json")
 
 
 def load_categories():
@@ -141,6 +142,160 @@ def save_categories(cat_map):
     with open(CATEGORIES_FILE, "w", encoding="utf-8") as f:
         json.dump(cats_list, f, indent=2, ensure_ascii=False)
 
+
+def load_prompts():
+    """Load AI prompts from prompts.json. Returns dict keyed by prompt name.
+    Falls back to hardcoded defaults if file is missing.
+    """
+    if os.path.exists(PROMPTS_FILE):
+        with open(PROMPTS_FILE, "r", encoding="utf-8") as f:
+            prompts = json.load(f)
+        print(f"  📝 Prompts loaded from {PROMPTS_FILE}")
+        return prompts
+    else:
+        return _DEFAULT_PROMPTS
+
+# ─── Hardcoded default prompts (used when prompts.json is absent) ───
+_DEFAULT_PROMPTS = {
+    "taxonomy": {
+        "system": "Middle East news taxonomy designer. Output ONLY valid JSON with keys: categories, assignments. No explanation.",
+        "user": (
+            "You are a Middle East news analyst. Review the articles below and propose"
+            " a taxonomy of categories that best organizes them."
+            "{CORE_BLOCK}"
+            "\n"
+            "RULES:"
+            "\n"
+            "- Propose 6-14 categories total (core + new). No fewer than 4."
+            "\n"
+            "- Each category must have:"
+            "  id (lowercase-hyphen), name (title case),"
+            "  description (one clear sentence), icon (one emoji),"
+            "  phases (5 progressive stages from emergence to resolution),"
+            "  keywords (5-8 relevant search terms)"
+            "\n"
+            "- Categories should reflect the ACTUAL TOPICS in the articles."
+            " Do not force-fit articles into generic buckets."
+            "\n"
+            "- Be specific: 'iran-nuclear' not 'regional'. 'west-bank' not 'palestine'."
+            "\n"
+            "- Phases should be meaningful for the topic (e.g. for conflict:"
+            " 'Escalation' → 'Peak Fighting' → 'Ceasefire Talks' → 'Agreement' → 'Rebuilding')"
+            "\n"
+            "- Keywords should be specific terms that appear in relevant articles."
+            "\n"
+            "- If articles span many countries without a clear theme, use 'regional'."
+            "\n"
+            "- Assign each article (by number) to exactly one category."
+            "\n\n"
+            "Output ONLY a JSON object:"
+            "\n"
+            '{"categories": [{"id": "...", "name": "...", "description": "...", "icon": "...", "phases": [...], "keywords": [...]}], "assignments": {"1": "cat-id", "2": "cat-id"}}'
+            "\n\n"
+            "Articles:"
+            "{ARTICLES_TEXT}"
+        ),
+    },
+    "classifier": {
+        "system": (
+            "You are a precise Middle East news classifier. "
+            "Your task is to analyze the provided news text and output a single, valid JSON object."
+            "\n\n"
+            "CRITICAL RULES:"
+            "\n"
+            "1. Choose the MOST SPECIFIC category from the list below. Do NOT invent new category IDs."
+            "\n"
+            "2. If the article is not about the Middle East, set me_relevant to false."
+            "\n"
+            "3. Output ONLY raw JSON. No explanations, no markdown code blocks."
+            "\n\n"
+            "Valid categories (use ONLY these IDs):\n"
+            "{CATEGORIES_BLOCK}"
+            "\n\nValid IDs: {CATEGORY_IDS}"
+        ),
+    },
+    "article_user": {
+        "user": (
+            "Analyze this specific article and determine its category, sentiment, risk (1-10), and Middle East relevance."
+            "\n\n"
+            "<article>"
+            "\n"
+            "<title>{TITLE}</title>"
+            "\n"
+            "<snippet>{SNIPPET}</snippet>"
+            "{SOURCE_LINE}"
+            "\n"
+            "</article>"
+            "\n\n"
+            "Output exactly in this JSON format:"
+            "\n"
+            '{"me_relevant": true, "category": "<one-of-the-valid-ids>", "sentiment": "positive|negative|neutral", "risk": 5}'
+        ),
+    },
+    "phases": {
+        "system": "Middle East analyst. Output ONLY valid JSON with key 'phases'. No explanation.",
+        "user": (
+            "You are a Middle East peace analyst. For each solution below, determine which phase it is currently in."
+            "\n\n"
+            "Read the recent events and match them to the phase that best describes the current state."
+            "\n\n"
+            "Rules:"
+            "\n"
+            "- If recent events show escalation/violence, the phase should be earlier (crisis/fighting)."
+            "\n"
+            "- If recent events show negotiations/agreements, the phase should advance."
+            "\n"
+            "- Weight RECENT events more than older ones."
+            "\n"
+            "- Be realistic — don't over-advance a phase based on one positive article."
+            "\n\n"
+            "{SOLUTIONS_TEXT}"
+            "\n\n"
+            "Output ONLY a JSON object:"
+            "\n"
+            '{"phases": {"solution-id": 2, "another-id": 0}}'
+        ),
+    },
+    "research": {
+        "system": "Middle East analyst. Output ONLY valid JSON with keys: description, phases, keywords. No explanation.",
+        "user": (
+            "You are a Middle East news analyst. Research and improve the definition of this category.\n\n"
+            "Current category:\n"
+            "  ID: {CATEGORY_ID}\n"
+            "  Name: {CATEGORY_NAME}\n"
+            "  Description: {CATEGORY_DESCRIPTION}\n"
+            "  Current phases: {CATEGORY_PHASES}\n"
+            "  Current keywords: {CATEGORY_KEYWORDS}\n\n"
+            "Here are recent news articles related to this topic:\n"
+            "{ARTICLES_TEXT}\n\n"
+            "TASK:\n"
+            "1. Rewrite the description to be precise and specific (1-2 sentences).\n"
+            "   - Be concrete: mention the actual countries, agreements, or mechanisms.\n"
+            "   - Avoid generic language like 'diplomatic efforts' without specifics.\n\n"
+            "2. Redesign the phases (exactly 5) to reflect the REAL progression of this topic.\n"
+            "   - Each phase should be a specific milestone or stage name.\n"
+            "   - Phases should go from earliest state to final resolution.\n"
+            "   - Make them meaningful and distinct from other categories.\n\n"
+            "3. Suggest 6-10 specific keywords that appear in articles about this topic.\n"
+            "   - Use terms that actually appear in the articles above.\n"
+            "   - Include proper nouns, acronyms, and specific terminology.\n\n"
+            "Output ONLY a JSON object:\n"
+            '{"description": "...", "phases": ["...", "...", "...", "...", "..."], "keywords": ["...", "..."]}'
+        ),
+    },
+    "generate_category": {
+        "system": "You are an expert on Middle East politics and peace initiatives. Generate concise, accurate category metadata.",
+        "user": (
+            "Generate a category definition for a Middle East peace initiative tracker.\n"
+            "The category is about: '{CATEGORY_NAME}'\n\n"
+            "Output exactly this JSON format (no markdown, no extra text):\n"
+            '{"description": "...", "icon": "...emoji...", "phases": ["phase1", "phase2", "phase3", "phase4", "phase5"], "keywords": ["kw1", "kw2", "kw3", "kw4", "kw5"]}'
+        ),
+    },
+}
+
+# ─── Global prompt store ───
+PROMPTS = None
 
 def inject_category(cat_map, cat_id, name, description, icon=None):
     """Inject a custom category. Usage: --categories "id:name:description" """
@@ -333,45 +488,15 @@ def propose_taxonomy(articles, core_cats=None):
             + "\n".join(core_lines)
         )
 
-    prompt = (
-        "You are a Middle East news analyst. Review the articles below and propose"
-        " a taxonomy of categories that best organizes them."
-        f"{core_block}"
-        "\n"
-        "RULES:"
-        "\n"
-        "- Propose 6-14 categories total (core + new). No fewer than 4."
-        "\n"
-        "- Each category must have:"
-        "  id (lowercase-hyphen), name (title case),"
-        "  description (one clear sentence), icon (one emoji),"
-        "  phases (5 progressive stages from emergence to resolution),"
-        "  keywords (5-8 relevant search terms)"
-        "\n"
-        "- Categories should reflect the ACTUAL TOPICS in the articles."
-        " Do not force-fit articles into generic buckets."
-        "\n"
-        "- Be specific: 'iran-nuclear' not 'regional'. 'west-bank' not 'palestine'."
-        "\n"
-        "- Phases should be meaningful for the topic (e.g. for conflict:"
-        " 'Escalation' → 'Peak Fighting' → 'Ceasefire Talks' → 'Agreement' → 'Rebuilding')"
-        "\n"
-        "- Keywords should be specific terms that appear in relevant articles."
-        "\n"
-        "- If articles span many countries without a clear theme, use 'regional'."
-        "\n"
-        "- Assign each article (by number) to exactly one category."
-        "\n\n"
-        "Output ONLY a JSON object:"
-        "\n"
-        '{"categories": [{"id": "...", "name": "...", "description": "...", "icon": "...", "phases": [...], "keywords": [...]}], "assignments": {"1": "cat-id", "2": "cat-id"}}'
-        "\n\n"
-        "Articles:"
-        f"\n{articles_text}"
+    # Build prompt from prompts.json template
+    taxonomy_prompt = PROMPTS["taxonomy"]["user"]
+    prompt = taxonomy_prompt.format(
+        CORE_BLOCK=core_block,
+        ARTICLES_TEXT=articles_text
     )
 
     result = _llm_chat([
-        {"role": "system", "content": "Middle East news taxonomy designer. Output ONLY valid JSON with keys: categories, assignments. No explanation."},
+        {"role": "system", "content": PROMPTS["taxonomy"]["system"]},
         {"role": "user", "content": prompt}
     ], max_tokens=16000, timeout=300)
 
@@ -419,20 +544,9 @@ def _make_classifier_prompt(cat_map, solution_contexts=None):
         lines.append(line)
     block = "\n".join(lines)
     cat_list = ", ".join(cat_ids)
-    return (
-        "You are a precise Middle East news classifier. "
-        "Your task is to analyze the provided news text and output a single, valid JSON object."
-        "\n\n"
-        "CRITICAL RULES:"
-        "\n"
-        "1. Choose the MOST SPECIFIC category from the list below. Do NOT invent new category IDs."
-        "\n"
-        "2. If the article is not about the Middle East, set me_relevant to false."
-        "\n"
-        "3. Output ONLY raw JSON. No explanations, no markdown code blocks."
-        "\n\n"
-        f"Valid categories (use ONLY these IDs):\n{block}"
-        f"\n\nValid IDs: {cat_list}"
+    return PROMPTS["classifier"]["system"].format(
+        CATEGORIES_BLOCK=block,
+        CATEGORY_IDS=cat_list
     ), cat_ids
 
 
@@ -446,21 +560,10 @@ def _classify_article(article, system_prompt, valid_ids):
     # Include source in prompt to help AI distinguish regional coverage
     source_line = f"\n<source>{article['source']}</source>" if article.get("source") else ""
 
-    user_prompt = (
-        "Analyze this specific article and determine its category, sentiment, risk (1-10), and Middle East relevance."
-        "\n\n"
-        "<article>"
-        "\n"
-        f"<title>{article['title']}</title>"
-        "\n"
-        f"<snippet>{context}</snippet>"
-        f"{source_line}"
-        "\n"
-        "</article>"
-        "\n\n"
-        "Output exactly in this JSON format:"
-        "\n"
-        '{"me_relevant": true, "category": "<one-of-the-valid-ids>", "sentiment": "positive|negative|neutral", "risk": 5}'
+    user_prompt = PROMPTS["article_user"]["user"].format(
+        TITLE=article['title'],
+        SNIPPET=context,
+        SOURCE_LINE=source_line
     )
 
     body = {
@@ -483,7 +586,7 @@ def _classify_article(article, system_prompt, valid_ids):
         headers=headers,
     )
     try:
-        with urlopen(req, timeout=60) as f:
+        with urlopen(req, timeout=180) as f:
             response = json.loads(f.read().decode())
     except Exception as e:
         print(f"  AI unavailable: {e}")
@@ -522,13 +625,30 @@ def classify_articles(articles, system_prompt, valid_ids):
     Returns list of (article, {solution, sentiment, risk}) pairs.
     Enforces that category must be one of valid_ids.
     """
-    # Lightweight pre-filter: skip obvious noise before LLM call (saves tokens + time)
-    HARD_EXCLUDE = {
+    # Layer 1: Keyword pre-filter — drop obviously irrelevant articles
+    EXCLUDE_KW = [
         "world cup", "fifa", "afcon", "premier league", "man city", "guardiola",
-        "real estate", "property investment", "fragrance", "bakhoor", "perfume",
+        "champions league", "transfer", "football", "basketball", "soccer",
+        "tennis", "olympics", "marathon", "racing", "formula 1",
+        "fragrance", "bakhoor", "perfume", "fashion week", "runway",
+        "real estate", "property investment", "metro station", "ferry crossing",
+        "housing market", "apartments for sale", "villa",
         "hollywood", "celebrity", "sydney sweeney", "euphoria", "tv show",
-        "secondhand smoke", "smoke in public", "sponsored",
-    }
+        "netflix", "streaming", "movie", "film festival", "award ceremony",
+        "sponsored", "ad", "advertisement", "billboard", "scabies",
+        "secondhand smoke", "smoke in public", "vaccine", "pandemic",
+        "authoritarian transformation", "istanbul", "ferrari",
+        "metro station guide", "ferry crossings",
+    ]
+    ME_OVERRIDE = [
+        "israel", "palestine", "gaza", "iran", "syria", "lebanon", "jordan",
+        "saudi", "uae", "qatar", "yemen", "iraq", "turkey", "egypt",
+        "hezbollah", "hamas", "houthi", "west bank", "doha", "beirut",
+        "tehran", "damascus", "amman", "riyadh", "dubai", "cairo",
+        "abraham accords", "normalization", "mideast", "middle east",
+        "ceasefire", "cease-fire", "un", "security council",
+        "operation roaring lion", "strait of hormuz",
+    ]
     print(f"\U0001f916 Classifying {len(articles)} articles via llama.cpp (1-by-1) [{len(valid_ids)} categories]...")
     pairs = []  # list of (article, classification)
     relevant = 0
@@ -538,9 +658,10 @@ def classify_articles(articles, system_prompt, valid_ids):
     ai_refusals = 0
 
     for idx, article in enumerate(articles):
-        # Pre-filter: skip obvious noise
-        lower_title = article["title"].lower()
-        if any(w in lower_title for w in HARD_EXCLUDE):
+        # Layer 1: Pre-filter — skip obviously irrelevant articles
+        text = f"{article['title']} {article.get('snippet', '')}".lower()
+        excluded = any(kw in text for kw in EXCLUDE_KW)
+        if excluded and not any(kw in text for kw in ME_OVERRIDE):
             pre_filtered += 1
             continue
 
@@ -567,6 +688,10 @@ def classify_articles(articles, system_prompt, valid_ids):
                 # AI unreachable — abort
                 print(f"  \u26a0\ufe0f AI unreachable after {ai_failures} failures. Aborting classification.")
                 break
+            # If retry also failed, skip this article
+            if result is None:
+                dropped += 1
+                continue
 
         if result.get("me_relevant"):
             # Enforce: category must be one of the known valid IDs
@@ -659,30 +784,7 @@ def compute_direction(events):
     return "stable"
 
 
-def compute_phase(events):
-    """Heuristic phase computation (used as fallback when AI is unavailable)."""
-    if not events:
-        return 0
-    total = len(events)
-    now_ts = datetime.now(timezone.utc).timestamp()
-
-    w_pos, w_total = 0, 0
-    for e in events:
-        age = now_ts - parse_date(e["date"]).timestamp()
-        weight = 2 if age < 48 * 3600 else 1
-        w_total += weight
-        if e["sentiment"] == "positive":
-            w_pos += weight
-
-    ratio = w_pos / w_total if w_total > 0 else 0
-    phase = min(4, int(ratio * 5))
-    neg = sum(1 for e in events if e["sentiment"] == "negative")
-    if neg / total > 0.6:
-        phase = min(phase, 1)
-    return phase
-
-
-def _llm_chat(messages, max_tokens=4000, temperature=0.0, timeout=60):
+def _llm_chat(messages, max_tokens=4000, temperature=0.0, timeout=180):
     """Generic LLM chat call. Returns parsed JSON or None on failure."""
     body = {
         "model": AI_MODEL,
@@ -755,32 +857,14 @@ def determine_phases_ai(solution_events, cat_map):
 
     solutions_text = "\n\n".join(blocks)
 
-    prompt = (
-        "You are a Middle East peace analyst. For each solution below, determine which phase it is currently in."
-        "\n\n"
-        "Read the recent events and match them to the phase that best describes the current state."
-        "\n\n"
-        "Rules:"
-        "\n"
-        "- If recent events show escalation/violence, the phase should be earlier (crisis/fighting)."
-        "\n"
-        "- If recent events show negotiations/agreements, the phase should advance."
-        "\n"
-        "- Weight RECENT events more than older ones."
-        "\n"
-        "- Be realistic — don't over-advance a phase based on one positive article."
-        "\n\n"
-        f"{solutions_text}"
-        "\n\n"
-        "Output ONLY a JSON object:"
-        "\n"
-        '{"phases": {"solution-id": 2, "another-id": 0}}'  # phase index (0-based)
+    prompt = PROMPTS["phases"]["user"].format(
+        SOLUTIONS_TEXT=solutions_text
     )
 
     result = _llm_chat([
-        {"role": "system", "content": "Middle East analyst. Output ONLY valid JSON with key 'phases'. No explanation."},
+        {"role": "system", "content": PROMPTS["phases"]["system"]},
         {"role": "user", "content": prompt}
-    ], max_tokens=4000, timeout=60)
+    ], max_tokens=4000, timeout=180)
 
     if result and "phases" in result:
         return result["phases"]
@@ -801,36 +885,19 @@ def research_category(cat, articles):
         sample.append(a["title"])
     articles_text = "\n".join(f"  - {t}" for t in sample)
 
-    prompt = (
-        f"You are a Middle East news analyst. Research and improve the definition of this category.\n\n"
-        f"Current category:\n"
-        f"  ID: {cat['id']}\n"
-        f"  Name: {cat['name']}\n"
-        f"  Description: {cat.get('description', 'N/A')}\n"
-        f"  Current phases: {', '.join(cat.get('phases', []))}\n"
-        f"  Current keywords: {', '.join(cat.get('keywords', []))}\n\n"
-        f"Here are recent news articles related to this topic:\n{articles_text}\n\n"
-        f"TASK:\n"
-        f"1. Rewrite the description to be precise and specific (1-2 sentences).\n"
-        f"   - Be concrete: mention the actual countries, agreements, or mechanisms.\n"
-        f"   - Avoid generic language like 'diplomatic efforts' without specifics.\n"
-        f"\n"
-        f"2. Redesign the phases (exactly 5) to reflect the REAL progression of this topic.\n"
-        f"   - Each phase should be a specific milestone or stage name.\n"
-        f"   - Phases should go from earliest state to final resolution.\n"
-        f"   - Make them meaningful and distinct from other categories.\n"
-        f"\n"
-        f"3. Suggest 6-10 specific keywords that appear in articles about this topic.\n"
-        f"   - Use terms that actually appear in the articles above.\n"
-        f"   - Include proper nouns, acronyms, and specific terminology.\n\n"
-        f"Output ONLY a JSON object:\n"
-        f'{{"description": "...", "phases": ["...", "...", "...", "...", "..."], "keywords": ["...", "..."]}}'  
+    prompt = PROMPTS["research"]["user"].format(
+        CATEGORY_ID=cat['id'],
+        CATEGORY_NAME=cat['name'],
+        CATEGORY_DESCRIPTION=cat.get('description', 'N/A'),
+        CATEGORY_PHASES=', '.join(cat.get('phases', [])),
+        CATEGORY_KEYWORDS=', '.join(cat.get('keywords', [])),
+        ARTICLES_TEXT=articles_text
     )
 
     result = _llm_chat([
-        {"role": "system", "content": "Middle East analyst. Output ONLY valid JSON with keys: description, phases, keywords. No explanation."},
+        {"role": "system", "content": PROMPTS["research"]["system"]},
         {"role": "user", "content": prompt}
-    ], max_tokens=2000, timeout=60)
+    ], max_tokens=2000, timeout=180)
 
     return result
 
@@ -918,7 +985,7 @@ def build_output(articles, classifications, cat_map):
             continue
         active_solutions.append(sol_id)
         direction = compute_direction(events)
-        phase_index = compute_phase(events)
+        phase_index = 0  # placeholder — set by AI later
         counts[direction] += 1
 
         cat = cat_map.get(sol_id)
@@ -1083,11 +1150,11 @@ def _merge_with_existing(data, existing, ai_phases=None):
     # Recompute for all solutions — compute on ALL events, exclude summary from stored events
     for sol in existing["solutions"]:
         sol["events"].sort(key=lambda e: e["date"], reverse=True)
-        # Use AI-determined phase if available, else heuristic
+        # Use AI-determined phase if available, else default to 0
         if ai_phases and sol["id"] in ai_phases:
             sol["phaseIndex"] = min(ai_phases[sol["id"]], len(sol["phases"]) - 1)
         else:
-            sol["phaseIndex"] = compute_phase(sol["events"])
+            sol["phaseIndex"] = 0
         sol["direction"] = compute_direction(sol["events"])
         sol["keyMetric"] = {"label": "Events (7d)", "value": str(len(sol["events"]))}
         sol["summary"] = sol["events"][0]["text"] if sol["events"] else ""
@@ -1166,6 +1233,10 @@ def main():
     # Load categories from categories.json (source of truth)
     cat_map, all_ids, core_ids, all_kws = load_categories()
     print(f"\U0001f4c5 Loaded {len(all_ids)} categories ({len(core_ids)} core) from categories.json")
+
+    # Load AI prompts (from prompts.json or hardcoded defaults)
+    global PROMPTS
+    PROMPTS = load_prompts()
 
     if args.use_taxonomy:
         print("  \u26a0 --use-taxonomy is deprecated. Categories are now in categories.json.")
