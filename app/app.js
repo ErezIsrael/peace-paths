@@ -401,7 +401,7 @@ function buildLayeredCard(solution) {
   header.className = 'lc-header';
   const kv = solution.keyMetric || {};
   const n = solution.narrative || {};
-  const eventsCount = (solution.events || []).length;
+  const eventsCount = (solution.events || []).length || (n.keyEvents || []).length + (n.keyOpinions || []).length;
   const solutionName = getLangText(solution.name) || solution.name;
   const dirLabel = getDirectionLabel(solution.direction);
   header.innerHTML = `
