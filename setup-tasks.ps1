@@ -1,61 +1,68 @@
-# Remove old task (best effort)
-try {
-    Unregister-ScheduledTask -TaskName "PeaceRoom-AutoDeploy" -Confirm:$false
-    Write-Host "Removed: PeaceRoom-AutoDeploy"
-} catch {
-    Write-Host "Could not remove old task (may need admin): PeaceRoom-AutoDeploy"
-}
+# Register scheduled tasks for Peace Paths auto-updates
+# Runs from project root, using the production pipeline
 
-# Fast hourly update — runs every 1 hour, repeats for 30 days
-$fastAction = New-ScheduledTaskAction `
-    -Execute "C:\Users\Erez\.pi\agent\projects\peace-paths\auto-fast-update.bat" `
-    -WorkingDirectory "C:\Users\Erez\.pi\agent\projects\peace-paths"
+$projectRoot = "C:\Users\Erez\.pi\agent\projects\peace-paths"
+$python = "C:\ProgramData\anaconda3\python.exe"
 
-$fastTrigger = New-ScheduledTaskTrigger `
+# ── Fast update (every hour, no end) ──
+$actionFast = New-ScheduledTaskAction `
+    -Execute $python `
+    -Argument "ai-analyze-prod.py --fast" `
+    -WorkingDirectory $projectRoot
+
+$triggerFast = New-ScheduledTaskTrigger `
     -Once `
     -At (Get-Date) `
-    -RepetitionInterval (New-TimeSpan -Hours 1) `
-    -RepetitionDuration (New-TimeSpan -Days 30)
+    -RepetitionInterval (New-TimeSpan -Hours 1)
 
-$fastSettings = New-ScheduledTaskSettingsSet `
+$settingsFast = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
     -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable `
-    -RunOnlyIfNetworkAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Hours 2) `
-    -RestartCount 0
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
 
 Register-ScheduledTask `
     -TaskName "PeacePaths-FastUpdate" `
-    -Action $fastAction `
-    -Trigger $fastTrigger `
-    -Settings $fastSettings `
-    -Description "Peace Paths: Fast hourly AI update (last 2h window, upload to KV)"
+    -Action $actionFast `
+    -Trigger $triggerFast `
+    -Settings $settingsFast `
+    -Description "Hourly fast AI analysis (last 2h) + KV upload" `
+    -User $env:USERNAME `
+    -Force
 
-Write-Host "Created: PeacePaths-FastUpdate (hourly)"
+# ── Daily update (2:00 AM) ──
+$actionDaily = New-ScheduledTaskAction `
+    -Execute $python `
+    -Argument "ai-analyze-prod.py --daily" `
+    -WorkingDirectory $projectRoot
 
-# Daily full update — runs at 2 AM each day
-$dailyAction = New-ScheduledTaskAction `
-    -Execute "C:\Users\Erez\.pi\agent\projects\peace-paths\auto-daily-update.bat" `
-    -WorkingDirectory "C:\Users\Erez\.pi\agent\projects\peace-paths"
-
-$dailyTrigger = New-ScheduledTaskTrigger `
+$triggerDaily = New-ScheduledTaskTrigger `
     -Daily `
     -At "2:00AM"
 
-$dailySettings = New-ScheduledTaskSettingsSet `
+$settingsDaily = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
     -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable `
-    -RunOnlyIfNetworkAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Hours 4) `
-    -RestartCount 0
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
 
 Register-ScheduledTask `
     -TaskName "PeacePaths-DailyUpdate" `
-    -Action $dailyAction `
-    -Trigger $dailyTrigger `
-    -Settings $dailySettings `
-    -Description "Peace Paths: Daily full AI update (7-day window, upload to KV)"
+    -Action $actionDaily `
+    -Trigger $triggerDaily `
+    -Settings $settingsDaily `
+    -Description "Daily full AI analysis (7-day window) + KV upload" `
+    -User $env:USERNAME `
+    -Force
 
-Write-Host "Created: PeacePaths-DailyUpdate (daily at 2 AM)"
+# ── Remove old task (best effort) ──
+try {
+    Unregister-ScheduledTask -TaskName "PeaceRoom-AutoDeploy" -Confirm:$false
+    Write-Host "Removed old task: PeaceRoom-AutoDeploy"
+} catch {
+    Write-Host "Old task not found or permission denied (ok)"
+}
+
+Write-Host "`nTasks registered:"
+Get-ScheduledTask | Where-Object {$_.TaskName -match 'PeacePaths'} | Format-Table TaskName, State
+Write-Host "`nNext run times:"
+Get-ScheduledTaskInfo -TaskName 'PeacePaths-FastUpdate' | Select-Object -ExpandProperty NextRunTime
+Get-ScheduledTaskInfo -TaskName 'PeacePaths-DailyUpdate' | Select-Object -ExpandProperty NextRunTime

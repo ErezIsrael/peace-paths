@@ -1,28 +1,38 @@
 #!/usr/bin/env python3
 """
-Peace Room AI Analyzer — Production
-====================================
+Peace Paths AI Analyzer — Production (Narrative Pipeline)
+==========================================================
 
 Pipeline:
   [Raw RSS Feed] -> [Extract 1200 chars] -> [Single-article LLM inference]
-                                                      |
-                                        [me_relevant:true]    [me_relevant:false]
-                                              |                       |
-                                      [classify category]     [silently drop]
+                                                        |
+                                          [me_relevant:true]    [me_relevant:false]
+                                                |                       |
+                                        [classify category]     [silently drop]
+                                        + type, signal_score    |
+                                        + source_weight         |
+                                                |
+                                      [Event Clustering]
+                                                |
+                                      [Solution Narrative]
+                                                |
+                                      [Shift Detection]
+                                                |
+                                          [data.json -> KV]
 
 Modes:
   --fast   — Hourly: fetch recent articles (last 2h), merge into existing solutions.json
   --daily  — Daily: full fetch (7-day window), overwrite solutions.json
+  --narrative — Force narrative rewrite (overrides auto-trigger)
   (default) — Same as --daily
 
 Flags:
-  --deploy — After analysis, deploy to Cloudflare Pages via wrangler
-  --skip-upload — Skip Cloudflare API upload (use --deploy instead)
-
-Run: python ai-analyze-prod.py
-Run: python ai-analyze-prod.py --fast
-Run: python ai-analyze-prod.py --daily --deploy
-Run: python ai-analyze-prod.py --categories "id:name:description"
+  --skip-upload — Skip Cloudflare API upload
+  --dry-run — Print output JSON to stdout
+  --fetch-only — Only fetch RSS, skip AI (keyword fallback)
+  --review-taxonomy — Phase 1 only: propose taxonomy
+  --research-categories — Research each category
+  --apply-research — Apply research results to categories.json
 
 Schedule: --fast every hour; --daily every 12h
 """
@@ -53,80 +63,89 @@ if sys.platform == "win32":
 # ─── Load .env ──────────────────────────────────────────────────────
 try:
     from dotenv import load_dotenv
-    _env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    # Try script dir first, then project root (parent of dev-environment)
+    _script_dir = os.path.dirname(os.path.abspath(__file__))
+    _env_path = os.path.join(_script_dir, ".env")
+    if not os.path.exists(_env_path):
+        _env_path = os.path.join(os.path.dirname(_script_dir), ".env")
     if os.path.exists(_env_path):
         load_dotenv(_env_path, override=True)
         print(f"  .env loaded from {_env_path}")
 except ImportError:
-    pass  # python-dotenv optional
+    pass
 
 # ─── Version ─────────────────────────────────────────────────────────
-SCRIPT_VERSION = "1.0.0"
+SCRIPT_VERSION = "2.0.0-narrative"
+
+# ─── Paths ───────────────────────────────────────────────────────────
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT = _SCRIPT_DIR  # Root pipeline lives in project root
 
 # ─── Configuration ───────────────────────────────────────────────────
 
-LLAMA_CPP_URL = os.environ.get("LLAMA_CPP_URL", "http://localhost:8080")  # set in .env — not hardcoded
-LLAMA_API_KEY = os.getenv("LLAMA_API_KEY", "")  # optional
+LLAMA_CPP_URL = os.environ.get("LLAMA_CPP_URL", "http://localhost:8080")
+LLAMA_API_KEY = os.getenv("LLAMA_API_KEY", "")
 
 CLOUDFLARE_PAGES_PROJECT = "peace-paths"
 CLOUDFLARE_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN", "")
 AI_MODEL = os.getenv("AI_MODEL", "Qwen3.6-27B")
 CLOUDFLARE_ACCOUNT = os.getenv("CLOUDFLARE_ACCOUNT_ID", "")
 
-# Output — write to local file, then push to Cloudflare
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app")
 DATA_FILE = os.path.join(DATA_DIR, "solutions.json")
+DATA_JSON_FILE = os.path.join(DATA_DIR, "data.json")
 TAXONOMY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "taxonomy.json")
+STAGING_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "staging")
+os.makedirs(STAGING_DIR, exist_ok=True)
 
 MAX_ARTICLES_PER_FEED = 8
 MAX_AGE_DAYS = 7
-FAST_AGE_HOURS = 2  # --fast: only articles from last N hours
+FAST_AGE_HOURS = 2
 
-# ─── RSS Feeds (loaded from rss-feeds.json) ─────────────────────────
+# ─── RSS Feeds ───────────────────────────────────────────────────────
 
-RSS_FEEDS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rss-feeds.json")
-
+RSS_FEEDS_FILE = os.path.join(_PROJECT_ROOT, "rss-feeds.json")
 
 def load_rss_feeds():
-    """Load RSS feeds from rss-feeds.json.
-    Returns list of (name, url, type) tuples.
-    """
     if not os.path.exists(RSS_FEEDS_FILE):
-        print(f"❌ {RSS_FEEDS_FILE} not found. Copy rss-feeds.example.json to rss-feeds.json.")
+        print(f"❌ {RSS_FEEDS_FILE} not found.")
         sys.exit(1)
     with open(RSS_FEEDS_FILE, "r", encoding="utf-8") as f:
-        feeds = json.load(f)
-    return feeds
+        return json.load(f)
 
-# ─── Categories (loaded from categories.json) ────────────────────────
+# ─── Categories, Prompts, Source Profiles, Stakeholders ─────────────
 
 CATEGORIES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "categories.json")
 PROMPTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts.json")
-STAKEHOLDERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stakeholders.json")
+SOURCE_PROFILES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "source-profiles.json")
+STAKEHOLDERS_FILE = os.path.join(_PROJECT_ROOT, "stakeholders.json")
 
 
 def load_stakeholders():
-    """Load stakeholder contacts from stakeholders.json."""
     if not os.path.exists(STAKEHOLDERS_FILE):
         return {}
     with open(STAKEHOLDERS_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
+def load_source_profiles():
+    """Load source bias profiles from source-profiles.json."""
+    if not os.path.exists(SOURCE_PROFILES_FILE):
+        print(f"  ⚠ {SOURCE_PROFILES_FILE} not found. Using defaults.")
+        return {}
+    with open(SOURCE_PROFILES_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
 def load_categories():
-    """Load categories from categories.json.
-    Returns (categories_dict, all_ids, core_ids, all_kws).
-    """
     if not os.path.exists(CATEGORIES_FILE):
-        print(f"\u274c {CATEGORIES_FILE} not found. Run admin to configure categories.")
+        print(f"❌ {CATEGORIES_FILE} not found.")
         sys.exit(1)
     with open(CATEGORIES_FILE, "r", encoding="utf-8") as f:
         cats = json.load(f)
-    # Build dict {id: category_obj}
     cat_map = {c["id"]: c for c in cats}
     all_ids = list(cat_map.keys())
     core_ids = [c["id"] for c in cats if c.get("core", False)]
-    # Build keyword map for fallback classifier
     all_kws = {}
     for c in cats:
         kws = c.get("keywords", [])
@@ -136,12 +155,11 @@ def load_categories():
 
 
 def save_categories(cat_map):
-    """Save categories dict back to categories.json."""
     cats_list = []
     for c in cat_map.values():
         cats_list.append({
             "id": c["id"],
-            "icon": c.get("icon", "\U0001f4cc"),
+            "icon": c.get("icon", "📌"),
             "name": c["name"],
             "description": c.get("description", ""),
             "phases": c.get("phases", []),
@@ -152,48 +170,7 @@ def save_categories(cat_map):
         json.dump(cats_list, f, indent=2, ensure_ascii=False)
 
 
-def translate_phases(cat_map):
-    """Translate all category phases to {en, he, ar} objects via LLM."""
-    all_phases = []
-    for c in cat_map.values():
-        phases = c.get("phases", [])
-        if phases:
-            all_phases.append({"id": c["id"], "name": c["name"], "phases": phases})
-    if not all_phases:
-        return
-
-    # Build prompt: list all categories with their phases
-    lines = []
-    for item in all_phases:
-        phase_list = "\n".join(f"    {i+1}. {p}" for i, p in enumerate(item["phases"]))
-        lines.append(f"Category: {item['name']}\nPhases:\n{phase_list}")
-    prompt_text = "\n\n".join(lines)
-
-    try:
-        result = _llm_chat([
-            {"role": "system", "content": "Translator. Output ONLY valid JSON. No explanation."},
-            {"role": "user", "content": (
-                "Translate each phase name into Hebrew (he) and Arabic (ar).\n"
-                "Keep the English (en) as-is.\n"
-                "Output format:\n"
-                '{"translations": {"category-id": [{"en": "...", "he": "...", "ar": "..."}, ...]}}\n\n'
-                f"Here are the categories and their phases:\n\n{prompt_text}"
-            )},
-        ])
-        translated = json.loads(result)
-        for item in all_phases:
-            cid = item["id"]
-            if cid in translated.get("translations", {}):
-                cat_map[cid]["phases"] = translated["translations"][cid]
-                print(f"  \u2713 Translated phases for {item['name']}")
-    except Exception as e:
-        print(f"  \u26a0 Phase translation failed: {e}. Using English phases.")
-
-
 def load_prompts():
-    """Load AI prompts from prompts.json. Returns dict keyed by prompt name.
-    Falls back to hardcoded defaults if file is missing.
-    """
     if os.path.exists(PROMPTS_FILE):
         with open(PROMPTS_FILE, "r", encoding="utf-8") as f:
             prompts = json.load(f)
@@ -202,7 +179,7 @@ def load_prompts():
     else:
         return _DEFAULT_PROMPTS
 
-# ─── Hardcoded default prompts (used when prompts.json is absent) ───
+# ─── Hardcoded default prompts ───
 _DEFAULT_PROMPTS = {
     "taxonomy": {
         "system": "Middle East news taxonomy designer. Output ONLY valid JSON with keys: categories, assignments. No explanation.",
@@ -210,135 +187,96 @@ _DEFAULT_PROMPTS = {
             "You are a Middle East news analyst. Review the articles below and propose"
             " a taxonomy of categories that best organizes them."
             "{CORE_BLOCK}"
-            "\n"
-            "RULES:"
-            "\n"
-            "- Propose 6-14 categories total (core + new). No fewer than 4."
-            "\n"
-            "- Each category must have:"
-            "  id (lowercase-hyphen), name (title case),"
-            "  description (one clear sentence), icon (one emoji),"
-            "  phases (5 progressive stages from emergence to resolution),"
-            "  keywords (5-8 relevant search terms)"
-            "\n"
-            "- Categories should reflect the ACTUAL TOPICS in the articles."
-            " Do not force-fit articles into generic buckets."
-            "\n"
-            "- Be specific: 'iran-nuclear' not 'regional'. 'west-bank' not 'palestine'."
-            "\n"
-            "- Phases should be meaningful for the topic (e.g. for conflict:"
-            " 'Escalation' → 'Peak Fighting' → 'Ceasefire Talks' → 'Agreement' → 'Rebuilding')"
-            "\n"
-            "- Keywords should be specific terms that appear in relevant articles."
-            "\n"
-            "- If articles span many countries without a clear theme, use 'regional'."
-            "\n"
-            "- Assign each article (by number) to exactly one category."
-            "\n\n"
-            "Output ONLY a JSON object:"
-            "\n"
-            '{"categories": [{"id": "...", "name": "...", "description": "...", "icon": "...", "phases": [...], "keywords": [...]}], "assignments": {"1": "cat-id", "2": "cat-id"}}'
-            "\n\n"
-            "Articles:"
-            "{ARTICLES_TEXT}"
+            "\nRULES:\n- Propose 6-14 categories total. No fewer than 4.\n"
+            "- Each category: id, name, description, icon, phases (5), keywords (5-8)\n"
+            "- Be specific. Assign each article to exactly one category.\n\n"
+            "Output ONLY JSON:\n"
+            '{"categories": [...], "assignments": {"1": "cat-id"}}\n\n'
+            "Articles:\n{ARTICLES_TEXT}"
         ),
     },
     "classifier": {
         "system": (
-            "You are a precise Middle East news classifier. "
-            "Your task is to analyze the provided news text and output a single, valid JSON object."
-            "\n\n"
-            "CRITICAL RULES:"
-            "\n"
-            "1. Choose the MOST SPECIFIC category from the list below. Do NOT invent new category IDs."
-            "\n"
-            "2. If the article is not about the Middle East, set me_relevant to false."
-            "\n"
-            "3. Output ONLY raw JSON. No explanations, no markdown code blocks."
-            "\n\n"
-            "Valid categories (use ONLY these IDs):\n"
-            "{CATEGORIES_BLOCK}"
-            "\n\nValid IDs: {CATEGORY_IDS}"
+            "NEWS CLASSIFIER — Middle East peace initiatives.\n"
+            "Output format: single JSON object (or JSON array for batch). No text outside JSON.\n\n"
+            "CATEGORIES:\n{CATEGORIES_BLOCK}\n\n"
+            "DECISION LOGIC:\n"
+            "- me_relevant: true if article relates to any listed category\n"
+            "- category: exact ID from list above. null if me_relevant=false\n"
+            "- sentiment: positive | negative | neutral\n"
+            "- type: reporting | analysis | opinion\n"
+            "- signal_score: integer 1-10\n\n"
+            "CRITICAL RULES:\n"
+            "1. Hezbollah/Lebanon articles are NOT about Gaza.\n"
+            "2. Gaza in passing while about Lebanon → use Lebanon or me_relevant=false.\n"
+            "3. Choose the MOST SPECIFIC matching category.\n"
+            "4. Do NOT invent new category IDs.\n\n"
+            "Valid IDs: {CATEGORY_IDS}"
         ),
     },
     "article_user": {
         "user": (
-            "Analyze this specific article and determine its category, sentiment, risk (1-10), and Middle East relevance."
-            "\n\n"
-            "<article>"
-            "\n"
-            "<title>{TITLE}</title>"
-            "\n"
-            "<snippet>{SNIPPET}</snippet>"
-            "{SOURCE_LINE}"
-            "\n"
-            "</article>"
-            "\n\n"
-            "Also translate the article title into English (en), Hebrew (he), and Arabic (ar). Keep it concise — just the title, not a summary."
-            "\n\n"
-            "Output exactly in this JSON format:"
-            "\n"
-            '{"me_relevant": true, "category": "<one-of-the-valid-ids>", "sentiment": "positive|negative|neutral", "risk": 5, "text": {"en": "...", "he": "...", "ar": "..."}}'
+            "[TASK] Classify article\n"
+            "[TITLE] {TITLE}\n"
+            "[SNIPPET] {SNIPPET}\n"
+            "[SOURCE] {SOURCE}\n"
+            "[PROFILE] {SOURCE_PROFILE}\n\n"
+            '[OUTPUT]\n{"me_relevant": bool, "category": "id|null", "sentiment": "str", "type": "str", "signal_score": int}'
+        ),
+    },
+    "batch_user": {
+        "user": (
+            "Classify these {BATCH_SIZE} articles.\n\n"
+            "{ARTICLES_TEXT}\n\n"
+            "For EACH: me_relevant, category, sentiment, type, signal_score.\n"
+            "Use ONLY these category IDs: {CATEGORY_IDS}\n"
+            "Output JSON array in SAME ORDER. No article_num field."
         ),
     },
     "phases": {
-        "system": "Middle East analyst. Output ONLY valid JSON with key 'phases'. No explanation.",
+        "system": "Middle East analyst. Output ONLY valid JSON with key 'phases'.",
         "user": (
-            "You are a Middle East peace analyst. For each solution below, determine which phase it is currently in."
-            "\n\n"
-            "Read the recent events and match them to the phase that best describes the current state."
-            "\n\n"
-            "Rules:"
-            "\n"
-            "- If recent events show escalation/violence, the phase should be earlier (crisis/fighting)."
-            "\n"
-            "- If recent events show negotiations/agreements, the phase should advance."
-            "\n"
-            "- Weight RECENT events more than older ones."
-            "\n"
-            "- Be realistic — don't over-advance a phase based on one positive article."
-            "\n\n"
-            "{SOLUTIONS_TEXT}"
-            "\n\n"
-            "Output ONLY a JSON object:"
-            "\n"
-            '{"phases": {"solution-id": 2, "another-id": 0}}'
+            "Determine current phase for each solution.\n\n"
+            "Rules: completed phases → pick next. Violence = stalled, not regressed.\n"
+            "Weight recent events. Be realistic.\n\n{SOLUTIONS_TEXT}\n\n"
+            'Output: {"phases": {"solution-id": 2}}'
+        ),
+    },
+    "narrative": {
+        "system": "Middle East peace analyst. Generate layered trilingual narrative. Output ONLY valid JSON.",
+        "user": (
+            "Generate layered narrative for: {SOLUTION_NAME}\n"
+            "Phase: {CURRENT_PHASE} (index {PHASE_INDEX}/{PHASE_COUNT})\n"
+            "Direction: {DIRECTION}\n\n"
+            "Clustered events (by effective_signal):\n{EVENTS_TEXT}\n\n"
+            "Previous longTerm: {PREV_LONG_TERM}\n"
+            "Previous shifts: {PREV_SHIFTS}\n\n"
+            "Generate JSON with en/he/ar translations:\n"
+            '{"longTerm": {"en":"...","he":"...","ar":"..."}, "weeklyHighlight": {...},\n'
+            ' "keyEvents": [...], "keyOpinions": [...], "shifts": [...]}\n\n'
+            "longTerm: 2-4 sentences, macro arc. Only change if fundamentally shifted.\n"
+            "weeklyHighlight: 1-2 sentences, what happened this period.\n"
+            "keyEvents: Top 3-5 reporting/analysis by effective_signal.\n"
+            "keyOpinions: Top 2-3 opinion pieces.\n"
+            "shifts: Narrative-changing events this period.\n"
+            "Translate ALL text to en, he, ar. Use effective_signal to prioritize."
         ),
     },
     "research": {
-        "system": "Middle East analyst. Output ONLY valid JSON with keys: description, phases, keywords. No explanation.",
+        "system": "Middle East analyst. Output ONLY valid JSON with keys: description, phases, keywords.",
         "user": (
-            "You are a Middle East news analyst. Research and improve the definition of this category.\n\n"
-            "Current category:\n"
-            "  ID: {CATEGORY_ID}\n"
-            "  Name: {CATEGORY_NAME}\n"
-            "  Description: {CATEGORY_DESCRIPTION}\n"
-            "  Current phases: {CATEGORY_PHASES}\n"
-            "  Current keywords: {CATEGORY_KEYWORDS}\n\n"
-            "Here are recent news articles related to this topic:\n"
-            "{ARTICLES_TEXT}\n\n"
-            "TASK:\n"
-            "1. Rewrite the description to be precise and specific (1-2 sentences).\n"
-            "   - Be concrete: mention the actual countries, agreements, or mechanisms.\n"
-            "   - Avoid generic language like 'diplomatic efforts' without specifics.\n\n"
-            "2. Redesign the phases (exactly 5) to reflect the REAL progression of this topic.\n"
-            "   - Each phase should be a specific milestone or stage name.\n"
-            "   - Phases should go from earliest state to final resolution.\n"
-            "   - Make them meaningful and distinct from other categories.\n\n"
-            "3. Suggest 6-10 specific keywords that appear in articles about this topic.\n"
-            "   - Use terms that actually appear in the articles above.\n"
-            "   - Include proper nouns, acronyms, and specific terminology.\n\n"
-            "Output ONLY a JSON object:\n"
-            '{"description": "...", "phases": ["...", "...", "...", "...", "..."], "keywords": ["...", "..."]}'
+            "Research and improve category: {CATEGORY_ID} ({CATEGORY_NAME})\n"
+            "Description: {CATEGORY_DESCRIPTION}\nPhases: {CATEGORY_PHASES}\nKeywords: {CATEGORY_KEYWORDS}\n\n"
+            "Articles:\n{ARTICLES_TEXT}\n\n"
+            "Rewrite description, redesign 5 phases, suggest 6-10 keywords.\n"
+            'Output: {"description": "...", "phases": [...], "keywords": [...]}'
         ),
     },
     "generate_category": {
-        "system": "You are an expert on Middle East politics and peace initiatives. Generate concise, accurate category metadata.",
+        "system": "Expert on ME politics. Generate category metadata.",
         "user": (
-            "Generate a category definition for a Middle East peace initiative tracker.\n"
-            "The category is about: '{CATEGORY_NAME}'\n\n"
-            "Output exactly this JSON format (no markdown, no extra text):\n"
-            '{"description": "...", "icon": "...emoji...", "phases": ["phase1", "phase2", "phase3", "phase4", "phase5"], "keywords": ["kw1", "kw2", "kw3", "kw4", "kw5"]}'
+            "Category about: '{CATEGORY_NAME}'\n"
+            'Output: {"description": "...", "icon": "...", "phases": [...], "keywords": [...]}'
         ),
     },
 }
@@ -346,52 +284,74 @@ _DEFAULT_PROMPTS = {
 # ─── Global prompt store ───
 PROMPTS = None
 
+
 def inject_category(cat_map, cat_id, name, description, icon=None):
-    """Inject a custom category. Usage: --categories "id:name:description" """
     if cat_id in cat_map:
-        print(f"  \u26a0 Category '{cat_id}' already exists, updating description.")
         cat_map[cat_id]["description"] = description
     else:
         cat_map[cat_id] = {
-            "id": cat_id,
-            "icon": icon or "\U0001f4cc",
-            "name": name,
+            "id": cat_id, "icon": icon or "📌", "name": name,
             "phases": ["Emerged", "Developing", "Gaining Traction", "Maturing", "Resolved"],
-            "description": description,
-            "keywords": [],
-            "core": False,
+            "description": description, "keywords": [], "core": False,
         }
-    print(f"  \u2713 Category '{cat_id}' ({name})")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Date Parsing
+# ═══════════════════════════════════════════════════════════════════════
+
+def _parse_rss_date(date_str):
+    """Parse RSS date in any common format → ISO 8601 string.
+    Handles: RFC 822 (Tue, 02 Jun 2026 21:44:08 +0000), ISO 8601, and fallback."""
+    if not date_str:
+        return None
+    # Try ISO 8601
+    try:
+        dt = datetime.fromisoformat(date_str)
+        return dt.isoformat()
+    except (ValueError, TypeError):
+        pass
+    # Try RFC 822 (emailutils.parsedate_to_datetime handles +0000, GMT, etc.)
+    try:
+        dt = parsedate_to_datetime(date_str)
+        return dt.isoformat()
+    except Exception:
+        pass
+    # Try common patterns: "Jun 2, 2026", "02/06/2026", etc.
+    from datetime import datetime as _dt
+    for fmt in ("%b %d, %Y", "%d/%m/%Y", "%m/%d/%Y", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            dt = _dt.strptime(date_str.strip(), fmt)
+            dt = dt.replace(tzinfo=timezone.utc)
+            return dt.isoformat()
+        except ValueError:
+            pass
+    # Give up — return None so caller knows date is unknown
+    return None
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # RSS Fetching & Parsing
 # ═══════════════════════════════════════════════════════════════════════
 
 def _extract_text(raw_html):
-    """Extract clean text from HTML content.
-    Prefers BeautifulSoup for clean stripping; falls back to regex.
-    """
     if HAS_BS4:
         soup = BeautifulSoup(raw_html, "html.parser")
         text = soup.get_text(separator=" ", strip=True)
     else:
         text = html.unescape(raw_html)
         text = re.sub(r"<[^>]+>", " ", text)
-    # Collapse whitespace
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def fetch_rss(url, source, max_items):
-    """Fetch and parse RSS feed using regex."""
     try:
         req = Request(url, headers={"User-Agent": "PeaceMeter/1.0"})
         with urlopen(req, timeout=10) as f:
             xml = f.read().decode("utf-8", errors="replace")
     except Exception as e:
-        print(f"  \u26a0 {source}: {e}")
+        print(f"  ⚠ {source}: {e}")
         return []
-
     if "<html" in xml[:200] or "<!DOCTYPE html" in xml[:200]:
         return []
 
@@ -401,7 +361,6 @@ def fetch_rss(url, source, max_items):
         title_m = re.search(r"<title>(.*?)</title>", block, re.DOTALL)
         link_m = re.search(r"<link>(.*?)</link>", block, re.DOTALL)
         date_m = re.search(r"<pubDate>(.*?)</pubDate>", block, re.DOTALL)
-
         if not title_m:
             continue
 
@@ -411,175 +370,114 @@ def fetch_rss(url, source, max_items):
         title = re.sub(r"&\w+;|&#\d+;|&#x[0-9a-fA-F]+;", "", title)
         title = re.sub(r"<[^>]+>", "", title)
 
-        # Extract snippet from <content:encoded> first, then <description>
         snippet = ""
-        # Try <content:encoded> — usually holds full article text
         content_m = re.search(r"<content:encoded>(.*?)</content:encoded>", block, re.DOTALL)
         if content_m:
-            raw = content_m.group(1)
-            raw = raw.replace("<![CDATA[", "").replace("]]>", "")
+            raw = content_m.group(1).replace("<![CDATA[", "").replace("]]>", "")
             snippet = _extract_text(raw)
         else:
-            # Fallback to <description>
             desc_m = re.search(r"<description>(.*?)</description>", block, re.DOTALL)
             if desc_m:
-                raw = desc_m.group(1)
-                raw = raw.replace("<![CDATA[", "").replace("]]>", "")
+                raw = desc_m.group(1).replace("<![CDATA[", "").replace("]]>", "")
                 snippet = _extract_text(raw)
-        # Truncate to 1200 chars for AI prompt
         snippet = snippet[:1200]
 
         link = link_m.group(1).strip() if link_m else ""
-        date_str = date_m.group(1).strip() if date_m else datetime.now(timezone.utc).isoformat()
-        if "GMT" in date_str or "UTC" in date_str:
-            try:
-                dt = parsedate_to_datetime(date_str)
-                date_str = dt.isoformat()
-            except Exception:
-                pass
+        date_str = date_m.group(1).strip() if date_m else None
+        # Parse RSS date (RFC 822, ISO 8601, or other)
+        date_str = _parse_rss_date(date_str)
 
         articles.append({
-            "title": title,
-            "link": link,
-            "date": date_str,
-            "source": source,
-            "snippet": snippet,
+            "title": title, "link": link, "date": date_str,
+            "source": source, "snippet": snippet,
         })
     return articles
 
 
 def fetch_all_feeds(age_hours=None):
-    """Fetch all RSS feeds, return deduplicated articles (no keyword filter).
-    The LLM decides relevance.
-    """
     feeds = load_rss_feeds()
     print(f"\U0001f4e1 Fetching {len(feeds)} RSS feeds...")
     now = datetime.now(timezone.utc)
-    if age_hours is not None:
-        max_age = now.timestamp() - (age_hours * 3600)
-    else:
-        max_age = now.timestamp() - (MAX_AGE_DAYS * 86400)
+    max_age = now.timestamp() - (age_hours * 3600 if age_hours else MAX_AGE_DAYS * 86400)
 
     fetched = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
         futures = {
-            executor.submit(fetch_rss, url, name, MAX_ARTICLES_PER_FEED): (name, url, feed_type)
-            for name, url, feed_type in feeds
+            executor.submit(fetch_rss, url, name, MAX_ARTICLES_PER_FEED): (name, url, ft)
+            for name, url, ft in feeds
         }
         for future in concurrent.futures.as_completed(futures, timeout=60):
-            name, url, feed_type = futures[future]
             try:
-                items = future.result()
-                fetched.extend(items)
-            except Exception as e:
-                print(f"  \u26a0 {source}: {e}")
+                fetched.extend(future.result())
+            except Exception:
+                pass
 
-    # Age filter — keep articles within time window
     all_articles = []
+    no_date = 0
+    too_old = 0
     for a in fetched:
+        date_str = a.get("date")
+        if not date_str:
+            # No parseable date — discard, don't assume "now"
+            no_date += 1
+            continue
         try:
-            dt = datetime.fromisoformat(a["date"])
+            dt = datetime.fromisoformat(date_str)
             if dt.timestamp() < max_age:
+                too_old += 1
                 continue
         except Exception:
-            pass  # keep articles with unparseable dates
+            no_date += 1
+            continue
         all_articles.append(a)
 
-    # Deduplicate by title
-    seen = set()
+    # Dedupe: first by link (exact same article), then by title
+    seen_links = set()
+    seen_titles = set()
     unique = []
     for a in all_articles:
-        key = a["title"].lower().strip()
-        if key not in seen:
-            seen.add(key)
-            unique.append(a)
+        link = a.get("link", "").strip().lower()
+        title = a["title"].lower().strip()
+        if link and link in seen_links:
+            continue
+        if title in seen_titles:
+            continue
+        if link:
+            seen_links.add(link)
+        seen_titles.add(title)
+        unique.append(a)
 
-    print(f"  \u2192 {len(unique)} unique articles ({len(all_articles) - len(unique)} duplicates removed)")
+    print(f"  → {len(unique)} unique articles ({len(fetched) - len(unique)} filtered: "
+          f"{too_old} too old, {no_date} no date, {len(all_articles) - len(unique)} dupes)")
     return unique
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Phase 1: Taxonomy Proposal — LLM suggests categories from articles
+# Phase 1: Taxonomy Proposal
 # ═══════════════════════════════════════════════════════════════════════
 
-_DEFAULT_EMOJIS = ["\U0001f54a", "🏚", "\U0001f91d", "\U0001f3db", "\U0001f4a7",
-                   "\u2623\ufe0f", "\U0001f1f1\U0001f1e7", "⚖️", "\U0001f3db", "🔥", "🌍", "📌"]
-
-
 def propose_taxonomy(articles, core_cats=None):
-    """Phase 1: Ask LLM to propose a taxonomy from all article titles.
-    Uses core categories as the base and asks LLM to suggest additions.
-    Returns dict {categories: [{id, name, description, icon}], assignments: {idx: cat_id}}
-    or None on failure.
-    """
-    # Sample articles to keep prompt manageable — use up to 100
     sample = articles[:100]
-    if len(articles) > 100:
-        print(f"  Sampling {len(sample)} of {len(articles)} articles for taxonomy proposal")
-    # Build numbered list of titles (no snippets — too many tokens)
-    lines = []
-    for i, a in enumerate(sample):
-        lines.append(f"{i+1}. {a['title']}")
+    lines = [f"{i+1}. {a['title']}" for i, a in enumerate(sample)]
     articles_text = "\n".join(lines)
 
-    # Build core categories block if provided
     core_block = ""
     if core_cats:
-        core_lines = []
-        for c in core_cats:
-            core_lines.append(f"  - {c['id']}: {c['name']} — {c['description']}")
-        core_block = (
-            "\n\n"
-            "You already have these CORE categories that MUST be included in your output.\n"
-            "You may add NEW categories beyond these if the articles warrant it.\n"
-            "Do not remove or rename core categories.\n\n"
-            "Core categories:\n"
-            + "\n".join(core_lines)
-        )
+        core_lines = [f"  - {c['id']}: {c['name']} — {c['description']}" for c in core_cats]
+        core_block = "\n\nCORE categories (MUST include):\n" + "\n".join(core_lines)
 
-    # Build prompt from prompts.json template
-    taxonomy_prompt = PROMPTS["taxonomy"]["user"]
-    prompt = taxonomy_prompt.format(
-        CORE_BLOCK=core_block,
-        ARTICLES_TEXT=articles_text
-    )
-
-    result = _llm_chat([
+    prompt = PROMPTS["taxonomy"]["user"].format(CORE_BLOCK=core_block, ARTICLES_TEXT=articles_text)
+    return _llm_chat([
         {"role": "system", "content": PROMPTS["taxonomy"]["system"]},
         {"role": "user", "content": prompt}
     ], max_tokens=16000, timeout=300)
 
-    return result
-
-
-def _build_taxonomy_prompt(categories):
-    """Build system prompt from LLM-proposed categories."""
-    block = "\n".join(f"  {c['id']}: {c['description']}" for c in categories)
-    cat_list = ", ".join(c['id'] for c in categories)
-    return (
-        "You are a precise Middle East news classifier. "
-        "Your task is to analyze the provided news text and output a single, valid JSON object."
-        "\n\n"
-        "CRITICAL RULES:"
-        "\n"
-        "1. Choose the MOST SPECIFIC category. Do NOT put general news into broad categories—use 'regional' instead."
-        "\n"
-        "2. Output ONLY raw JSON. No explanations, no markdown code blocks."
-        "\n\n"
-        f"Categories:\n{block}"
-    )
-
 
 # ═══════════════════════════════════════════════════════════════════════
-# Phase 2: AI Classification via llama.cpp (single-article inference)
+# Phase 2: AI Classification (with source_weight + signal_score + type)
 # ═══════════════════════════════════════════════════════════════════════
 
 def _make_classifier_prompt(cat_map, solution_contexts=None):
-    """Build the system prompt from the loaded category map.
-
-    solution_contexts: optional dict {cat_id: short_context_string}
-      Provides up-to-date context per solution so the AI can better place articles.
-    """
     cat_ids = list(cat_map.keys())
     lines = []
     for cid in cat_ids:
@@ -587,39 +485,87 @@ def _make_classifier_prompt(cat_map, solution_contexts=None):
         line = f"  {cid}: {c['name']} — {c['description']}"
         phases = c.get("phases", [])
         if phases:
-            line += f"\n    Phases: {' → '.join(phases)}"
+            phase_strs = [p.get("en", p) if isinstance(p, dict) else p for p in phases]
+            line += f"\n    Phases: {' → '.join(phase_strs)}"
         if solution_contexts and cid in solution_contexts:
             line += f"\n    [Context: {solution_contexts[cid]}]"
         lines.append(line)
     block = "\n".join(lines)
     cat_list = ", ".join(cat_ids)
-    return PROMPTS["classifier"]["system"].format(
-        CATEGORIES_BLOCK=block,
-        CATEGORY_IDS=cat_list
-    ), cat_ids
+    return PROMPTS["classifier"]["system"].format(CATEGORIES_BLOCK=block, CATEGORY_IDS=cat_list), cat_ids
 
 
-def _classify_article(article, system_prompt, valid_ids):
-    """Classify a single article via llama.cpp chat API.
-    Returns dict {me_relevant, category, sentiment, risk} or None on failure.
-    """
-    snippet = article.get("snippet", "")
-    context = snippet if snippet else article["title"]
+# ═══════════════════════════════════════════════════════════════════════
+# Expanded keyword map for two-pass classification
+# ═══════════════════════════════════════════════════════════════════════
 
-    # Include source in prompt to help AI distinguish regional coverage
-    source_line = f"\n<source>{article['source']}</source>" if article.get("source") else ""
+_EXPANDED_KEYWORDS = {
+    "iran-us-peace-process": ["tehran", "shiraz", "isfahan", "nuclear", "enrichment", "iaea", "fatemi",
+                              "khamenei", "operation roaring", "ceasefire iran", "iran war", "iran ceasefire",
+                              "iran deal", "iran us", "iran united states", "iranian", "dealey",
+                              "qatar mediation", "pakistan mediation", "strait of hormuz", "hormuz"],
+    "20-point-gaza-peace-plan": ["gaza", "hamas", "witkoff", "ncag", "board of peace", "gaza peace",
+                                  "gaza ceasefire", "gaza war", "gaza strip", "gaza reconstruction",
+                                  "disarmament", "demilitarization", "gaza governance", "hostage"],
+    "lebanon-hezbollah-conflict": ["hezbollah", "lebanon", "beirut", "southern lebanon", "blue line",
+                                    "shebaa", "resolution 1701", "un 1701", "nabih berri", "hasbeallah",
+                                    "israel-lebanon", "lebanon border", "lebanon ceasefire", "displaced lebanon"],
+    "abraham-accords": ["abraham accords", "normalization", "mbs", "saudi arabia", "bahrain", "morocco",
+                         "sudan", "qatar", "uae", "emirati", "pakistan", "pakistan normalization",
+                         "trump accords", "diplomatic relations"],
+    "geneva-initiative": ["two-state", "palestinian state", "geneva initiative", "two-state index", "tsi",
+                           "mutual recognition", "saudi-france", "recognition", "palestinian",
+                           "palestine state", "statehood"],
+    "israeli-annexation-of-the-west-bank": ["west bank", "annexation", "area c", "smotrich", "settlements",
+                                             "seam zone", "al-haq", "land registration", "settlement expansion",
+                                             "hebron", "jericho", "ramallah"],
+    "india-middle-east-europe-economic-corridor": ["imec", "trade corridor", "rail link", "shipping route",
+                                                     "silk route", "economic corridor", "india middle east",
+                                                     "india europe", "multimodal"],
+}
 
-    user_prompt = PROMPTS["article_user"]["user"].format(
-        TITLE=article['title'],
-        SNIPPET=context,
-        SOURCE_LINE=source_line
-    )
+
+def _build_keyword_map(cat_map):
+    """Build keyword→category map from categories + expanded keywords."""
+    kw_map = {}
+    for c in cat_map.values():
+        for kw in c.get("keywords", []):
+            kw_map[kw.lower()] = c["id"]
+    for cat_id, kws in _EXPANDED_KEYWORDS.items():
+        if cat_id in cat_map:
+            for kw in kws:
+                kw_map[kw.lower().strip()] = cat_id
+    return kw_map
+
+
+def _keyword_classify_one(title, snippet, kw_map):
+    """Classify a single article by keywords. Returns (category_id, confidence) or (None, 0)."""
+    text = f"{title} {snippet}".lower()
+    scores = {}
+    for kw, cat_id in kw_map.items():
+        if kw in text:
+            scores[cat_id] = scores.get(cat_id, 0) + 1
+    if scores:
+        best = max(scores, key=scores.get)
+        return best, scores[best]
+    return None, 0
+
+
+def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, batch_size=10):
+    """Classify a batch of articles in a single LLM call.
+    Returns list of classification dicts, one per article."""
+    n = len(articles)
+    txt = ""
+    for j, a in enumerate(articles):
+        txt += f"<article_{j+1}>\n<title>{a['title']}</title>\n<snippet>{a.get('snippet','')[:300]}</snippet>\n<source>{a['source']}</source>\n</article_{j+1}>\n"
+
+    user = f"Classify these {n} articles.\n\n{txt}\nFor EACH article output: me_relevant, category, sentiment, type, signal_score.\nUse ONLY these category IDs: {', '.join(valid_ids)}\nOutput a JSON array in SAME ORDER. No article_num field.\n"
 
     body = {
         "model": AI_MODEL,
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
+            {"role": "user", "content": user},
         ],
         "max_tokens": 8000,
         "temperature": 0.0,
@@ -629,52 +575,110 @@ def _classify_article(article, system_prompt, valid_ids):
     if LLAMA_API_KEY:
         headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
 
-    req = Request(
-        f"{LLAMA_CPP_URL}/v1/chat/completions",
-        data=json.dumps(body).encode(),
-        headers=headers,
-    )
+    req = Request(f"{LLAMA_CPP_URL}/v1/chat/completions", data=json.dumps(body).encode(), headers=headers)
     try:
-        with urlopen(req, timeout=180) as f:
+        with urlopen(req, timeout=300) as f:
+            response = json.loads(f.read().decode())
+    except Exception as e:
+        print(f"  AI unavailable in batch: {e}")
+        return None
+
+    raw = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+    if raw.startswith("```"):
+        lines = raw.split("\n")
+        raw = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
+
+    first, last = raw.find("["), raw.rfind("]")
+    if first != -1 and last > first:
+        try:
+            parsed = json.loads(raw[first:last+1])
+            if isinstance(parsed, list) and len(parsed) == n:
+                # Fill in defaults
+                results = []
+                for item in parsed:
+                    item.setdefault("type", "reporting")
+                    item.setdefault("signal_score", 5)
+                    item.setdefault("source_weight", 2)
+                    results.append(item)
+                return results
+        except json.JSONDecodeError:
+            pass
+
+    # Parse failed — return None to trigger fallback
+    return None
+
+
+def _classify_article(article, system_prompt, valid_ids, source_profiles=None):
+    """Classify single article. Returns dict with type, signal_score, source_weight."""
+    snippet = article.get("snippet", "")
+    context = snippet if snippet else article["title"]
+    source_line = f"\n<source>{article['source']}</source>" if article.get("source") else ""
+
+    # Source profile context
+    source_name = article.get("source", "")
+    source_profile = "N/A"
+    if source_profiles and source_name in source_profiles:
+        sp = source_profiles[source_name]
+        source_profile = f"lean={sp.get('lean','unknown')}, region={sp.get('region','unknown')}"
+
+    user_prompt = PROMPTS["article_user"]["user"].format(
+        TITLE=article['title'],
+        SNIPPET=context,
+        SOURCE=article.get('source', ''),
+        SOURCE_PROFILE=source_profile
+    )
+
+    body = {
+        "model": AI_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        "max_tokens": 1500,
+        "temperature": 0.0,
+    }
+
+    headers = {"Content-Type": "application/json"}
+    if LLAMA_API_KEY:
+        headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
+
+    req = Request(f"{LLAMA_CPP_URL}/v1/chat/completions", data=json.dumps(body).encode(), headers=headers)
+    try:
+        with urlopen(req, timeout=120) as f:
             response = json.loads(f.read().decode())
     except Exception as e:
         print(f"  AI unavailable: {e}")
         return None
 
-    result_text = response.get("choices", [{}])[0].get("message", {}).get("content", "")
-    result_text = result_text.strip()
-
-    # Empty response — LLM content filter blocked
+    result_text = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
     if not result_text:
         return {"_refused": True, "_text": "(empty response)"}
 
-    # Strip markdown code fences if LLM wraps them
     if result_text.startswith("```"):
         lines = result_text.split("\n")
         result_text = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
 
-    # Extract JSON object
     first_brace = result_text.find('{')
     last_brace = result_text.rfind('}')
     if first_brace != -1 and last_brace > first_brace:
-        json_str = result_text[first_brace:last_brace+1]
         try:
-            obj = json.loads(json_str)
+            obj = json.loads(result_text[first_brace:last_brace+1])
             if "me_relevant" in obj:
+                # Ensure new fields exist
+                obj.setdefault("type", "reporting")
+                obj.setdefault("signal_score", 5)
+                obj.setdefault("source_weight", 2)
                 return obj
         except json.JSONDecodeError:
             pass
-    # No valid JSON found — LLM returned prose (refusal) or garbled output
     return {"_refused": True, "_text": result_text[:100]}
 
 
-def classify_articles(articles, system_prompt, valid_ids):
-    """Classify each article individually via llama.cpp.
-    Articles with me_relevant=false are silently dropped.
-    Returns list of (article, {solution, sentiment, risk}) pairs.
-    Enforces that category must be one of valid_ids.
-    """
-    # Layer 1: Keyword pre-filter — drop obviously irrelevant articles
+def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
+    """Two-pass classification: keyword filter → batch LLM for uncertain articles.
+    Pass 1: Pre-filter (EXCLUDE_KW) + keyword classify (conf>=2)
+    Pass 2: Batch LLM classify remaining articles (batch_size=10)
+    Falls back to single-article LLM if batch parse fails."""
     EXCLUDE_KW = [
         "world cup", "fifa", "afcon", "premier league", "man city", "guardiola",
         "champions league", "transfer", "football", "basketball", "soccer",
@@ -687,7 +691,6 @@ def classify_articles(articles, system_prompt, valid_ids):
         "sponsored", "ad", "advertisement", "billboard", "scabies",
         "secondhand smoke", "smoke in public", "vaccine", "pandemic",
         "authoritarian transformation", "istanbul", "ferrari",
-        "metro station guide", "ferry crossings",
     ]
     ME_OVERRIDE = [
         "israel", "palestine", "gaza", "iran", "syria", "lebanon", "jordan",
@@ -698,73 +701,162 @@ def classify_articles(articles, system_prompt, valid_ids):
         "ceasefire", "cease-fire", "un", "security council",
         "operation roaring lion", "strait of hormuz",
     ]
-    print(f"\U0001f916 Classifying {len(articles)} articles via llama.cpp (1-by-1) [{len(valid_ids)} categories]...")
-    pairs = []  # list of (article, classification)
+    KW_THRESHOLD = 2  # Minimum keyword confidence for pass-1 acceptance
+    BATCH_SIZE = 10
+
+    print(f"\U0001f916 Classifying {len(articles)} articles (two-pass: keyword + batch LLM)...")
+    pairs = []
     relevant = 0
     dropped = 0
     pre_filtered = 0
+    kw_classified = 0
     ai_failures = 0
     ai_refusals = 0
+    stage_file = os.path.join(STAGING_DIR, "classification.json")
+    start_time = time.time()
 
-    for idx, article in enumerate(articles):
-        # Layer 1: Pre-filter — skip obviously irrelevant articles
+    # Build keyword map from all_kws global + expanded keywords
+    kw_map = {}
+    for cat_id, kws in all_kws.items():
+        for kw in kws:
+            kw_map[kw.lower()] = cat_id
+    # Add expanded keywords
+    for cat_id, kws in _EXPANDED_KEYWORDS.items():
+        if cat_id in valid_ids:
+            for kw in kws:
+                kw_map[kw.lower().strip()] = cat_id
+
+    # ── PASS 1: Pre-filter + keyword classify ──
+    remaining = []  # articles needing LLM
+    for article in articles:
         text = f"{article['title']} {article.get('snippet', '')}".lower()
         excluded = any(kw in text for kw in EXCLUDE_KW)
         if excluded and not any(kw in text for kw in ME_OVERRIDE):
             pre_filtered += 1
             continue
 
-        t0 = time.time()
-        result = _classify_article(article, system_prompt, valid_ids)
-        elapsed = time.time() - t0
-
-        # Content filter refusal — LLM refused to classify
-        if isinstance(result, dict) and result.get("_refused"):
-            ai_refusals += 1
-            if ai_refusals <= 3:
-                print(f"  \u26d4 AI content filter blocked: {result.get('_text', '?')}...")
-            continue  # skip this article, try next
-
-        if result is None:
-            ai_failures += 1
-            if ai_failures <= 3:
-                # Retry once
-                result = _classify_article(article, system_prompt, valid_ids)
-                elapsed = time.time() - t0
-                if result:
-                    ai_failures = 0
-            else:
-                # AI unreachable — abort
-                print(f"  \u26a0\ufe0f AI unreachable after {ai_failures} failures. Aborting classification.")
-                break
-            # If retry also failed, skip this article
-            if result is None:
-                dropped += 1
-                continue
-
-        if result.get("me_relevant"):
-            # Enforce: category must be one of the known valid IDs
-            sol = result.get("category") or result.get("solution")
-            if sol not in valid_ids:
-                sol = _fallback_classify(article, all_kws) or "regional"
-                print(f"  \u26a0 Unknown category '{result.get('category')}', fallback → '{sol}'")
+        cat_id, conf = _keyword_classify_one(article['title'], article.get('snippet', ''), kw_map)
+        if conf >= KW_THRESHOLD and cat_id:
+            # Keyword classified — add to pairs
             pairs.append((article, {
-                "solution": sol,
-                "sentiment": result.get("sentiment", "neutral"),
-                "risk": result.get("risk", 5),
+                "solution": cat_id,
+                "sentiment": "neutral",
+                "risk": 5,
+                "type": "reporting",
+                "signal_score": 5,
+                "source_weight": 2,
             }))
             relevant += 1
+            kw_classified += 1
         else:
-            dropped += 1
+            remaining.append(article)
 
-        if (idx + 1) % 20 == 0 or idx == len(articles) - 1:
-            print(f"  [{idx+1}/{len(articles)}] {relevant} relevant, {dropped} dropped")
+    print(f"  Pass 1: {kw_classified} keyword-classified, {pre_filtered} pre-filtered, {len(remaining)} need LLM")
 
-    print(f"  Total: {relevant} relevant, {dropped} dropped by LLM, {ai_refusals} AI refusals, {pre_filtered} pre-filtered / {len(articles)} articles")
+    # ── PASS 2: Batch LLM for remaining ──
+    if remaining:
+        print(f"  Pass 2: Batch LLM classifying {len(remaining)} articles (batch={BATCH_SIZE})...")
+        batch_idx = 0
+        for bi in range(0, len(remaining), BATCH_SIZE):
+            batch = remaining[bi:bi+BATCH_SIZE]
+            batch_idx += 1
+
+            # Try batch classification
+            batch_results = _batch_classify(batch, system_prompt, valid_ids, source_profiles, BATCH_SIZE)
+
+            if batch_results is None:
+                # Batch parse failed — fall back to single-article
+                print(f"  ⚠ Batch {batch_idx} parse failed, falling back to single-article")
+                for article in batch:
+                    result = _classify_article(article, system_prompt, valid_ids, source_profiles)
+                    if isinstance(result, dict) and result.get("_refused"):
+                        ai_refusals += 1
+                        continue
+                    if result is None:
+                        ai_failures += 1
+                        if ai_failures <= 3:
+                            result = _classify_article(article, system_prompt, valid_ids, source_profiles)
+                            if result: ai_failures = 0
+                        if result is None:
+                            dropped += 1
+                            continue
+                    r, d = _add_classified(pairs, result, article, valid_ids)
+                    relevant += r
+                    dropped += d
+            else:
+                for article, result in zip(batch, batch_results):
+                    if isinstance(result, dict) and result.get("_refused"):
+                        ai_refusals += 1
+                        continue
+                    r, d = _add_classified(pairs, result, article, valid_ids)
+                    relevant += r
+                    dropped += d
+
+            # Stream progress
+            processed = len(pairs) + dropped
+            wall = time.time() - start_time
+            avg = wall / max(processed, 1)
+            eta = avg * (len(articles) - processed)
+            stage = {
+                "progress": processed,
+                "total": len(articles),
+                "relevant": relevant,
+                "dropped": dropped,
+                "refusals": ai_refusals,
+                "pre_filtered": pre_filtered,
+                "kw_classified": kw_classified,
+                "wall_seconds": round(wall, 1),
+                "avg_per_article": round(avg, 2),
+                "eta_seconds": round(eta, 1),
+            }
+            with open(stage_file, "w", encoding="utf-8") as f:
+                json.dump(stage, f, indent=2, ensure_ascii=False)
+            print(f"  [{processed}/{len(articles)}] {relevant} relevant, {dropped} dropped | {wall:.0f}s elapsed, ETA {eta:.0f}s")
+
+    # Save final
+    final_stage = {
+        "complete": True,
+        "total": len(articles),
+        "relevant": relevant,
+        "dropped": dropped,
+        "refusals": ai_refusals,
+        "pre_filtered": pre_filtered,
+        "kw_classified": kw_classified,
+        "llm_classified": relevant - kw_classified,
+        "wall_seconds": round(time.time() - start_time, 1),
+        "pairs_count": len(pairs),
+    }
+    with open(stage_file, "w", encoding="utf-8") as f:
+        json.dump(final_stage, f, indent=2, ensure_ascii=False)
+    print(f"  💾 Staged → staging/classification.json")
+
+    print(f"  Total: {relevant} relevant ({kw_classified} kw + {relevant-kw_classified} LLM), "
+          f"{dropped} dropped, {ai_refusals} refusals, {pre_filtered} pre-filtered")
     if ai_refusals > 0:
-        pct = ai_refusals / len(articles) * 100
-        print(f"  \U0001f6a8\ufe0f WARNING: AI content filter triggered on {ai_refusals} articles ({pct:.1f}%)")
+        pct = ai_refusals / max(len(articles), 1) * 100
+        print(f"  🚨 AI content filter: {ai_refusals} articles ({pct:.1f}%)")
     return pairs, ai_refusals
+
+
+def _add_classified(pairs, result, article, valid_ids):
+    """Helper: add a classified article to pairs list. Returns (relevant_added, dropped_added)."""
+    if result.get("me_relevant"):
+        sol = result.get("category") or result.get("solution")
+        if sol not in valid_ids:
+            sol = _fallback_classify(article, all_kws) or "regional"
+            print(f"  ⚠ Unknown category '{result.get('category')}', fallback → '{sol}'")
+        pairs.append((article, {
+            "solution": sol,
+            "sentiment": result.get("sentiment", "neutral"),
+            "risk": result.get("risk", 5),
+            "type": result.get("type", "reporting"),
+            "signal_score": result.get("signal_score", 5),
+            "source_weight": result.get("source_weight", 2),
+        }))
+        return (1, 0)
+    else:
+        return (0, 1)
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # Keyword fallback classifier
@@ -775,7 +867,6 @@ NEGATIVE_WORDS = ["killed", "attack", "strike", "bombing", "destroyed", "escalat
 
 
 def _fallback_classify(article, kw_map):
-    """Fallback keyword classifier using keywords from categories.json."""
     lower = article["title"].lower()
     scores = {}
     for cat_id, kws in kw_map.items():
@@ -785,14 +876,12 @@ def _fallback_classify(article, kw_map):
                 scores[cat_id] = scores.get(cat_id, 0) + weight
     if scores:
         max_score = max(scores.values())
-        best = [k for k, v in scores.items() if v == max_score]
-        # Pick first match (categories.json order)
-        return best[0]
+        return [k for k, v in scores.items() if v == max_score][0]
     return None
 
 
 def keyword_classify(articles, kw_map):
-    """Fallback keyword-based classification using categories.json keywords."""
+    """Fallback keyword classification with default new fields."""
     results = []
     for article in articles:
         cat = _fallback_classify(article, kw_map)
@@ -801,8 +890,372 @@ def keyword_classify(articles, kw_map):
             pos = sum(1 for w in POSITIVE_WORDS if w in lower)
             neg = sum(1 for w in NEGATIVE_WORDS if w in lower)
             sentiment = "positive" if pos > neg else "negative" if neg > pos else "neutral"
-            results.append((article, {"solution": cat, "sentiment": sentiment, "risk": 5}))
+            results.append((article, {
+                "solution": cat, "sentiment": sentiment, "risk": 5,
+                "type": "reporting", "signal_score": 5, "source_weight": 2,
+            }))
     return results
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Phase 1b: Event Clustering
+# ═══════════════════════════════════════════════════════════════════════
+
+def _normalize_title(title):
+    """Normalize title for clustering comparison."""
+    t = title.lower().strip()
+    t = re.sub(r'[^\w\s]', ' ', t)
+    t = re.sub(r'\s+', ' ', t)
+    # Remove common stop words
+    stop = {'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'was', 'are', 'were'}
+    words = t.split()
+    words = [w for w in words if w not in stop and len(w) > 2]
+    return ' '.join(words)
+
+
+def _title_similarity(t1, t2):
+    """Compute token overlap similarity between two normalized titles."""
+    set1 = set(t1.split())
+    set2 = set(t2.split())
+    if not set1 or not set2:
+        return 0.0
+    intersection = set1 & set2
+    union = set1 | set2
+    return len(intersection) / len(union)
+
+
+def cluster_events(pairs, source_profiles=None, threshold=0.65, time_window_hours=6):
+    """Cluster articles describing the same event.
+    
+    Returns list of clustered events, each with:
+      - representative article (highest effective_signal)
+      - attestations (other sources reporting same event)
+      - cross_attestation_bonus if sources have different leans
+    """
+    print(f"\U0001f517 Clustering {len(pairs)} articles into events...")
+    
+    # Group by solution first
+    by_solution = {}
+    for article, classification in pairs:
+        sol = classification.get("solution", "regional")
+        by_solution.setdefault(sol, []).append((article, classification))
+    
+    clustered = {}
+    total_clusters = 0
+    
+    for sol_id, sol_pairs in by_solution.items():
+        # Normalize titles
+        normalized = []
+        for article, classification in sol_pairs:
+            norm = _normalize_title(article["title"])
+            eff_signal = classification.get("signal_score", 5) * (classification.get("source_weight", 2) / 2)
+            normalized.append((article, classification, norm, eff_signal))
+        
+        if len(normalized) <= 1:
+            # Single article = single cluster
+            clustered[sol_id] = [_make_cluster(normalized, source_profiles)]
+            continue
+        
+        # Heuristic clustering
+        clusters = []
+        used = set()
+        
+        for i in range(len(normalized)):
+            if i in used:
+                continue
+            cluster = [normalized[i]]
+            used.add(i)
+            
+            for j in range(i + 1, len(normalized)):
+                if j in used:
+                    continue
+                
+                # Check time proximity
+                try:
+                    dt_i = datetime.fromisoformat(normalized[i][0]["date"])
+                    dt_j = datetime.fromisoformat(normalized[j][0]["date"])
+                    time_diff = abs((dt_i - dt_j).total_seconds()) / 3600
+                except Exception:
+                    time_diff = 0
+                
+                # Check title similarity
+                sim = _title_similarity(normalized[i][2], normalized[j][2])
+                
+                # Adjust threshold based on time proximity
+                effective_threshold = threshold - (0.1 if time_diff < time_window_hours else 0)
+                
+                if sim >= effective_threshold and time_diff < 24:
+                    cluster.append(normalized[j])
+                    used.add(j)
+            
+            if cluster:
+                clusters.append(cluster)
+        
+        # Build clustered events
+        clustered_events = []
+        for cluster in clusters:
+            clustered_events.append(_make_cluster(cluster, source_profiles))
+        
+        clustered[sol_id] = clustered_events
+        total_clusters += len(clustered_events)
+    
+    # Flatten
+    all_clustered = []
+    for sol_id, events in clustered.items():
+        for event in events:
+            event["_solution"] = sol_id
+        all_clustered.extend(events)
+    
+    print(f"  → {total_clusters} clusters from {len(pairs)} articles")
+    return all_clustered, clustered
+
+
+def _make_cluster(cluster_items, source_profiles):
+    """Create a clustered event from a group of similar articles.
+    
+    Picks representative (highest effective_signal), collects attestations,
+    checks for cross-attestation bonus.
+    """
+    # Sort by effective_signal desc
+    cluster_items.sort(key=lambda x: x[3], reverse=True)
+    rep_article, rep_class, _, rep_eff_signal = cluster_items[0]
+    
+    # Compute effective_signal for representative
+    sig = rep_class.get("signal_score", 5)
+    sw = rep_class.get("source_weight", 2)
+    effective_signal = sig * (sw / 2)
+    
+    # Attestations
+    attestations = []
+    source_leans = set()
+    rep_source = rep_article.get("source", "")
+    if source_profiles and rep_source in source_profiles:
+        source_leans.add(source_profiles[rep_source].get("lean", "unknown"))
+    
+    for article, classification, _, eff_signal in cluster_items[1:]:
+        attestations.append({
+            "source": article.get("source", ""),
+            "link": article.get("link", ""),
+            "signal_score": classification.get("signal_score", 5),
+            "source_weight": classification.get("source_weight", 2),
+        })
+        src = article.get("source", "")
+        if source_profiles and src in source_profiles:
+            source_leans.add(source_profiles[src].get("lean", "unknown"))
+    
+    # Cross-attestation bonus
+    has_cross_bonus = len(source_leans) >= 2
+    if has_cross_bonus:
+        effective_signal += 2
+    
+    # Trilingual text from classifier, or fallback to plain title
+    text = rep_class.get("text")
+    if not text or not isinstance(text, dict):
+        text = rep_article["title"]
+
+    return {
+        "title": rep_article["title"],
+        "text": text,
+        "link": rep_article["link"],
+        "source": rep_article.get("source", ""),
+        "date": rep_article["date"],
+        "snippet": rep_article.get("snippet", ""),
+        "type": rep_class.get("type", "reporting"),
+        "sentiment": rep_class.get("sentiment", "neutral"),
+        "signal_score": sig,
+        "source_weight": sw,
+        "effective_signal": round(effective_signal, 1),
+        "risk": rep_class.get("risk", 5),
+        "attestations": attestations,
+        "cross_attestation_bonus": has_cross_bonus,
+        "cluster_size": len(cluster_items),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Phase 2: Solution-Level Narrative Generation
+# ═══════════════════════════════════════════════════════════════════════
+
+def generate_narratives(clustered_by_solution, cat_map, existing_data, force_narrative=False):
+    """Generate per-solution narratives (longTerm, weeklyHighlight, keyEvents, keyOpinions, shifts).
+    
+    Returns dict {solution_id: narrative_obj}.
+    """
+    print(f"\U0001f4dc Generating narratives for {len(clustered_by_solution)} solutions...")
+    narratives = {}
+    
+    for sol_id, events in clustered_by_solution.items():
+        cat = cat_map.get(sol_id)
+        if not cat:
+            continue
+        
+        # Sort by effective_signal desc
+        events_sorted = sorted(events, key=lambda e: e.get("effective_signal", 0), reverse=True)
+        
+        # Get previous narrative
+        prev_narrative = None
+        prev_long_term = ""
+        prev_shifts = []
+        if existing_data:
+            for sol in existing_data.get("solutions", []):
+                if sol["id"] == sol_id:
+                    prev_narrative = sol.get("narrative")
+                    if prev_narrative:
+                        lt = prev_narrative.get("longTerm", "")
+                        prev_long_term = lt if isinstance(lt, str) else lt.get("en", "")
+                        prev_shifts = prev_narrative.get("shifts", [])
+                    break
+        
+        # Determine current phase
+        phase_index = 0
+        if existing_data:
+            for sol in existing_data.get("solutions", []):
+                if sol["id"] == sol_id:
+                    phase_index = sol.get("phaseIndex", 0)
+                    break
+        
+        phases = cat.get("phases", [])
+        current_phase_raw = phases[phase_index] if phase_index < len(phases) else "Unknown"
+        current_phase = current_phase_raw.get("en", str(current_phase_raw)) if isinstance(current_phase_raw, dict) else current_phase_raw
+        
+        # Build events text (top 10 by effective_signal)
+        events_text = ""
+        for ev in events_sorted[:10]:
+            att_str = f" (+{len(ev.get('attestations', []))} sources)" if ev.get("attestations") else ""
+            events_text += f"  [{ev['type']}] signal={ev['effective_signal']} {ev['title']} — {ev['source']}{att_str}\n"
+        
+        # Build shifts text
+        shifts_text = json.dumps(prev_shifts, ensure_ascii=False)[:500]
+        
+        prompt = PROMPTS["narrative"]["user"].format(
+            SOLUTION_NAME=cat["name"],
+            CURRENT_PHASE=current_phase,
+            PHASE_INDEX=phase_index,
+            PHASE_COUNT=len(phases),
+            DIRECTION=existing_data and next((s.get("direction", "stable") for s in existing_data.get("solutions", []) if s["id"] == sol_id), "stable") or "stable",
+            EVENTS_TEXT=events_text,
+            PREV_LONG_TERM=prev_long_term,
+            PREV_SHIFTS=shifts_text,
+        )
+        
+        result = _llm_chat([
+            {"role": "system", "content": PROMPTS["narrative"]["system"]},
+            {"role": "user", "content": prompt}
+        ], max_tokens=8000, timeout=240)
+        
+        if result:
+            narratives[sol_id] = result
+            print(f"  ✓ {cat['name']}: narrative generated")
+        else:
+            # Fallback: create minimal narrative
+            narratives[sol_id] = _fallback_narrative(cat, events_sorted, prev_long_term)
+            print(f"  ⚠ {cat['name']}: fallback narrative")
+    
+    return narratives
+
+
+def _fallback_narrative(cat, events, prev_long_term):
+    """Create minimal narrative when LLM fails."""
+    top_event = events[0] if events else None
+    reporting = [e for e in events if e.get("type") == "reporting"][:3]
+    opinions = [e for e in events if e.get("type") == "opinion"][:2]
+    
+    lt = prev_long_term or f"The {cat['name']} process continues to evolve."
+    
+    return {
+        "longTerm": {"en": lt, "he": lt, "ar": lt},
+        "weeklyHighlight": {"en": top_event["title"] if top_event else "", "he": "", "ar": ""},
+        "keyEvents": [
+            {
+                "title": {"en": e["title"], "he": "", "ar": ""},
+                "link": e["link"], "source": e["source"], "date": e["date"],
+                "type": e["type"], "signal_score": e["signal_score"],
+                "source_weight": e["source_weight"],
+                "effective_signal": e["effective_signal"],
+                "attestations": e.get("attestations", []),
+            }
+            for e in reporting
+        ],
+        "keyOpinions": [
+            {
+                "quote": {"en": e["title"], "he": "", "ar": ""},
+                "link": e["link"], "source": e["source"], "date": e["date"],
+                "type": "opinion", "signal_score": e["signal_score"],
+                "source_weight": e["source_weight"],
+                "effective_signal": e["effective_signal"],
+            }
+            for e in opinions
+        ],
+        "shifts": [],
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Phase 3: Shift Detection
+# ═══════════════════════════════════════════════════════════════════════
+
+def detect_shifts(current_solutions, previous_solutions):
+    """Detect narrative shifts by comparing current vs previous data."""
+    shifts = []
+    now = datetime.now(timezone.utc).isoformat()
+    
+    prev_map = {s["id"]: s for s in previous_solutions}
+    
+    for cur in current_solutions:
+        prev = prev_map.get(cur["id"])
+        if not prev:
+            continue
+        
+        # Phase changed
+        if cur.get("phaseIndex") != prev.get("phaseIndex"):
+            cur_phase_raw = cur["phases"][cur["phaseIndex"]] if cur["phaseIndex"] < len(cur["phases"]) else "?"
+            cur_phase = cur_phase_raw.get("en", str(cur_phase_raw)) if isinstance(cur_phase_raw, dict) else cur_phase_raw
+            prev_phase_raw = prev["phases"][prev["phaseIndex"]] if prev["phaseIndex"] < len(prev["phases"]) else "?"
+            prev_phase = prev_phase_raw.get("en", str(prev_phase_raw)) if isinstance(prev_phase_raw, dict) else prev_phase_raw
+            shifts.append({
+                "solutionId": cur["id"],
+                "desc": {"en": f"Phase changed: {prev_phase} → {cur_phase}", "he": "", "ar": ""},
+                "direction": "positive" if cur["phaseIndex"] > prev["phaseIndex"] else "negative",
+                "date": now,
+            })
+        
+        # Direction flipped
+        if cur.get("direction") != prev.get("direction"):
+            if cur["direction"] == "advancing" and prev["direction"] in ("stalling", "stable"):
+                shifts.append({
+                    "solutionId": cur["id"],
+                    "desc": {"en": f"Direction improved: {prev['direction']} → advancing", "he": "", "ar": ""},
+                    "direction": "positive",
+                    "date": now,
+                })
+            elif cur["direction"] == "stalling" and prev["direction"] in ("advancing", "stable"):
+                shifts.append({
+                    "solutionId": cur["id"],
+                    "desc": {"en": f"Direction worsened: {prev['direction']} → stalling", "he": "", "ar": ""},
+                    "direction": "negative",
+                    "date": now,
+                })
+        
+        # High-signal articles (signal_score >= 9)
+        for ev in cur.get("narrative", {}).get("keyEvents", []):
+            if ev.get("signal_score", 0) >= 9:
+                # Check if this event was in previous data
+                prev_titles = set()
+                for e in prev.get("events", []):
+                    t = e.get("text", "")
+                    prev_titles.add(t["en"] if isinstance(t, dict) else t)
+                ev_title = ev.get("title", "")
+                if isinstance(ev_title, dict):
+                    ev_title = ev_title.get("en", "")
+                if ev_title not in prev_titles:
+                    shifts.append({
+                        "solutionId": cur["id"],
+                        "desc": {"en": ev.get("title", {}).get("en", ev.get("title", "")), "he": "", "ar": ""},
+                        "direction": "negative" if ev.get("sentiment") == "negative" else "positive",
+                        "date": ev.get("date", now),
+                    })
+    
+    return shifts
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -810,7 +1263,6 @@ def keyword_classify(articles, kw_map):
 # ═══════════════════════════════════════════════════════════════════════
 
 def parse_date(date_str):
-    """Parse date string (ISO 8601 or RFC 2822)."""
     try:
         return datetime.fromisoformat(date_str)
     except (ValueError, TypeError):
@@ -823,8 +1275,8 @@ def parse_date(date_str):
 def compute_direction(events):
     if not events:
         return "stable"
-    pos = sum(1 for e in events if e["sentiment"] == "positive")
-    neg = sum(1 for e in events if e["sentiment"] == "negative")
+    pos = sum(1 for e in events if e.get("sentiment") == "positive")
+    neg = sum(1 for e in events if e.get("sentiment") == "negative")
     ratio = pos / (pos + neg) if (pos + neg) > 0 else 0.5
     if ratio > 0.65:
         return "advancing"
@@ -833,35 +1285,31 @@ def compute_direction(events):
     return "stable"
 
 
-def _llm_chat(messages, max_tokens=4000, temperature=0.0, timeout=180):
-    """Generic LLM chat call. Returns parsed JSON or None on failure."""
+def _llm_chat(messages, max_tokens=4000, temperature=0.0, timeout=180, raw_text=False):
     body = {
-        "model": AI_MODEL,
-        "messages": messages,
-        "max_tokens": max_tokens,
-        "temperature": temperature,
+        "model": AI_MODEL, "messages": messages,
+        "max_tokens": max_tokens, "temperature": temperature,
     }
     headers = {"Content-Type": "application/json"}
     if LLAMA_API_KEY:
         headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
-
-    req = Request(
-        f"{LLAMA_CPP_URL}/v1/chat/completions",
-        data=json.dumps(body).encode(),
-        headers=headers,
-    )
+    
+    req = Request(f"{LLAMA_CPP_URL}/v1/chat/completions", data=json.dumps(body).encode(), headers=headers)
     try:
         with urlopen(req, timeout=timeout) as f:
             response = json.loads(f.read().decode())
     except Exception as e:
         print(f"  AI unavailable: {e}")
         return None
-
+    
     result_text = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
     if result_text.startswith("```"):
         lines = result_text.split("\n")
         result_text = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
-
+    
+    if raw_text:
+        return result_text
+    
     first_brace = result_text.find('{')
     last_brace = result_text.rfind('}')
     if first_brace != -1 and last_brace > first_brace:
@@ -872,13 +1320,251 @@ def _llm_chat(messages, max_tokens=4000, temperature=0.0, timeout=180):
     return None
 
 
-def determine_phases_ai(solution_events, cat_map):
-    """Ask the LLM to determine the current phase for each solution based on recent events.
+# ─── Translation helpers ─────────────────────────────────────────────
+_translation_cache = {}
 
-    Returns dict {solution_id: phase_index} or None on failure.
-    Uses the last 8 events per solution to keep the prompt short.
-    """
-    # Build per-solution context: name, phases, recent event summaries
+def _translate(text, target_lang):
+    """Translate text to target language (he or ar) via LLM. Uses cache."""
+    cache_key = f"{target_lang}:{text[:200]}"
+    if cache_key in _translation_cache:
+        return _translation_cache[cache_key]
+    prompt = f"Translate this to {target_lang}. Output ONLY the translation, no other text:\n\n{text}"
+    result = _llm_chat([
+        {"role": "system", "content": "You are a translator. Output ONLY the translated text."},
+        {"role": "user", "content": prompt}
+    ], max_tokens=500, timeout=60, raw_text=True)
+    translated = result if isinstance(result, str) and result else text
+    _translation_cache[cache_key] = translated
+    return translated
+
+def _make_trilingual(text):
+    """Create {en, he, ar} dict from English text. Translates via LLM."""
+    return {"en": text, "he": _translate(text, "hebrew"), "ar": _translate(text, "arabic")}
+
+def _batch_translate(texts, target_lang):
+    """Batch translate a list of texts to target language. Returns list of translations."""
+    if not texts:
+        return []
+    # Deduplicate
+    unique = list(dict.fromkeys(texts))
+    if len(unique) <= 1:
+        return [_translate(t, target_lang) for t in texts]
+
+    lang_name = "Hebrew" if "hebr" in target_lang else "Arabic"
+    # Chunk into groups of 5 for reliable translation
+    chunk_size = 5
+    all_translations = {}
+
+    for chunk_start in range(0, len(unique), chunk_size):
+        chunk = unique[chunk_start:chunk_start + chunk_size]
+        numbered = "\n".join(f"{i+1}. {t}" for i, t in enumerate(chunk))
+        prompt = f"""Translate each of these English texts to {lang_name}. Output ONLY the {lang_name} translations, one per line, same order:
+
+{numbered}"""
+        result = _llm_chat([
+            {"role": "system", "content": f"You are a professional translator. Translate English to {lang_name}. Output ONLY the {lang_name} text, one per line. Do NOT include numbers or English."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=1500, timeout=120, raw_text=True)
+
+        if isinstance(result, str) and result.strip():
+            translated_lines = [l.strip() for l in result.strip().split("\n") if l.strip()]
+        else:
+            translated_lines = chunk  # fallback: use single translate
+
+        # Validate: if translation equals source or wrong script, re-translate
+        for orig, trans in zip(chunk, translated_lines[:len(chunk)]):
+            is_valid = trans != orig
+            # Also verify correct script
+            if is_valid:
+                if "hebr" in target_lang:
+                    # Hebrew must contain Hebrew script chars
+                    is_valid = any('\u0590' <= c <= '\u05FF' for c in trans)
+                elif "arab" in target_lang:
+                    # Arabic must contain Arabic script chars
+                    is_valid = any('\u0600' <= c <= '\u06FF' for c in trans)
+            if not is_valid:
+                # Fallback: single translate
+                trans = _translate(orig, target_lang)
+            all_translations[orig] = trans
+            _translation_cache[f"{target_lang}:{orig[:200]}"] = trans
+
+    # Map back to original order
+    return [all_translations.get(t, t) for t in texts]
+
+def _batch_translate_dual(texts):
+    """Translate a list of English texts to both Hebrew and Arabic in batch.
+    Returns dict {text: {en, he, ar}}.
+    Uses two LLM calls per chunk (one Hebrew, one Arabic) instead of two per text.
+    Uses JSON array output for reliable parsing."""
+    import json, re
+    if not texts:
+        return {}
+    unique = list(dict.fromkeys(texts))
+    trilingual_map = {}
+    chunk_size = 5
+
+    for lang, lang_name in [("he", "Hebrew"), ("ar", "Arabic")]:
+        for chunk_start in range(0, len(unique), chunk_size):
+            chunk = unique[chunk_start:chunk_start + chunk_size]
+            input_json = json.dumps(chunk, ensure_ascii=False)
+            # Domain glossary for political/diplomatic terminology
+            if lang == "he":
+                glossary = """Use these exact Hebrew terms:
+Annexation → סיפוח (NOT אנקסיה)
+Ceasefire → הפסקת אש
+Mediation → גישור
+Displacement → העתקה
+Normalization → נרמול
+Two-State Solution → פתרון שתי מדינות
+Diplomacy → דיפלומטיה
+Reconstruction → שיקום
+Stabilization → ייצוב
+Framework Agreement → הסכם מסגרת
+Trade Integration → אינטגרציה מסחרית
+Civil Society → החברה האזרחית"""
+            elif lang == "ar":
+                glossary = """Use these exact Arabic terms:
+Annexation → ضم (NOT مرفق)
+Ceasefire → وقف إطلاق النار
+Mediation → وساطة
+Displacement → إزاحة (NOT تشرد)
+Normalization → تطبيع
+Two-State Solution → حل الدولتين
+Diplomacy → دبلوماسية
+Reconstruction → إعادة الإعمار
+Stabilization → استقرار
+Framework Agreement → اتفاقية إطار
+Trade Integration → تكامل تجاري
+Civil Society → المجتمع المدني"""
+            else:
+                glossary = ""
+
+            prompt = f"""Translate each English text to {lang_name}.
+
+Input (JSON array): {input_json}
+
+Output ONLY a JSON array of {lang_name} translations in the same order.
+Example: ["translation1", "translation2", "translation3"]
+
+Rules:
+- Output ONLY the JSON array, nothing else
+- Use proper {lang_name} grammar and natural phrasing
+- Translate ALL words, do not leave English words
+- Keep abbreviations like G20, MoU, UN, NCAG as-is
+{glossary}"""
+            result = _llm_chat([
+                {"role": "system", "content": f"You are a professional translator from English to {lang_name} specializing in Middle East political and diplomatic terminology. Output ONLY JSON arrays."},
+                {"role": "user", "content": prompt}
+            ], max_tokens=2000, timeout=120, raw_text=True)
+
+            translated_lines = ["" for _ in chunk]
+            if isinstance(result, str) and result.strip():
+                # Try JSON parse first
+                try:
+                    clean = result.strip().strip('`').strip()
+                    if clean.startswith('['):
+                        translated_lines = json.loads(clean)
+                        if not isinstance(translated_lines, list):
+                            translated_lines = ["" for _ in chunk]
+                except (json.JSONDecodeError, ValueError):
+                    # Fallback: split by newline or |
+                    translated_lines = [t.strip() for t in re.split(r'\|', result.strip())]
+                    # Strip leading numbers
+                    translated_lines = [re.sub(r'^\d+[\s.\u00b7]+', '', t) for t in translated_lines]
+
+            for orig, trans in zip(chunk, translated_lines[:len(chunk)]):
+                if not isinstance(trans, str):
+                    trans = str(trans)
+                trans = trans.strip()
+                is_valid = trans != orig and trans != ""
+                if is_valid:
+                    if lang == "he":
+                        is_valid = any('\u0590' <= c <= '\u05FF' for c in trans)
+                    else:
+                        is_valid = any('\u0600' <= c <= '\u06FF' for c in trans)
+                if not is_valid:
+                    trans = _translate(orig, "hebrew" if lang == "he" else "arabic")
+                if orig not in trilingual_map:
+                    trilingual_map[orig] = {"en": orig, "he": "", "ar": ""}
+                trilingual_map[orig][lang] = trans
+                _translation_cache[f"{lang}:{orig[:200]}"] = trans
+
+    return trilingual_map
+
+
+def _translate_events_to_trilingual(events, solution_names, max_events_per_solution=10):
+    """Convert solution names and recent event texts to {en, he, ar} format.
+    Only translates the most recent events per solution (those actually displayed in UI).
+    Uses batch translation (10 texts per LLM call) instead of per-text calls."""
+    # Collect texts to translate
+    texts_to_translate = set()
+
+    # Solution names
+    for s in solution_names:
+        if isinstance(s, str):
+            texts_to_translate.add(s)
+        elif isinstance(s, dict) and (s.get('he') == s.get('en') or s.get('ar') == s.get('en')):
+            texts_to_translate.add(s['en'])
+
+    # Events — only recent ones per solution (grouped by solution for limit)
+    # events is a flat list from all solutions; we need to know boundaries.
+    # Caller passes a dict {sol_id: [events]} for proper grouping.
+    if isinstance(events, dict):
+        for sol_id, ev_list in events.items():
+            recent = ev_list[:max_events_per_solution]
+            for ev in recent:
+                t = ev.get("text", "")
+                if isinstance(t, str) and t:
+                    texts_to_translate.add(t)
+                elif isinstance(t, dict) and (t.get('he') == t.get('en') or t.get('ar') == t.get('en')):
+                    texts_to_translate.add(t['en'])
+    else:
+        # Flat list — translate all (legacy path for step 9.5)
+        for ev in events:
+            t = ev.get("text", "")
+            if isinstance(t, str) and t:
+                texts_to_translate.add(t)
+            elif isinstance(t, dict) and (t.get('he') == t.get('en') or t.get('ar') == t.get('en')):
+                texts_to_translate.add(t['en'])
+
+    texts_to_translate.discard("")
+    if not texts_to_translate:
+        print(f"  🌐 No texts to translate (already trilingual or empty)")
+        return
+
+    texts_list = list(texts_to_translate)
+    print(f"  🌐 Translating {len(texts_list)} unique texts to Hebrew & Arabic (batch)...")
+
+    trilingual_map = _batch_translate_dual(texts_list)
+
+    # Apply to solution names
+    for i, s in enumerate(solution_names):
+        if isinstance(s, str) and s in trilingual_map:
+            solution_names[i] = trilingual_map[s]
+        elif isinstance(s, dict) and s.get('en') in trilingual_map:
+            solution_names[i] = trilingual_map[s['en']]
+
+    # Apply to events
+    if isinstance(events, dict):
+        # events is {sol_id: [event_dict, ...]} — flatten to individual events
+        event_list = []
+        for ev_list in events.values():
+            event_list.extend(ev_list)
+    else:
+        event_list = events
+    for ev in event_list:
+        if not isinstance(ev, dict):
+            continue
+        t = ev.get("text", "")
+        if isinstance(t, str) and t in trilingual_map:
+            ev["text"] = trilingual_map[t]
+        elif isinstance(t, str) and t:
+            ev["text"] = _make_trilingual(t)
+        elif isinstance(t, dict) and t.get('en') in trilingual_map:
+            ev["text"] = trilingual_map[t['en']]
+
+
+def determine_phases_ai(solution_events, cat_map):
     blocks = []
     for sol_id, events in solution_events.items():
         cat = cat_map.get(sol_id)
@@ -887,382 +1573,293 @@ def determine_phases_ai(solution_events, cat_map):
         phases = cat.get("phases", [])
         if not phases:
             continue
-        # Last 8 events, newest first
         recent = sorted(events, key=lambda e: e["date"], reverse=True)[:8]
-        event_lines = "\n".join(
-            f"    - [{e['sentiment']}] {e['text']}" for e in recent
-        )
-        phase_names = "\n".join(f"  {i}: {p}" for i, p in enumerate(phases))
+        _extract_text = lambda e: e.get('text', {}).get('en', '') if isinstance(e.get('text'), dict) else e.get('text', '')
+        event_lines = "\n".join(f"    - [{e['sentiment']}] {_extract_text(e)}" for e in recent)
+        phase_names = "\n".join(f"  {i}: {p.get('en', p) if isinstance(p, dict) else p}" for i, p in enumerate(phases))
         blocks.append(
-            f"<solution id=\"{sol_id}\">\n"
-            f"  Name: {cat['name']}\n"
-            f"  Phases:\n{phase_names}\n"
-            f"  Recent events:\n{event_lines}\n"
-            f"</solution>"
+            f"<solution id=\"{sol_id}\">\n  Name: {cat['name']}\n  Phases:\n{phase_names}\n"
+            f"  Recent events:\n{event_lines}\n</solution>"
         )
-
     if not blocks:
         return None
-
-    solutions_text = "\n\n".join(blocks)
-
-    prompt = PROMPTS["phases"]["user"].format(
-        SOLUTIONS_TEXT=solutions_text
-    )
-
+    
+    prompt = PROMPTS["phases"]["user"].format(SOLUTIONS_TEXT="\n\n".join(blocks))
     result = _llm_chat([
         {"role": "system", "content": PROMPTS["phases"]["system"]},
         {"role": "user", "content": prompt}
     ], max_tokens=4000, timeout=180)
-
+    
     if result and "phases" in result:
         return result["phases"]
     return None
 
 
 def research_category(cat, articles):
-    """Research a single category: rewrite description, phases, and keywords
-    based on actual articles in the corpus.
-
-    Returns dict with keys: description, phases, keywords (or None on failure).
-    """
-    # Sample up to 15 relevant-appearing articles for context
-    sample = []
-    for a in articles:
-        if len(sample) >= 15:
-            break
-        sample.append(a["title"])
+    sample = [a["title"] for a in articles[:15]]
     articles_text = "\n".join(f"  - {t}" for t in sample)
-
+    
     prompt = PROMPTS["research"]["user"].format(
-        CATEGORY_ID=cat['id'],
-        CATEGORY_NAME=cat['name'],
+        CATEGORY_ID=cat['id'], CATEGORY_NAME=cat['name'],
         CATEGORY_DESCRIPTION=cat.get('description', 'N/A'),
         CATEGORY_PHASES=', '.join(cat.get('phases', [])),
         CATEGORY_KEYWORDS=', '.join(cat.get('keywords', [])),
         ARTICLES_TEXT=articles_text
     )
-
-    result = _llm_chat([
+    return _llm_chat([
         {"role": "system", "content": PROMPTS["research"]["system"]},
         {"role": "user", "content": prompt}
     ], max_tokens=2000, timeout=180)
 
-    return result
-
 
 def research_all_categories(articles, cat_map):
-    """Research all categories sequentially. Returns list of research results.
-
-    Each result: {id, icon, name, core, description, phases, keywords}
-    """
     results = []
     cat_ids = list(cat_map.keys())
     print(f"  Researching {len(cat_ids)} categories...")
-
     for i, cid in enumerate(cat_ids):
         cat = cat_map[cid]
         print(f"  [{i+1}/{len(cat_ids)}] Researching: {cat['name']}...")
         researched = research_category(cat, articles)
         if researched:
             results.append({
-                "id": cid,
-                "icon": cat.get("icon", "📌"),
-                "name": cat["name"],
+                "id": cid, "icon": cat.get("icon", "📌"), "name": cat["name"],
                 "description": researched["description"],
-                "phases": researched["phases"],
-                "keywords": researched["keywords"],
+                "phases": researched["phases"], "keywords": researched["keywords"],
                 "core": cat.get("core", False),
             })
-            print(f"    ✓ description: {researched['description'][:80]}...")
-            print(f"    ✓ phases: {', '.join(researched['phases'])}")
         else:
-            print(f"    ✗ Failed for {cat['name']}, keeping existing")
             results.append(cat.copy())
-
     return results
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Build Output Data
+# Build Output Data (with narrative pipeline)
 # ═══════════════════════════════════════════════════════════════════════
 
-def build_output(articles, classifications, cat_map, stakeholders=None):
-    """Build the final JSON structure for the Peace Room frontend.
-
-    arguments: If 'classifications' is a list of (article, classification) tuples,
-    articles is ignored and pairs are iterated directly.
-    cat_map: dict of category definitions from categories.json
+def build_output(clustered_events, cat_map, narratives, ai_phases=None, stakeholders=None):
+    """Build final JSON with narrative structure.
+    
+    clustered_events: dict {solution_id: [clustered_event, ...]}
+    narratives: dict {solution_id: narrative_obj}
     """
     now = datetime.now(timezone.utc)
-
-    # Group articles by solution (use category IDs from categories.json)
-    solution_events = {cid: [] for cid in cat_map}
-
-    # Handle new format: list of (article, classification) pairs
-    if classifications and isinstance(classifications[0], tuple):
-        pairs = classifications
-    else:
-        pairs = list(zip(articles, classifications))
-
-    for article, classification in pairs:
-        sol = classification.get("solution", "ceasefire")
-        if sol not in solution_events:
-            sol = "ceasefire"  # unknown category, default to ceasefire
-
-        # Trilingual text from classifier, or fallback to plain title
-        text = classification.get("text")
-        if not text or not isinstance(text, dict):
-            text = article["title"]
-
-        solution_events[sol].append({
-            "date": article["date"],
-            "text": text,
-            "sentiment": classification.get("sentiment", "neutral"),
-            "source": article["source"],
-            "link": article["link"],
-            "snippet": article.get("snippet", ""),
-            "ai_risk": classification.get("risk", 5),
-        })
-
-    # Sort events per solution by date desc
-    for sol in solution_events:
-        solution_events[sol].sort(key=lambda e: e["date"], reverse=True)
-
+    
     solutions = []
     counts = {"advancing": 0, "stable": 0, "stalling": 0}
-    active_solutions = []  # only solutions with recent articles
-
+    active_solutions = []
+    
     for sol_id in cat_map:
-        events = solution_events[sol_id]
+        events = clustered_events.get(sol_id, [])
         if not events:
             continue
         active_solutions.append(sol_id)
+        
         direction = compute_direction(events)
-        phase_index = 0  # placeholder — set by AI later
+        phase_index = ai_phases.get(sol_id, 0) if ai_phases else 0
         counts[direction] += 1
-
+        
         cat = cat_map.get(sol_id)
-        if cat:
-            # Known category from categories.json — use its config
-            solutions.append({
-                "id": sol_id,
-                "icon": cat.get("icon", "\U0001f4cc"),
-                "name": cat["name"],
-                "phases": cat.get("phases", ["Emerged", "Developing", "Maturing", "Resolved"]),
-                "phaseIndex": phase_index,
-                "direction": direction,
-                "keyMetric": {"label": "Events (7d)", "value": str(len(events))},
-                "summary": events[0]["text"],
-                "events": events[1:],  # exclude summary event to avoid duplicate
-                "confidence": "high" if len(events) > 5 else "medium" if len(events) > 2 else "low",
-                "core": cat.get("core", False),
-                "stakeholders": stakeholders.get(sol_id, []) if stakeholders else [],
+        if not cat:
+            continue
+        
+        # Build events list from clustered events
+        events_list = []
+        for ev in events:
+            events_list.append({
+                "date": ev["date"],
+                "text": ev.get("text", ev["title"]),
+                "sentiment": ev.get("sentiment", "neutral"),
+                "source": ev["source"],
+                "link": ev["link"],
+                "snippet": ev.get("snippet", ""),
+                "ai_risk": ev.get("risk", 5),
+                "type": ev.get("type", "reporting"),
+                "signal_score": ev.get("signal_score", 5),
+                "source_weight": ev.get("source_weight", 2),
+                "effective_signal": ev.get("effective_signal", 0),
+                "attestations": ev.get("attestations", []),
+                "cross_attestation_bonus": ev.get("cross_attestation_bonus", False),
+                "cluster_size": ev.get("cluster_size", 1),
             })
-        else:
-            # Unknown category — generate default (shouldn't happen with enforcement)
-            name = sol_id.replace("-", " ").replace("_", " ").title()
-            solutions.append({
-                "id": sol_id,
-                "icon": "📌",
-                "name": name,
-                "phases": ["Emerged", "Developing", "Gaining Traction", "Maturing", "Resolved"],
-                "phaseIndex": phase_index,
-                "direction": direction,
-                "keyMetric": {"label": "Events (7d)", "value": str(len(events))},
-                "summary": events[0]["text"],
-                "events": events[1:],  # exclude summary event to avoid duplicate
-                "confidence": "low",
-                "core": False,
-            })
+        
+        # Narrative
+        narrative = narratives.get(sol_id)
+        if not narrative:
+            narrative = _fallback_narrative(cat, events, "")
+        
+        # Summary = most significant event title
+        summary = events[0]["title"] if events else ""
+        
+        solutions.append({
+            "id": sol_id,
+            "icon": cat.get("icon", "📌"),
+            "name": cat["name"],
+            "phases": cat.get("phases", ["Emerged", "Developing", "Maturing", "Resolved"]),
+            "phaseIndex": min(phase_index, len(cat.get("phases", [])) - 1),
+            "direction": direction,
+            "keyMetric": {"label": _make_trilingual("Events"), "value": str(len(events))},
+            "summary": summary,
+            "events": events_list[1:],  # exclude summary event
+            "narrative": narrative,
+            "confidence": "high" if len(events) > 5 else "medium" if len(events) > 2 else "low",
+            "core": cat.get("core", False),
+            "stakeholders": stakeholders.get(sol_id, []) if stakeholders else [],
+        })
 
-    if not active_solutions:
-        counts["stable"] = 1
+    # Translate solution names and recent event texts to Hebrew & Arabic
+    # Pass events grouped by solution so only recent ones are translated
+    events_by_solution = {s["id"]: s.get("events", []) for s in solutions}
+    sol_names = [s["name"] for s in solutions]
+    _translate_events_to_trilingual(events_by_solution, sol_names)
+    for i, s in enumerate(solutions):
+        s["name"] = sol_names[i]
 
-    # Sort by event count desc, keep top 8
-    solutions.sort(key=lambda s: s["keyMetric"]["value"], reverse=True)
+    # Sort by effective_signal total, keep top 8
+    def signal_total(s):
+        return sum(e.get("effective_signal", 0) for e in s.get("events", []))
+    solutions.sort(key=signal_total, reverse=True)
     solutions = solutions[:8]
-    # Re-sort activeSolutions to match
+    
     active_ids = set(s["id"] for s in solutions)
     active_solutions = [sid for sid in active_solutions if sid in active_ids]
-
+    
     # Overall momentum
     if counts["advancing"] > counts["stalling"]:
-        m_dir = "advancing"
+        m_dir, m_label = "advancing", "Net Positive"
     elif counts["stalling"] > counts["advancing"]:
-        m_dir = "stalling"
+        m_dir, m_label = "stalling", "Net Negative"
     else:
-        m_dir = "stable"
-
-    adv, stab, stall = counts["advancing"], counts["stable"], counts["stalling"]
-    n_active = len(active_solutions)
-    n_articles = len(articles)
-    n_feeds = len(load_rss_feeds())
-
-    # Trilingual summary
-    summary = {
-        "en": f"{adv} advancing, {stab} stable, {stall} stalling ({n_active} active). {n_articles} ME articles from {n_feeds} feeds.",
-        "he": f"{adv} מתקדמים, {stab} יציבים, {stall} נעצרים ({n_active} פעילים). {n_articles} כתבות ממזרח תיכון מ-{n_feeds} מקורות.",
-        "ar": f"{adv} متقدم، {stab} مستقر، {stall} متوقف ({n_active} نشط). {n_articles} مقال من الشرق الأوسط من {n_feeds} مصدر.",
-    }
-
+        m_dir, m_label = "stable", "Mixed Signals"
+    
+    en_summary = f"{counts['advancing']} advancing, {counts['stable']} stable, {counts['stalling']} stalling ({len(active_solutions)} active)."
+    he_summary = f"{counts['advancing']} מתקדם, {counts['stable']} יציב, {counts['stalling']} מתעכב ({len(active_solutions)} פעיל)."
+    ar_summary = f"{counts['advancing']} متقدم، {counts['stable']} مستقر، {counts['stalling']} متوقف ({len(active_solutions)} نشط)."
     return {
         "solutions": solutions,
         "activeSolutions": active_solutions,
         "overallMomentum": {
             "direction": m_dir,
-            "summary": summary,
+            "label": m_label,
+            "summary": {"en": en_summary, "he": he_summary, "ar": ar_summary},
         },
         "lastUpdated": now.isoformat(),
         "source": "ai-analyzer-prod",
-        "feedCount": len(articles),
         "aiVersion": SCRIPT_VERSION,
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Upload to Cloudflare Pages via Workers API
+# Upload to Cloudflare KV
 # ═══════════════════════════════════════════════════════════════════════
 
 def upload_to_cloudflare(data):
-    """Push solutions.json to Cloudflare Pages via the API."""
+    """Push data.json to Cloudflare KV via wrangler."""
     if not CLOUDFLARE_TOKEN or not CLOUDFLARE_ACCOUNT:
-        print("\n\u26a0 CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set")
-        print("   Setting env vars will enable automatic deployment.")
-        print("   Data written locally — deploy with: npx wrangler pages deploy")
+        print("\n⚠ CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set")
         return False
-
-    json_bytes = json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
-    boundary = "PeaceMeterBoundary"
-
-    # Build multipart form for Pages Upload API
-    body = (
-        f"--{boundary}\r\n"
-        f'Content-Disposition: form-data; name="name"\r\n\r\n'
-        f"solutions.json\r\n"
-        f"--{boundary}\r\n"
-        f'Content-Disposition: form-data; name="file"; filename="solutions.json"\r\n'
-        f"Content-Type: application/json\r\n\r\n"
-    ).encode() + json_bytes + f"\r\n--{boundary}--\r\n".encode()
-
-    url = (
-        f"https://api.cloudflare.com/client/v4/accounts/"
-        f"{CLOUDFLARE_ACCOUNT}/pages/projects/{CLOUDFLARE_PAGES_PROJECT}/uploads"
-    )
-
-    try:
-        req = Request(
-            url,
-            data=body,
-            headers={
-                "Authorization": f"Bearer {CLOUDFLARE_TOKEN}",
-                "Content-Type": f"multipart/form-data; boundary={boundary}",
-            },
-        )
-        with urlopen(req, timeout=30) as f:
-            resp = json.loads(f.read().decode())
-
-        if resp.get("success"):
-            print("  \u2713 Deployed to Cloudflare Pages")
-            return True
-        else:
-            print(f"  \u26a0 Upload failed: {resp.get('errors', 'unknown')}")
-            return False
-
-    except Exception as e:
-        print(f"  \u26a0 Upload failed: {e}")
+    # Use wrangler CLI
+    import subprocess
+    kv_id = "badf4fb7acfe4d1c905db77ed8d5e70f"
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    cmd = f'npx wrangler kv key put "data.json" --namespace-id={kv_id} --path="{DATA_JSON_FILE}" --remote'
+    result = subprocess.run(cmd, shell=True, cwd=project_root, capture_output=True, timeout=60)
+    if result.returncode == 0:
+        print("  ✓ data.json uploaded to KV")
+        return True
+    else:
+        print(f"  ⚠ KV upload failed")
         return False
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Main
+# Merge with Existing Data
 # ═══════════════════════════════════════════════════════════════════════
 
-def _load_existing_data():
-    """Load existing solutions.json for merge operations."""
-    if not os.path.exists(DATA_FILE):
-        return None
-    try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"  \u26a0 Could not load existing data: {e}")
-        return None
-
-
-def _merge_with_existing(data, existing, ai_phases=None, stakeholders=None):
-    """Merge new events into existing solutions, preserving history.
-
-    - Deduplicates events by text content within each category
-    - Adds new solution categories discovered by AI
-    - Recomputes phases, directions, confidence for all solutions
-    - Uses AI-determined phases when available, falls back to heuristic
-    """
+def _merge_with_existing(data, existing, ai_phases=None, narratives=None, stakeholders=None):
+    """Merge new events into existing solutions, preserving narrative.longTerm."""
+    
+    # Merge events
     for sol in existing.get("solutions", []):
         sol_id = sol["id"]
-        existing_texts = {e["text"] for e in sol["events"]}
+        # Extract plain text for comparison (text may be {en,he,ar} dict or string)
+        def _text_key(e):
+            t = e.get("text", "")
+            return t["en"] if isinstance(t, dict) else t
+        existing_texts = {_text_key(e) for e in sol.get("events", [])}
+
         for new_sol in data["solutions"]:
             if new_sol["id"] == sol_id:
-                for ev in new_sol["events"]:
-                    if ev["text"] not in existing_texts:
+                for ev in new_sol.get("events", []):
+                    key = _text_key(ev)
+                    if key not in existing_texts:
                         sol["events"].append(ev)
-                        existing_texts.add(ev["text"])
-
+                        existing_texts.add(key)
+    
+    # Add new solutions
     existing_ids = {s["id"] for s in existing["solutions"]}
     for new_sol in data["solutions"]:
         if new_sol["id"] not in existing_ids:
             existing["solutions"].append(new_sol)
-
-    # Recompute for all solutions — compute on ALL events, exclude summary from stored events
+    
+    # Update phases, directions, narratives
     for sol in existing["solutions"]:
-        sol["events"].sort(key=lambda e: e["date"], reverse=True)
-        # Use AI-determined phase if available (daily mode), else preserve existing phase (fast mode)
+        sol["events"].sort(key=lambda e: e.get("date", ""), reverse=True)
+        
         if ai_phases and sol["id"] in ai_phases:
             sol["phaseIndex"] = min(ai_phases[sol["id"]], len(sol["phases"]) - 1)
-        # else: keep existing phaseIndex — fast mode doesn't re-evaluate phases
+        
         sol["direction"] = compute_direction(sol["events"])
-        sol["keyMetric"] = {"label": "Events (7d)", "value": str(len(sol["events"]))}
-        sol["summary"] = sol["events"][0]["text"] if sol["events"] else ""
-        sol["events"] = sol["events"][1:]  # exclude summary event to avoid duplicate
+        sol["keyMetric"] = {"label": _make_trilingual("Events"), "value": str(len(sol["events"]))}
+        # summary: extract English text if trilingual dict
+        if sol["events"]:
+            _sev = sol["events"][0]
+            _st = _sev.get("text", "")
+            sol["summary"] = _st["en"] if isinstance(_st, dict) else _st
+            sol["events"] = sol["events"][1:]  # exclude summary
+        
+        # Preserve narrative from existing data (fast mode skips narrative generation)
+        existing_narrative = sol.get("narrative")
+        if narratives and sol["id"] in narratives:
+            existing_lt = sol.get("narrative", {}).get("longTerm")
+            new_narrative = narratives[sol["id"]]
+            # In fast mode, preserve existing longTerm
+            if existing_lt:
+                new_narrative["longTerm"] = existing_lt
+            sol["narrative"] = new_narrative
+        elif existing_narrative:
+            # Fast mode: keep existing narrative intact
+            sol["narrative"] = existing_narrative
+        
         sol["confidence"] = "high" if len(sol["events"]) >= 5 else "medium" if len(sol["events"]) >= 3 else "low"
-        # Inject stakeholders if available
         if stakeholders and sol["id"] in stakeholders:
             sol["stakeholders"] = stakeholders[sol["id"]]
-
+    
     # Recompute momentum
     all_solutions = existing["solutions"]
-    active_ids = [s["id"] for s in all_solutions if s["events"]]
+    active_ids = [s["id"] for s in all_solutions if s.get("events")]
     existing["activeSolutions"] = active_ids
-
+    
     counts = {"advancing": 0, "stable": 0, "stalling": 0}
     for s in all_solutions:
         counts[s["direction"]] += 1
-
-    # Sort by event count, keep top 8
-    all_solutions.sort(key=lambda s: len(s["events"]), reverse=True)
-    top8 = all_solutions[:8]
-    existing["solutions"] = top8
-    existing["activeSolutions"] = [s["id"] for s in top8]
-
+    
+    all_solutions.sort(key=lambda s: len(s.get("events", [])), reverse=True)
+    existing["solutions"] = all_solutions[:8]
+    existing["activeSolutions"] = [s["id"] for s in existing["solutions"]]
+    
     if counts["advancing"] > counts["stalling"]:
-        m_dir = "advancing"
+        m_dir, m_label = "advancing", "Net Positive"
     elif counts["stalling"] > counts["advancing"]:
-        m_dir = "stalling"
+        m_dir, m_label = "stalling", "Net Negative"
     else:
-        m_dir = "stable"
-
-    adv, stab, stall = counts["advancing"], counts["stable"], counts["stalling"]
-    n_events = sum(len(s['events']) for s in all_solutions)
-    n_cats = len(all_solutions)
-    n_active = len(active_ids)
-
+        m_dir, m_label = "stable", "Mixed Signals"
+    
+    en_s = f"{counts['advancing']} advancing, {counts['stable']} stable, {counts['stalling']} stalling."
+    he_s = f"{counts['advancing']} מתקדם, {counts['stable']} יציב, {counts['stalling']} מתעכב."
+    ar_s = f"{counts['advancing']} متقدم، {counts['stable']} مستقر، {counts['stalling']} متوقف."
     existing["overallMomentum"] = {
-        "direction": m_dir,
-        "summary": {
-            "en": f"{adv} advancing, {stab} stable, {stall} stalling ({n_active} active). {n_events} events across {n_cats} categories.",
-            "he": f"{adv} מתקדמים, {stab} יציבים, {stall} נעצרים ({n_active} פעילים). {n_events} אירועים ב-{n_cats} קטגוריות.",
-            "ar": f"{adv} متقدم، {stab} مستقر، {stall} متوقف ({n_active} نشط). {n_events} حدث عبر {n_cats} فئة.",
-        },
+        "direction": m_dir, "label": m_label,
+        "summary": {"en": en_s, "he": he_s, "ar": ar_s},
     }
     existing["lastUpdated"] = datetime.now(timezone.utc).isoformat()
     existing["source"] = "ai-analyzer-prod"
@@ -1270,458 +1867,288 @@ def _merge_with_existing(data, existing, ai_phases=None, stakeholders=None):
     return existing
 
 
-def _print_summary(data, articles_count, elapsed):
-    """Print run summary."""
-    print(f"\n\u2713 Done in {elapsed:.1f}s")
-    print(f"  {articles_count} articles \u2192 {len(data['solutions'])} solutions")
-    m = data['overallMomentum']
-    summary_text = m['summary'] if isinstance(m['summary'], str) else m['summary'].get('en', '')
-    print(f"  Momentum: {m['direction']} — {summary_text}")
+def _save_stage(name, data):
+    """Save an intermediate pipeline stage to staging/ for debugging."""
+    path = os.path.join(STAGING_DIR, f"{name}.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    print(f"  💾 Staged → {os.path.relpath(path)}")
 
+
+def _load_existing_data():
+    if not os.path.exists(DATA_FILE) and not os.path.exists(DATA_JSON_FILE):
+        return None
+    # Prefer data.json (has narratives) over solutions.json (events-only)
+    target = DATA_JSON_FILE if os.path.exists(DATA_JSON_FILE) else DATA_FILE
+    try:
+        with open(target, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _print_summary(data, articles_count, elapsed):
+    print(f"\n✓ Done in {elapsed:.1f}s")
+    print(f"  {articles_count} articles → {len(data['solutions'])} solutions")
+    print(f"  Momentum: {data['overallMomentum']['label']}")
     for sol in data["solutions"]:
-        d = "\U0001f7e2" if sol["direction"] == "advancing" else "\U0001f7e5" if sol["direction"] == "stalling" else "\U0001f7e1"
-        phase = sol["phases"][sol["phaseIndex"]]
-        print(f"  {sol['icon']} {sol['name']:35s} {sol['direction']:10s} {d} {sol['keyMetric']['value']} events \u2192 {phase}")
+        d = "🟢" if sol["direction"] == "advancing" else "🟤" if sol["direction"] == "stalling" else "🟡"
+        phase_raw = sol["phases"][sol["phaseIndex"]]
+        phase = phase_raw.get("en", str(phase_raw)) if isinstance(phase_raw, dict) else phase_raw
+        has_narrative = "📖" if sol.get("narrative") else ""
+        name = sol['name'].get('en', str(sol['name'])) if isinstance(sol['name'], dict) else sol['name']
+        print(f"  {sol['icon']} {name:35s} {sol['direction']:10s} {d} {sol['keyMetric']['value']} events → {phase} {has_narrative}")
+
+
+# Global reference for fallback classifier
+all_kws = {}
+source_profiles = {}
 
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="Peace Room AI Analyzer (Production)")
-    parser.add_argument("--fast", action="store_true",
-                        help="Hourly fast run: fetch last 2h, merge into existing data")
-    parser.add_argument("--daily", action="store_true",
-                        help="Daily full run: fetch 7 days, overwrite solutions.json")
-    parser.add_argument("--categories", type=str, nargs="*",
-                        help="Inject custom categories (id:name:description). E.g., --categories \"armistice:Ceasefire Talks:Truce negotiations\"")
+    parser = argparse.ArgumentParser(description="Peace Paths AI Analyzer (Narrative Pipeline)")
+    parser.add_argument("--fast", action="store_true", help="Hourly fast run")
+    parser.add_argument("--daily", action="store_true", help="Daily full run")
+    parser.add_argument("--narrative", action="store_true", help="Force narrative rewrite")
+    parser.add_argument("--categories", type=str, nargs="*", help="Inject custom categories")
     parser.add_argument("--skip-upload", action="store_true", help="Skip Cloudflare deploy")
-    parser.add_argument("--dry-run", action="store_true", help="Print output JSON to stdout")
+    parser.add_argument("--dry-run", action="store_true", help="Print output JSON")
     parser.add_argument("--fetch-only", action="store_true", help="Only fetch RSS, skip AI")
-    parser.add_argument("--review-taxonomy", action="store_true",
-                        help="Phase 1 only: propose taxonomy using core categories as base, save to taxonomy.json")
-    parser.add_argument("--use-taxonomy", type=str, default=None,
-                        help="[deprecated] Use approved taxonomy from file. Categories now come from categories.json.")
-    parser.add_argument("--recent", type=int, default=0,
-                        help="[deprecated] Only process articles from last N hours")
-    parser.add_argument("--research-categories", action="store_true",
-                        help="Research each category: rewrite description, phases, and keywords via AI")
-    parser.add_argument("--apply-research", action="store_true",
-                        help="Apply research results directly to categories.json (use with --research-categories)")
-    parser.add_argument("--verify", action="store_true",
-                        help="Verify AI-generated narratives against web search results")
-    parser.add_argument("--translate-phases", action="store_true",
-                        help="Translate category phases to Hebrew and Arabic via LLM")
+    parser.add_argument("--review-taxonomy", action="store_true", help="Propose taxonomy")
+    parser.add_argument("--research-categories", action="store_true", help="Research categories")
+    parser.add_argument("--apply-research", action="store_true", help="Apply research to categories.json")
     args = parser.parse_args()
-
-    # Load categories from categories.json (source of truth)
+    
+    global all_kws, source_profiles
+    
     cat_map, all_ids, core_ids, all_kws = load_categories()
-    print(f"\U0001f4c5 Loaded {len(all_ids)} categories ({len(core_ids)} core) from categories.json")
-
-    # Translate phases to trilingual {en, he, ar}
-    if args.translate_phases:
-        print("🔍 Translating phases...")
-        translate_phases(cat_map)
+    print(f"\U0001f4c5 Loaded {len(all_ids)} categories ({len(core_ids)} core)")
+    
     stakeholders = load_stakeholders()
     if stakeholders:
         print(f"\U0001f464 Loaded {len(stakeholders)} stakeholder groups")
-
-    # Load AI prompts (from prompts.json or hardcoded defaults)
+    
+    source_profiles = load_source_profiles()
+    if source_profiles:
+        print(f"\U0001f4c4 Loaded {len(source_profiles)} source profiles")
+    
     global PROMPTS
     PROMPTS = load_prompts()
-
-    if args.use_taxonomy:
-        print("  \u26a0 --use-taxonomy is deprecated. Categories are now in categories.json.")
-
-    # ── Research mode: rewrite descriptions, phases, keywords ──
+    
+    # ── Research mode ──
     if args.research_categories:
-        print("\n🔬 Researching categories from RSS articles...")
-        articles = fetch_all_feeds(age_hours=None)  # 7-day window for best context
+        print("\n🔬 Researching categories...")
+        articles = fetch_all_feeds(age_hours=None)
         if not articles:
-            print("No articles found, aborting.")
             return
-        print(f"  Fetched {len(articles)} articles for research context")
-
         researched = research_all_categories(articles, cat_map)
-
-        # Show diff: old vs new
+        
         print("\n--- RESEARCH RESULTS ---")
         for r in researched:
             old = cat_map.get(r["id"], {})
-            desc_changed = old.get("description") != r["description"]
-            phases_changed = old.get("phases") != r["phases"]
-            kws_changed = old.get("keywords") != r["keywords"]
-            changed = desc_changed or phases_changed or kws_changed
+            changed = old.get("description") != r["description"] or old.get("phases") != r["phases"]
             status = "🔄" if changed else "✓"
             print(f"\n  {status} {r['icon']} {r['name']}")
-            if desc_changed:
+            if old.get("description") != r["description"]:
                 print(f"     desc: {old.get('description', 'N/A')}")
                 print(f"    →    {r['description']}")
-            if phases_changed:
-                print(f"     phases: {', '.join(old.get('phases', []))}")
-                print(f"    →      {', '.join(r['phases'])}")
-            if kws_changed:
-                print(f"     kws:    {', '.join(old.get('keywords', []))}")
-                print(f"    →      {', '.join(r['keywords'])}")
-
-        # Save to file
+            if old.get("phases") != r["phases"]:
+                old_p = [p.get("en", p) if isinstance(p, dict) else p for p in old.get('phases', [])]
+                new_p = [p.get("en", p) if isinstance(p, dict) else p for p in r.get('phases', [])]
+                print(f"     phases: {', '.join(old_p)}")
+                print(f"    →      {', '.join(new_p)}")
+        
         if args.apply_research:
             with open(CATEGORIES_FILE, "w", encoding="utf-8") as f:
                 json.dump(researched, f, indent=2, ensure_ascii=False)
-            print(f"\n✓ Applied research results to {CATEGORIES_FILE}")
+            print(f"\n✓ Applied to {CATEGORIES_FILE}")
         else:
-            preview_file = CATEGORIES_FILE.replace(".json", "-researched.json")
-            with open(preview_file, "w", encoding="utf-8") as f:
+            preview = CATEGORIES_FILE.replace(".json", "-researched.json")
+            with open(preview, "w", encoding="utf-8") as f:
                 json.dump(researched, f, indent=2, ensure_ascii=False)
-            print(f"\n✓ Saved preview to {preview_file}")
-            print(f"  Review it, then run with --apply-research to apply to categories.json")
+            print(f"\n✓ Preview saved to {preview}")
         return
-
+    
     # Determine mode
     if args.fast:
         mode = "fast"
         age_hours = FAST_AGE_HOURS
-    elif args.daily or (args.fast == False and args.recent == 0):
+    elif args.daily or (not args.fast):
         mode = "daily"
         age_hours = None
     else:
         mode = "fast"
-        age_hours = args.recent
-        print("  \u26a0 --recent is deprecated, use --fast instead")
-
-    print(f"\n{'\U0001f680' if mode == 'daily' else '\U0001f4a9'} Peace Room AI Analyzer — {mode.upper()} mode\n")
-
-    # Inject custom categories (merges into cat_map)
+        age_hours = FAST_AGE_HOURS
+    
+    print(f"\n{'🚀' if mode == 'daily' else '⚡'} Peace Paths AI Analyzer — {mode.upper()} mode\n")
+    
+    # Inject custom categories
     if args.categories:
-        print("\u2728 Injecting custom categories:")
+        print("✨ Injecting custom categories:")
         for cat in args.categories:
             parts = cat.split(":", 2)
-            if len(parts) == 3:
-                cat_id, name, desc = parts
+            if len(parts) >= 2:
+                cat_id, name = parts[0], parts[1]
+                desc = parts[2] if len(parts) == 3 else f"{name} news"
                 inject_category(cat_map, cat_id, name, desc)
-            elif len(parts) == 2:
-                cat_id, name = parts
-                inject_category(cat_map, cat_id, name, f"{name} news and updates")
-            else:
-                print(f"  \u26a0 Invalid format: '{cat}' (expected id:name:description)")
-        # Rebuild lists after injection
-        all_ids = list(cat_map.keys())
-        all_kws = {c["id"]: c.get("keywords", []) for c in cat_map.values() if c.get("keywords")}
-
+            all_ids = list(cat_map.keys())
+            all_kws = {c["id"]: c.get("keywords", []) for c in cat_map.values() if c.get("keywords")}
+    
     start = time.time()
-
-    # 0. Load existing data for solution context (helps AI classify better)
+    
+    # Load existing data for context
     existing_data = _load_existing_data()
     solution_contexts = {}
     if existing_data:
         for sol in existing_data.get("solutions", []):
             events = sol.get("events", [])
             if events:
-                # Short context: current phase + last 3 event titles
-                phase_name = sol["phases"][sol["phaseIndex"]] if sol.get("phaseIndex", 0) < len(sol.get("phases", [])) else "Unknown"
-                recent = [e["text"] for e in events[:3]]
+                phase_name_raw = sol["phases"][sol["phaseIndex"]] if sol.get("phaseIndex", 0) < len(sol.get("phases", [])) else "Unknown"
+                phase_name = phase_name_raw.get("en", str(phase_name_raw)) if isinstance(phase_name_raw, dict) else phase_name_raw
+                recent = []
+                for e in events[:3]:
+                    t = e.get("text", "")
+                    recent.append(t["en"] if isinstance(t, dict) else t)
                 solution_contexts[sol["id"]] = f"Phase: {phase_name}. Recent: {'; '.join(recent)}"
-        if solution_contexts:
-            print(f"  \\U0001f4c4 Loaded context for {len(solution_contexts)} existing solutions")
-
+    
     # 1. Fetch RSS
     if age_hours is not None:
-        print(f"  [fast mode] fetching articles from last {age_hours}h")
+        print(f"  [fast] fetching last {age_hours}h")
     else:
-        print(f"  [daily mode] fetching articles from last {MAX_AGE_DAYS}d")
+        print(f"  [daily] fetching last {MAX_AGE_DAYS}d")
     articles = fetch_all_feeds(age_hours=age_hours)
     if not articles:
-        print("No articles found, aborting.")
+        print("No articles found.")
         return
-
-    # ── Phase 1: Taxonomy Proposal (uses core categories as base) ──
+    _save_stage("articles", articles)
+    print(f"  → {len(articles)} articles fetched")
+    
+    # 2. Build classifier prompt
     system_prompt, valid_ids = _make_classifier_prompt(cat_map, solution_contexts=solution_contexts if not args.review_taxonomy else None)
+    
+    # Taxonomy review mode
     if args.review_taxonomy:
         core_cats = [c for c in cat_map.values() if c.get("core", False)]
-        print(f"\n\U0001f50d Phase 1: Proposing taxonomy from {len(articles)} articles ({len(core_cats)} core categories as base)...")
+        print(f"\n🔍 Proposing taxonomy from {len(articles)} articles...")
         taxonomy = propose_taxonomy(articles, core_cats=core_cats)
-        if taxonomy is None:
-            print("  \u274c Taxonomy proposal failed.")
-            return
-
         if taxonomy and "categories" in taxonomy:
             with open(TAXONOMY_FILE, "w", encoding="utf-8") as f:
                 json.dump(taxonomy, f, indent=2, ensure_ascii=False)
-            print(f"\n\u2713 Proposed taxonomy saved to {TAXONOMY_FILE}")
-
-            print("\n--- PROPOSED CATEGORIES ---")
+            print(f"\n✓ Taxonomy saved to {TAXONOMY_FILE}")
             for cat in taxonomy["categories"]:
                 print(f"  {cat.get('icon', '📌')} {cat['id']:25s} → {cat['name']}")
-                print(f"       {cat['description']}")
-
-            cat_counts = {}
-            for idx_str, cat_id in taxonomy.get("assignments", {}).items():
-                cat_counts[cat_id] = cat_counts.get(cat_id, 0) + 1
-            print("\n--- ARTICLE ASSIGNMENTS ---")
-            for cat in taxonomy["categories"]:
-                count = cat_counts.get(cat["id"], 0)
-                print(f"  {cat['id']:25s} → {count} articles")
-
-            print(f"\nReview {TAXONOMY_FILE}, then add new categories to categories.json via admin panel.")
-            print(f"Then run:  python ai-analyze-prod.py --{mode}")
-            return
-        else:
-            print("  \u274c Taxonomy proposal failed, proceeding with existing categories.")
-
-    using_fallback = False
-    # 2. AI Classification
+        return
+    
+    # 3. AI Classification
     if args.fetch_only:
-        print("[--fetch-only] Using keyword fallback")
         classified_pairs = keyword_classify(articles, all_kws)
         ai_refusals = 0
     else:
-        classified_pairs, ai_refusals = classify_articles(articles, system_prompt, valid_ids)
+        classified_pairs, ai_refusals = classify_articles(articles, system_prompt, valid_ids, source_profiles)
         if not classified_pairs:
-            print("  \u26a0 AI failed, falling back to keyword classification")
+            print("  ⚠ AI failed, using keyword fallback")
             classified_pairs = keyword_classify(articles, all_kws)
             ai_refusals = 0
-
-    # 3. Build output
-    data = build_output(articles, classified_pairs, cat_map, stakeholders)
-
-    # 3.5 AI Phase Determination — only in daily mode (full article corpus)
-    # Fast mode preserves existing phases from the last daily run
+    # Save classified pairs (serializable form)
+    _save_stage("classified", [{"article": a, "classification": c} for a, c in classified_pairs])
+    
+    # 4. Event Clustering
+    all_clustered, clustered_by_solution = cluster_events(classified_pairs, source_profiles=source_profiles)
+    _save_stage("clustered", [{"solution": s, "events": len(e)} for s, e in clustered_by_solution.items()])
+    
+    # 5. AI Phase Determination (daily only)
     ai_phases = None
     if mode == "daily" and not args.fetch_only:
         solution_events_for_ai = {cid: [] for cid in cat_map}
         for article, classification in classified_pairs:
-            sol = classification.get("solution", "ceasefire")
-            if sol not in solution_events_for_ai:
-                sol = "ceasefire"
-            text = classification.get("text")
-            if not text or not isinstance(text, dict):
-                text = article["title"]
-            solution_events_for_ai[sol].append({
-                "date": article["date"],
-                "text": text,
+            sol = classification.get("solution", "regional")
+            solution_events_for_ai.setdefault(sol, []).append({
+                "date": article["date"], "text": article["title"],
                 "sentiment": classification.get("sentiment", "neutral"),
             })
-        print("\n🧠 Determining phases via AI (daily only)...")
+        print("\n🧠 Determining phases via AI...")
         ai_phases = determine_phases_ai(solution_events_for_ai, cat_map)
         if ai_phases:
-            print(f"  ✓ AI determined phases for {len(ai_phases)} solutions")
-            for sol in data["solutions"]:
-                if sol["id"] in ai_phases:
-                    sol["phaseIndex"] = ai_phases[sol["id"]]
-                    sol["phaseIndex"] = min(sol["phaseIndex"], len(sol["phases"]) - 1)
-        else:
-            print("  ⚠ AI phase determination failed, defaulting to phase 0")
+            print(f"  ✓ Phases for {len(ai_phases)} solutions")
+            _save_stage("phases", ai_phases)
+    
+    # 6. Narrative Generation (daily or --narrative flag)
+    narratives = {}
+    if mode == "daily" or args.narrative:
+        narratives = generate_narratives(clustered_by_solution, cat_map, existing_data, force_narrative=args.narrative)
+        if narratives:
+            _save_stage("narratives", narratives)
     else:
-        print("\n⏩ Skipping AI phase determination (fast mode — preserving existing phases)")
+        print("\n⏩ Skipping narrative generation (fast mode)")
+    
+    # 7. Build output
+    data = build_output(clustered_by_solution, cat_map, narratives, ai_phases, stakeholders)
+    
+    # 8. Shift Detection (daily only)
+    if mode == "daily" and existing_data:
+        print("\n🔍 Detecting shifts...")
+        shifts = detect_shifts(data["solutions"], existing_data.get("solutions", []))
+        if shifts:
+            print(f"  ✓ {len(shifts)} shifts detected")
+            # Append shifts to relevant solutions
+            for shift in shifts:
+                for sol in data["solutions"]:
+                    if sol["id"] == shift["solutionId"]:
+                        sol.setdefault("narrative", {})
+                        sol["narrative"].setdefault("shifts", []).append(shift)
+                        break
+    
+    # 9. Merge or overwrite
+    if mode == "fast" and existing_data:
+        print(f"→ Merging {len(classified_pairs)} events into existing data")
+        data = _merge_with_existing(data, existing_data, ai_phases=ai_phases, narratives=narratives, stakeholders=stakeholders)
 
-    # 4. Merge with existing data (fast mode) or overwrite (daily mode)
-    if mode == "fast":
-        if existing_data:
-            print(f"\u2192 Merging {len(classified_pairs)} new events into existing data")
-            data = _merge_with_existing(data, existing_data, ai_phases=ai_phases, stakeholders=stakeholders)
-        else:
-            print("  \u26a0 No existing data found, falling back to daily mode")
-    # daily mode: data already overwrites
+    # 9.5 Re-translate stale translations in daily mode
+    # (build_output already translated recent events; this catches stale ones)
+    if mode == "daily":
+        events_by_sol = {s["id"]: s.get("events", []) for s in data["solutions"]}
+        sol_names = [s["name"] for s in data["solutions"]]
+        _translate_events_to_trilingual(events_by_sol, sol_names)
+        for i, s in enumerate(data["solutions"]):
+            s["name"] = sol_names[i]
 
-    # Add AI health metadata
+    # AI health metadata
     data["aiHealth"] = {
         "refusals": ai_refusals,
         "totalClassified": len(classified_pairs),
         "refusalRate": round(ai_refusals / max(len(articles), 1) * 100, 1),
         "lastRun": datetime.now(timezone.utc).isoformat(),
-        "classificationMethod": "ai" if not using_fallback else "keyword-fallback",
+        "classificationMethod": "ai" if not args.fetch_only else "keyword-fallback",
+        "status": "healthy" if ai_refusals == 0 else "warning" if ai_refusals / max(len(articles), 1) < 0.05 else "degraded",
     }
-    if using_fallback:
-        data["aiHealth"]["status"] = "fallback"
-    elif ai_refusals > 0:
-        pct = data["aiHealth"]["refusalRate"]
-        data["aiHealth"]["status"] = "warning" if pct > 5 else "ok"
-    else:
-        data["aiHealth"]["status"] = "healthy"
-
-    # 5. Dry run
+    
+    # Save final output to staging for inspection
+    _save_stage("output", data)
+    
+    # Dry run
     if args.dry_run:
-        print("\n--- solutions.json ---")
+        print("\n--- data.json ---")
         print(json.dumps(data, indent=2, ensure_ascii=False))
         return
-
-    # 6. Write local JSON
-    os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+    
+    # Write local files
+    os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"\n\u2713 Written to {DATA_FILE}")
-
-    # Also sync to data.json for local dev server (even with --skip-upload)
-    DATA_JSON = os.path.join(os.path.dirname(DATA_FILE), "data.json")
-    with open(DATA_JSON, "w", encoding="utf-8") as f:
+    with open(DATA_JSON_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    # Also write app/data.json for GitHub-deployed frontend
-    APP_DATA_JSON = os.path.join(os.path.dirname(DATA_FILE), "data.json")
-    with open(APP_DATA_JSON, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-    # Back-propagate new category IDs to categories.json
-    # (e.g., keyword fallback created a solution for a category not in categories.json)
-    solution_ids = {s["id"] for s in data.get("solutions", [])}
-    missing = solution_ids - set(cat_map.keys())
-    if missing:
-        for sid in missing:
-            sol = next((s for s in data.get("solutions", []) if s["id"] == sid), None)
-            inject_category(cat_map, sid, sol["name"] if sol else sid, f"{sid} news and updates")
-            print(f"  \u2795 Auto-added missing category: {sid}")
-        # Re-read categories.json to preserve categories not used this run,
-        # then merge new ones into the existing cat_map dict
-        existing_map, _, _, _ = load_categories()  # dict {id: category_obj}
-        for cid, cdata in cat_map.items():
-            if cid not in existing_map:
-                existing_map[cid] = cdata
-        save_categories(existing_map)
-
-    # 7. Upload data.json to Cloudflare KV (served via Pages Function)
+    print(f"\n✓ Written to {DATA_FILE} and {DATA_JSON_FILE}")
+    
+    # Upload to KV
     if not args.skip_upload:
-        print(f"\n\U0001f4a9 Uploading data.json to Cloudflare KV...")
-        project_root = os.path.dirname(os.path.abspath(__file__))
-        import subprocess
-        kv_id = "badf4fb7acfe4d1c905db77ed8d5e70f"
-        cmd = f'npx wrangler kv key put "data.json" --namespace-id={kv_id} --path="{APP_DATA_JSON}" --remote'
-        result = subprocess.run(cmd, shell=True, cwd=project_root, capture_output=True, timeout=60)
-        try:
-            result.stdout = result.stdout.decode('utf-8', errors='replace')
-            result.stderr = result.stderr.decode('utf-8', errors='replace')
-        except Exception:
-            pass
-        if result.returncode == 0:
-            print("  \u2713 data.json uploaded to KV")
-        else:
-            print(f"  \u26a0 KV upload failed: {result.stderr[:300]}")
-            print("  Fallback: data.json written locally")
+        print(f"\n🚀 Uploading data.json to Cloudflare KV...")
+        upload_to_cloudflare(data)
     else:
-        print(f"\n\u2139\ufe0f Deploy skipped. Data written to {DATA_FILE} and {DATA_JSON}")
-
+        print(f"\nℹ Upload skipped.")
+    
     elapsed = time.time() - start
     _print_summary(data, len(classified_pairs), elapsed)
-
-    # 8. Web Search Verification (optional)
-    if args.verify:
-        print(f"\n🔍 Running web search verification...")
-        verify_results = verify_narratives(data.get("solutions", []))
-        print(f"  Verified {len(verify_results)} solutions")
-        for v in verify_results:
-            status = "✅" if v["score"] >= 70 else "⚠️" if v["score"] >= 40 else "❌"
-            print(f"  {status} {v['name']}: {v['score']}% ({v['verified_count']}/{v['total_claims']} claims)")
-            for d in v.get("discrepancies", []):
-                print(f"    ⚠ {d}")
-
-
-def verify_narratives(solutions):
-    """Verify AI-generated narratives against web search results.
-
-    Uses SearXNG to search for key claims in narratives.
-    Returns verification results with scores and discrepancies.
-    """
-    import urllib.request
-    import urllib.parse
-
-    search_url = os.environ.get("SEARXNG_URL", "http://192.168.2.213:8888")
-    results = []
-
-    for sol in solutions:
-        narrative = sol.get("narrative", {})
-        if not narrative:
-            continue
-
-        # Extract key claims to verify
-        claims = []
-        if narrative.get("longTerm"):
-            lt = narrative["longTerm"]
-            claims.append({"type": "longTerm", "text": lt["en"] if isinstance(lt, dict) else lt})
-        if narrative.get("weeklyHighlight"):
-            wh = narrative["weeklyHighlight"]
-            claims.append({"type": "weeklyHighlight", "text": wh["en"] if isinstance(wh, dict) else wh})
-        for ev in narrative.get("keyEvents", []):
-            title = ev.get("title", "")
-            if isinstance(title, dict):
-                title = title.get("en", "")
-            if title:
-                claims.append({"type": "keyEvent", "text": title})
-        for op in narrative.get("keyOpinions", []):
-            quote = op.get("quote", "")
-            if isinstance(quote, dict):
-                quote = quote.get("en", "")
-            if quote:
-                claims.append({"type": "keyOpinion", "text": quote})
-
-        search_results = []
-        total_score = 0
-        verified_count = 0
-        discrepancies = []
-
-        for claim in claims:
-            query = claim["text"][:120]
-            try:
-                url = f"{search_url}/search?q={urllib.parse.quote(query)}&format=json&categories=general&language=en"
-                req = urllib.request.Request(url)
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    search_data = json.loads(resp.read().decode())
-
-                results_list = search_data.get("results", [])
-                if results_list:
-                    top_result = results_list[0]
-                    result_title = top_result.get("title", "").lower()
-                    claim_lower = claim["text"].lower()
-
-                    # Simple relevance scoring
-                    score = 0
-                    claim_words = set(claim_lower.split())
-                    title_words = set(result_title.split())
-                    if claim_words:
-                        overlap = len(claim_words & title_words) / len(claim_words)
-                        score = int(overlap * 60)
-
-                    # Source credibility bonus
-                    source = top_result.get("source", "").lower()
-                    if any(s in source for s in ["reuters", "ap", "bbc", "al jazeera"]):
-                        score += 15
-                    score = min(score, 100)
-
-                    total_score += score
-                    verified_count += 1
-
-                    if score < 40:
-                        discrepancies.append(f"Low confidence: '{claim['text'][:60]}...'")
-
-                    search_results.append({
-                        "claim": claim["text"][:100],
-                        "claim_type": claim["type"],
-                        "score": score,
-                        "source": top_result.get("source", "Unknown"),
-                        "title": top_result.get("title", ""),
-                        "url": top_result.get("url", ""),
-                        "snippet": top_result.get("snippet", "")[:200]
-                    })
-                else:
-                    discrepancies.append(f"No results: '{claim['text'][:60]}...'")
-            except Exception as e:
-                discrepancies.append(f"Search failed: {str(e)[:50]}")
-
-        avg_score = int(total_score / verified_count) if verified_count > 0 else 0
-        narrative_text = narrative.get("longTerm", "")
-        if isinstance(narrative_text, dict):
-            narrative_text = narrative_text.get("en", "")
-
-        results.append({
-            "id": sol["id"],
-            "name": sol.get("name", ""),
-            "icon": sol.get("icon", "📰"),
-            "score": avg_score,
-            "verified_count": verified_count,
-            "total_claims": len(claims),
-            "narrativeText": narrative_text,
-            "queries": [c["text"][:80] for c in claims],
-            "results": search_results,
-            "discrepancies": discrepancies,
-            "summary": f"{verified_count}/{len(claims)} claims verified. Avg score: {avg_score}%"
-        })
-
-    return results
 
 
 if __name__ == "__main__":
