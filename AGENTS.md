@@ -55,8 +55,8 @@ AI-powered tracker of concrete peace initiatives across the Middle East.
 | Data (`app/data.json`) | Upload to KV via `wrangler kv key put` |
 
 - **NEVER commit `app/data.json`** to Git — served from KV.
-- **NEVER deploy frontend via `npx wrangler pages deploy`** — use GitHub push only.
-- `npx wrangler` is for **KV data and Workers only**.
+- **NEVER deploy frontend via `npx wrangler pages deploy`** — use GitHub push only. This is MANDATORY.
+- `npx wrangler` is for **KV data and Workers only** — never for frontend deployment.
 
 ---
 
