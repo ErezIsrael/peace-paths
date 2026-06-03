@@ -572,7 +572,12 @@ a:hover { text-decoration: underline; }
 }
 .card-players-sep { color: var(--text-dim); }
 .card-player-chip { color: var(--accent); font-size: 12px; }
-.card-player-chip:hover { text-decoration: underline; }
+.card-player-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 12px;
+}
+.card-player-link:hover { text-decoration: underline; }
 .card-player-email {
   font-size: 10px;
   color: var(--accent);

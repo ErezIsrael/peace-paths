@@ -581,25 +581,27 @@ function buildStakeholders(stakeholders) {
     }
     const chip = document.createElement('span');
     chip.className = 'card-player-chip';
-    chip.textContent = p.name;
+    if (p.contact) {
+      const link = document.createElement('a');
+      link.className = 'card-player-link';
+      link.href = p.contact;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = p.name;
+      link.title = `${p.name} — ${p.role}`;
+      chip.appendChild(link);
+    } else {
+      chip.textContent = p.name;
+      chip.title = `${p.name} — ${p.role}`;
+    }
     if (p.email) {
       const em = document.createElement('a');
       em.className = 'card-player-email';
       em.href = `mailto:${p.email}`;
-      em.textContent = p.email;
+      em.textContent = '✉';
+      em.title = `Email: ${p.email}`;
       chip.appendChild(em);
     }
-    if (p.contact) {
-      const cl = document.createElement('a');
-      cl.className = 'card-player-contact';
-      cl.href = p.contact;
-      cl.target = '_blank';
-      cl.rel = 'noopener';
-      cl.title = `${p.role} — Contact`;
-      cl.textContent = '✉';
-      chip.appendChild(cl);
-    }
-    chip.title = `${p.name} — ${p.role}`;
     row.appendChild(chip);
   });
   div.appendChild(row);
