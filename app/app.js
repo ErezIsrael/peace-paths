@@ -1,28 +1,144 @@
-/* ── Peace Paths — Frontend App v4 ──────────────────── */
+/* ── Peace Paths — Frontend App v5 (Narrative Pipeline) ─── */
 
 // No hardcoded categories — solutions render dynamically from data.activeSolutions
 
-const MOMENTUM_CONFIG = {
-  advancing: { icon: '🟢', label: 'Net Positive', cls: 'momentum-advancing' },
-  stable:    { icon: '🟡', label: 'Mixed Signals', cls: 'momentum-stable' },
-  stalling:  { icon: '🔴', label: 'Net Negative', cls: 'momentum-stalling' },
+const MOMENTUM_CONFIG_KEYS = {
+  advancing: 'momentumAdvancing',
+  stable: 'momentumStable',
+  stalling: 'momentumStalling',
 };
 
-const DIRECTION_LABELS = {
-  advancing: 'Advancing',
-  stable:    'Stable',
-  stalling:  'Stalling',
+const MOMENTUM_ICONS = {
+  advancing: { icon: '🟢', cls: 'momentum-advancing' },
+  stable:    { icon: '🟡', cls: 'momentum-stable' },
+  stalling:  { icon: '🔴', cls: 'momentum-stalling' },
 };
+
+function getDirectionLabel(key) {
+  return t(key) || key;
+}
+
+// Current language
+let currentLang = 'en';
+let translations = {};
+
+/* ── Translation System ───────────────────────────────── */
+async function loadTranslations() {
+  try {
+    const res = await fetch('./translations.json');
+    if (res.ok) {
+      translations = await res.json();
+    }
+  } catch (e) {
+    console.warn('translations.json unavailable:', e);
+    translations = { en: {}, he: {}, ar: {} };
+  }
+}
+
+function t(key) {
+  const lang = translations[currentLang] || {};
+  return lang[key] || translations.en?.[key] || key;
+}
+
+function getLangDirection() {
+  return (currentLang === 'he' || currentLang === 'ar') ? 'rtl' : 'ltr';
+}
+
+function applyLanguage(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = getLangDirection();
+  localStorage.setItem('peace-paths-lang', lang);
+  document.title = `${t('siteTitle')} — Peace Tracker`;
+
+  // Update language switcher
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+
+  // Update static UI elements
+  const logoText = document.getElementById('logoText');
+  if (logoText) logoText.textContent = t('siteTitle');
+  const tagline = document.querySelector('.tagline');
+  if (tagline) tagline.textContent = t('tagline');
+  const infoBtn = document.getElementById('infoBtn');
+  if (infoBtn) infoBtn.textContent = `ℹ ${t('howItWorks')}`;
+  const modalClose = document.getElementById('modalClose');
+  if (modalClose) modalClose.textContent = t('close');
+
+  // Section headers
+  const sectionHeaders = document.querySelectorAll('.section-header');
+  if (sectionHeaders[0]) {
+    // Recent Activity — keep the live dot
+    const dot = sectionHeaders[0].querySelector('.live-dot');
+    sectionHeaders[0].textContent = '';
+    if (dot) sectionHeaders[0].appendChild(dot);
+    sectionHeaders[0].appendChild(document.createTextNode(' ' + (t('recentActivity') || 'Recent Activity')));
+  }
+  if (sectionHeaders[1]) sectionHeaders[1].textContent = t('solutions') || 'Solutions';
+
+  // Footer
+  const footer = document.querySelector('.footer');
+  if (footer) {
+    const ps = footer.querySelectorAll('p');
+    if (ps[0]) ps[0].textContent = t('footerDisclaimer');
+    if (ps[1]) ps[1].innerHTML = t('footerData').replace('{n}', `<span id="feedCount">${data?.feedCount || 60}</span>`);
+    if (ps[2]) ps[2].textContent = t('footerAlgorithmic');
+  }
+  const footerLinks = document.querySelectorAll('.footer-links .footer-link:not(#versionTag)');
+  if (footerLinks[0]) footerLinks[0].textContent = t('reportBug');
+  if (footerLinks[1]) footerLinks[1].textContent = t('buyCoffee');
+  if (footerLinks[2]) footerLinks[2].textContent = t('peaceMeter');
+
+  // Activity "show more" button
+  const moreBtn = document.getElementById('showMoreActivity');
+  if (moreBtn && moreBtn.style.display !== 'none' && activityFeedEvents.length > feedShowing) {
+    const extra = Math.min(12, activityFeedEvents.length - feedShowing);
+    moreBtn.textContent = `${extra} ${t('showMore')}`;
+  }
+
+  // Refresh info modal if open
+  const overlay = document.getElementById('modalOverlay');
+  if (overlay && overlay.classList.contains('active')) {
+    renderInfoModal();
+  }
+
+  // Refresh refresh badge title
+  const refreshBadge = document.getElementById('refreshBadge');
+  if (refreshBadge) refreshBadge.title = t('refreshTitle');
+
+  // Re-render momentum banner (direction label + trilingual summary)
+  if (data?.overallMomentum) renderMomentum(data.overallMomentum);
+
+  // Re-render with new language
+  if (data) renderAll(data);
+}
+
+function detectLanguage() {
+  // Check localStorage first
+  const saved = localStorage.getItem('peace-paths-lang');
+  if (saved && translations[saved]) return saved;
+
+  // Check URL param
+  const params = new URLSearchParams(window.location.search);
+  const urlLang = params.get('lang');
+  if (urlLang && translations[urlLang]) return urlLang;
+
+  // Check browser preference
+  const browser = navigator.language.slice(0, 2);
+  if (translations[browser]) return browser;
+
+  return 'en';
+}
 
 /* ── Helpers ─────────────────────────────────────────── */
 function parseDate(dateStr) {
   if (!dateStr) return null;
   let d = new Date(dateStr);
   if (!isNaN(d.getTime())) return d;
-  // Normalize "Wednesday, April 29, 2026 - 10:00" -> "April 29, 2026 10:00"
   const normalized = dateStr
-    .replace(/^\w+,?\s*/, '')       // strip day-of-week
-    .replace(/\s+-\s+/, ' ');       // replace " - " with space
+    .replace(/^\w+,?\s*/, '')
+    .replace(/\s+-\s+/, ' ');
   d = new Date(normalized);
   if (!isNaN(d.getTime())) return d;
   return null;
@@ -34,7 +150,6 @@ function formatTime(dateStr) {
   const now = new Date();
   const diffMs = now - d;
   const diffHrs = diffMs / 3600000;
-
   if (diffHrs < 1) {
     const mins = Math.floor(diffMs / 60000);
     return mins < 1 ? 'now' : `${mins}m`;
@@ -45,12 +160,12 @@ function formatTime(dateStr) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function formatEventTime(dateStr) {
-  const d = parseDate(dateStr);
-  if (!d) return '—';
-  const h = d.getUTCHours();
-  const m = String(d.getUTCMinutes()).padStart(2, '0');
-  return `${h}:${m}`;
+/* ── Multilingual Text Helper ─────────────────────────── */
+function getLangText(obj, fallback) {
+  if (typeof obj === 'string') return obj;
+  if (obj && typeof obj === 'object' && obj[currentLang]) return obj[currentLang];
+  if (obj && obj.en) return obj.en;
+  return fallback || '';
 }
 
 /* ── Data Loading ────────────────────────────────────── */
@@ -60,7 +175,6 @@ const FEED_MAX = 5;
 let feedShowing = FEED_MAX;
 
 async function loadData() {
-  // Load AI-generated data.json (deployed with the site)
   try {
     const res = await fetch('./data.json');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -69,13 +183,14 @@ async function loadData() {
   } catch (err) {
     console.warn('data.json unavailable, falling back to solutions.json:', err);
     try {
-      const res = await fetch('solutions.json');
+      const res = await fetch('./solutions.json');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       data = await res.json();
       renderAll(data);
     } catch (fallbackErr) {
       console.error('Failed to load data:', fallbackErr);
-      document.getElementById('momentumSummary').textContent = 'Failed to load data. Retry later.';
+      const ms = document.getElementById('momentumSummary');
+      if (ms) ms.textContent = t('error') || 'Failed to load data';
     }
   }
 }
@@ -90,10 +205,9 @@ function renderClassificationWarning(aiHealth) {
     container.innerHTML = `
       <span style="font-size:18px">⚠️</span>
       <div>
-        <strong>Keyword Fallback Active</strong><br>
+        <strong>${t('keywordFallback')}</strong><br>
         <span style="font-size:12px;color:var(--text-muted)">
-          AI classification was skipped or failed. Articles are classified by keyword matching only.
-          Accuracy may be lower than normal.
+          ${t('keywordFallbackDesc')}
         </span>
       </div>
     `;
@@ -106,20 +220,20 @@ function renderClassificationWarning(aiHealth) {
 function renderMomentum(momentum) {
   if (!momentum) return;
   const banner = document.getElementById('momentumBanner');
-  const cfg = MOMENTUM_CONFIG[momentum.direction] || MOMENTUM_CONFIG.stable;
+  const cfg = MOMENTUM_ICONS[momentum.direction] || MOMENTUM_ICONS.stable;
   banner.className = `momentum-banner ${cfg.cls}`;
   document.getElementById('momentumIcon').textContent = cfg.icon;
-  document.getElementById('momentumLabel').textContent = cfg.label;
-  document.getElementById('momentumSummary').textContent = momentum.summary || '';
+  const mk = MOMENTUM_CONFIG_KEYS[momentum.direction] || 'momentumStable';
+  document.getElementById('momentumLabel').textContent = t(mk);
+  document.getElementById('momentumSummary').textContent = getLangText(momentum.summary) || '';
 }
 
-/* ── Activity Feed (global) ──────────────────────────── */
+/* ── Activity Feed ───────────────────────────────────── */
 function buildActivityFeed() {
-  // Collect all events across all solutions, sort by date desc
   const all = [];
   (data.solutions || []).forEach(sol => {
     (sol.events || []).forEach(ev => {
-      all.push({ ...ev, solutionId: sol.id, solutionName: sol.name });
+      all.push({ ...ev, solutionId: sol.id, solutionName: getLangText(sol.name, sol.name) });
     });
   });
   all.sort((a, b) => {
@@ -141,20 +255,19 @@ function renderActivityFeed() {
     item.className = `activity-item sentiment-${ev.sentiment || 'neutral'}`;
     item.innerHTML = `
       <span class="activity-time">${formatTime(ev.date)}</span>
-      <span class="activity-solution">${ev.solutionId}</span>
-      ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="activity-link">${ev.text}</a>` : `<span class="activity-text">${ev.text}</span>`}
+      <span class="activity-solution">${ev.solutionName}</span>
+      ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="activity-link">${getLangText(ev.text)}</a>` : `<span class="activity-text">${getLangText(ev.text)}</span>`}
     `;
     container.appendChild(item);
   });
 
-  // Toggle more
   const moreBtn = document.getElementById('showMoreActivity');
   if (feedShowing >= activityFeedEvents.length) {
     moreBtn.style.display = 'none';
   } else {
     moreBtn.style.display = 'block';
     const extra = Math.min(12, activityFeedEvents.length - feedShowing);
-    moreBtn.textContent = `Show ${extra} more events…`;
+    moreBtn.textContent = `${extra} ${t('showMore')}`;
   }
 }
 
@@ -180,46 +293,41 @@ function buildPeacePath(solution) {
   const track = document.createElement('div');
   track.className = 'peace-path';
 
-  // Rail (horizontal line)
   const rail = document.createElement('div');
   rail.className = 'peace-path__rail';
-
   const fill = document.createElement('div');
   fill.className = 'peace-path__rail-fill';
   fill.style.width = `${(idx / (total - 1)) * 100}%`;
-
   const dash = document.createElement('div');
   dash.className = 'peace-path__rail-dash';
   dash.style.width = `${(1 - idx / (total - 1)) * 100}%`;
-
   rail.appendChild(fill);
   rail.appendChild(dash);
   track.appendChild(rail);
 
-  // Milestone nodes
   const nodes = document.createElement('div');
   nodes.className = 'peace-path__nodes';
 
-  phases.forEach((p, i) => {
+  // Peace path always LTR (CSS direction:ltr on .peace-path)
+  const orderedPhases = phases;
+  const activeIdx = idx;
+
+  orderedPhases.forEach((p, i) => {
     const node = document.createElement('div');
     node.className = 'peace-path__node';
-
     const dot = document.createElement('div');
-    if (i < idx) dot.className = 'peace-path__dot done';
-    else if (i === idx) dot.className = 'peace-path__dot active';
+    if (i < activeIdx) dot.className = 'peace-path__dot done';
+    else if (i === activeIdx) dot.className = 'peace-path__dot active';
     else dot.className = 'peace-path__dot future';
-
     const label = document.createElement('div');
     label.className = 'peace-path__label';
-    if (i < idx) label.classList.add('done');
-    else if (i === idx) label.classList.add('active');
+    if (i < activeIdx) label.classList.add('done');
+    else if (i === activeIdx) label.classList.add('active');
     else label.classList.add('future');
-
-    // Truncate long phase names for display
-    const short = p.length > 28 ? p.slice(0, 26) + '…' : p;
+    const phaseText = getLangText(p);
+    const short = phaseText.length > 28 ? phaseText.slice(0, 26) + '…' : phaseText;
     label.textContent = `${i + 1}. ${short}`;
-    label.title = p; // full name on hover
-
+    label.title = phaseText;
     node.appendChild(dot);
     node.appendChild(label);
     nodes.appendChild(node);
@@ -227,7 +335,6 @@ function buildPeacePath(solution) {
 
   track.appendChild(nodes);
 
-  // Percentage badge
   const pctBadge = document.createElement('div');
   pctBadge.className = 'peace-path__pct';
   pctBadge.textContent = `${pct}%`;
@@ -236,148 +343,263 @@ function buildPeacePath(solution) {
   return track;
 }
 
-/* ── Solution Cards ──────────────────────────────────── */
+/* ── Type Badge ──────────────────────────────────────── */
+function typeBadge(type) {
+  const labels = { reporting: t('reporting'), analysis: t('analysis'), opinion: t('opinion') };
+  const label = labels[type] || type;
+  return `<span class="type-badge type-${type}">${label}</span>`;
+}
+
+/* ── Solution Cards (Concept J — Layered Narrative) ──── */
 function createSolutionCard(solution) {
   const card = document.createElement('div');
-  card.className = `solution-card ${solution.direction}`;
 
-  // Top row: icon, name, metric, direction
+  // Check if narrative exists (new schema)
+  const hasNarrative = solution.narrative && solution.narrative.longTerm;
+
+  if (hasNarrative) {
+    card.className = `layered-card ${solution.direction}`;
+    card.appendChild(buildLayeredCard(solution));
+  } else {
+    // Fallback: old schema
+    card.className = `solution-card ${solution.direction}`;
+    card.appendChild(createLegacyCardTop(solution));
+    const path = buildPeacePath(solution);
+    if (path) card.appendChild(path);
+    const events = buildLegacyEvents(solution);
+    if (events) card.appendChild(events);
+  }
+
+  // Stakeholders
+  if (solution.stakeholders && solution.stakeholders.length) {
+    card.appendChild(buildStakeholders(solution.stakeholders));
+  }
+
+  return card;
+}
+
+function buildLayeredCard(solution) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'lc-wrapper';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'lc-header';
+  const kv = solution.keyMetric || {};
+  // For narrative cards, count keyEvents + keyOpinions (what's actually shown)
+  const n = solution.narrative || {};
+  const eventsCount = (n.keyEvents || []).length + (n.keyOpinions || []).length || (solution.events || []).length;
+  const solutionName = getLangText(solution.name) || solution.name;
+  const dirLabel = getDirectionLabel(solution.direction);
+  header.innerHTML = `
+    <span class="lc-icon">${solution.icon}</span>
+    <span class="lc-name">${solutionName}</span>
+    <span class="lc-metric">${eventsCount || kv.value || '—'} <small>${getLangText(kv.label, kv.label || '')}</small></span>
+    <span class="lc-direction ${solution.direction}">${dirLabel}</span>
+  `;
+  wrapper.appendChild(header);
+
+  // Progress track
+  const path = buildPeacePath(solution);
+  if (path) wrapper.appendChild(path);
+
+  // Shifts badges
+  if (n.shifts && n.shifts.length) {
+    const shiftsDiv = document.createElement('div');
+    shiftsDiv.className = 'lc-shifts';
+    n.shifts.slice(0, 3).forEach(s => {
+      const desc = getLangText(s.desc, s.desc);
+      const badge = document.createElement('span');
+      badge.className = `lc-shift-badge ${s.direction}`;
+      badge.textContent = `${t('shiftDetected')}: ${desc}`;
+      shiftsDiv.appendChild(badge);
+    });
+    wrapper.appendChild(shiftsDiv);
+  }
+
+  // Long-term Arc layer
+  const longTerm = getLangText(n.longTerm, '');
+  if (longTerm) {
+    const layer = document.createElement('div');
+    layer.className = 'lc-layer lc-layer-context';
+    layer.innerHTML = `
+      <div class="lc-layer-title">📖 ${t('longTerm')}</div>
+      <div class="lc-layer-text">${longTerm}</div>
+    `;
+    wrapper.appendChild(layer);
+  }
+
+  // This Week layer
+  const weekly = getLangText(n.weeklyHighlight, '');
+  if (weekly || (n.keyEvents && n.keyEvents.length)) {
+    const layer = document.createElement('div');
+    layer.className = 'lc-layer lc-layer-signals';
+
+    let html = `<div class="lc-layer-title">⚡ ${t('weekly')} ${t('signals')}</div>`;
+    if (weekly) html += `<div class="lc-layer-text">${weekly}</div>`;
+
+    if (n.keyEvents) {
+      n.keyEvents.forEach(ev => {
+        const title = getLangText(ev.title, ev.title);
+        const attCount = ev.attestations ? ev.attestations.length : 0;
+        html += `
+          <div class="lc-event-item">
+            ${typeBadge(ev.type)}
+            <span class="lc-signal">${ev.signal_score || ev.effective_signal || '?'}</span>
+            ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="lc-event-title">${title}</a>` : `<span class="lc-event-title">${title}</span>`}
+            <span class="lc-source">${ev.source}</span>
+            ${attCount ? `<span class="lc-attestations" title="${t('attestations')}">${attCount} ${t('sources')}</span>` : ''}
+            ${ev.cross_attestation_bonus ? `<span class="lc-cross-attest" title="${t('crossAttestation')}">✦</span>` : ''}
+          </div>
+        `;
+      });
+    }
+    layer.innerHTML = html;
+    wrapper.appendChild(layer);
+  }
+
+  // Key Perspectives layer
+  if (n.keyOpinions && n.keyOpinions.length) {
+    const layer = document.createElement('div');
+    layer.className = 'lc-layer lc-layer-opinions';
+    let html = `<div class="lc-layer-title">💭 ${t('opinions')}</div>`;
+    n.keyOpinions.forEach(ev => {
+      const quote = getLangText(ev.quote, ev.quote);
+      html += `
+        <div class="lc-event-item">
+          ${typeBadge('opinion')}
+          <span class="lc-signal">${ev.signal_score || ev.effective_signal || '?'}</span>
+          ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="lc-event-title">"${quote}"</a>` : `<span class="lc-event-title">"${quote}"</span>`}
+          <span class="lc-source">${ev.source}</span>
+        </div>
+      `;
+    });
+    layer.innerHTML = html;
+    wrapper.appendChild(layer);
+  }
+
+  return wrapper;
+}
+
+function createLegacyCardTop(solution) {
   const top = document.createElement('div');
   top.className = 'card-top';
   const kv = solution.keyMetric || {};
   const eventsCount = (solution.events || []).length;
   let valHtml = eventsCount ? `${eventsCount}` : `${kv.value || '—'}`;
   if (kv.total && !eventsCount) valHtml += ` / ${kv.total}`;
-  if (kv.unit && !eventsCount) valHtml += `<small style="font-size:11px;color:var(--text-muted)"> ${kv.unit}</small>`;
-  const metricHtml = `<span class="card-metric"><span class="card-metric-value">${valHtml}</span><span class="card-metric-label">${kv.label || ''}</span></span>`;
+  const solutionName = getLangText(solution.name) || solution.name;
+  const dirLabel = getDirectionLabel(solution.direction);
   top.innerHTML = `
     <span class="card-icon">${solution.icon}</span>
-    <span class="card-name">${solution.name}</span>
-    ${metricHtml}
-    <span class="card-direction ${solution.direction}">${DIRECTION_LABELS[solution.direction] || solution.direction}</span>
+    <span class="card-name">${solutionName}</span>
+    <span class="card-metric"><span class="card-metric-value">${valHtml}</span><span class="card-metric-label">${getLangText(kv.label, kv.label || '')}</span></span>
+    <span class="card-direction ${solution.direction}">${dirLabel}</span>
   `;
+  return top;
+}
 
-  // Peace Path progress track
-  card.appendChild(top);
-  card.appendChild(buildPeacePath(solution));
-
-  // Events list (sorted newest-first)
+function buildLegacyEvents(solution) {
   const events = (solution.events || []).slice().sort((a, b) => {
     const da = parseDate(a.date) || new Date(0);
     const db = parseDate(b.date) || new Date(0);
     return db - da;
   });
 
-  if (events.length) {
-    const evDiv = document.createElement('div');
-    evDiv.className = 'card-events';
+  if (!events.length) return null;
+  const evDiv = document.createElement('div');
+  evDiv.className = 'card-events';
+  const SENTIMENT_KEYS = { positive: 'sentimentPositive', neutral: 'sentimentNeutral', negative: 'sentimentNegative' };
+  const show = 3;
 
-    // Show top 3, with toggle for more
-    const SENTIMENT_LABELS = { positive: 'Peace', neutral: 'Neutral', negative: 'War' };
-    const show = 3;
-    events.slice(0, show).forEach(ev => {
-      const src = ev.source ? ` <span class="card-event-source">(${ev.source})</span>` : '';
-      const sentLabel = ev.sentiment ? SENTIMENT_LABELS[ev.sentiment] || ev.sentiment : '';
-      const item = document.createElement('div');
-      item.className = 'card-event';
-      item.innerHTML = `
-        <span class="card-event-dot sentiment-${ev.sentiment || 'neutral'}"></span>
-        ${sentLabel ? `<span class="card-event-sentiment sentiment-${ev.sentiment}">${sentLabel}</span>` : ''}
-        <span class="card-event-time">${formatTime(ev.date)}</span>
-        ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="card-event-text">${ev.text}</a>` : `<span class="card-event-text">${ev.text}</span>`}
-        ${src}
-      `;
-      evDiv.appendChild(item);
-    });
+  events.slice(0, show).forEach(ev => {
+    const src = ev.source ? ` <span class="card-event-source">(${ev.source})</span>` : '';
+    const sentKey = ev.sentiment ? (SENTIMENT_KEYS[ev.sentiment] || ev.sentiment) : '';
+    const sentLabel = sentKey ? t(sentKey) : '';
+    const item = document.createElement('div');
+    item.className = 'card-event';
+    item.innerHTML = `
+      <span class="card-event-dot sentiment-${ev.sentiment || 'neutral'}"></span>
+      ${sentLabel ? `<span class="card-event-sentiment sentiment-${ev.sentiment}">${sentLabel}</span>` : ''}
+      <span class="card-event-time">${formatTime(ev.date)}</span>
+      ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="card-event-text">${getLangText(ev.text)}</a>` : `<span class="card-event-text">${getLangText(ev.text)}</span>`}
+      ${src}
+    `;
+    evDiv.appendChild(item);
+  });
 
-    // Toggle more events
-    if (events.length > show) {
-      const toggle = document.createElement('div');
-      toggle.className = 'card-events-toggle';
-      toggle.textContent = `Show ${events.length - show} more…`;
-      toggle.addEventListener('click', () => {
-        evDiv.querySelectorAll('.card-event, .card-events-toggle').forEach(el => el.remove());
-        events.forEach(ev => {
-          const src = ev.source ? ` <span class="card-event-source">(${ev.source})</span>` : '';
-          const sentLabel = ev.sentiment ? SENTIMENT_LABELS[ev.sentiment] || ev.sentiment : '';
-          const item = document.createElement('div');
-          item.className = 'card-event';
-          item.innerHTML = `
-            <span class="card-event-dot sentiment-${ev.sentiment || 'neutral'}"></span>
-            ${sentLabel ? `<span class="card-event-sentiment sentiment-${ev.sentiment}">${sentLabel}</span>` : ''}
-            <span class="card-event-time">${formatTime(ev.date)}</span>
-            ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="card-event-text">${ev.text}</a>` : `<span class="card-event-text">${ev.text}</span>`}
-            ${src}
-          `;
-          evDiv.appendChild(item);
-        });
-        evDiv.appendChild(toggle);
-        toggle.textContent = 'Show less';
-        toggle.addEventListener('click', () => {
-          loadData();
-        });
+  if (events.length > show) {
+    const toggle = document.createElement('div');
+    toggle.className = 'card-events-toggle';
+    toggle.textContent = `${events.length - show} ${t('showMore')}`;
+    toggle.addEventListener('click', () => {
+      evDiv.querySelectorAll('.card-event, .card-events-toggle').forEach(el => el.remove());
+      events.forEach(ev => {
+        const src = ev.source ? ` <span class="card-event-source">(${ev.source})</span>` : '';
+        const sentKey = ev.sentiment ? (SENTIMENT_KEYS[ev.sentiment] || ev.sentiment) : '';
+        const sentLabel = sentKey ? t(sentKey) : '';
+        const item = document.createElement('div');
+        item.className = 'card-event';
+        item.innerHTML = `
+          <span class="card-event-dot sentiment-${ev.sentiment || 'neutral'}"></span>
+          ${sentLabel ? `<span class="card-event-sentiment sentiment-${ev.sentiment}">${sentLabel}</span>` : ''}
+          <span class="card-event-time">${formatTime(ev.date)}</span>
+          ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="card-event-text">${getLangText(ev.text)}</a>` : `<span class="card-event-text">${getLangText(ev.text)}</span>`}
+          ${src}
+        `;
+        evDiv.appendChild(item);
       });
       evDiv.appendChild(toggle);
-    }
-    card.appendChild(evDiv);
-  }
-
-  // Key Players / Stakeholders
-  if (solution.stakeholders && solution.stakeholders.length) {
-    const playersDiv = document.createElement('div');
-    playersDiv.className = 'card-players';
-    const pTitle = document.createElement('div');
-    pTitle.className = 'card-players-title';
-    pTitle.textContent = 'Key Players';
-    playersDiv.appendChild(pTitle);
-
-    const playersRow = document.createElement('div');
-    playersRow.className = 'card-players-row';
-
-    solution.stakeholders.forEach((p, i) => {
-      if (i > 0) {
-        const comma = document.createElement('span');
-        comma.className = 'card-players-sep';
-        comma.textContent = ',';
-        playersRow.appendChild(comma);
-      }
-      const chip = document.createElement('span');
-      chip.className = 'card-player-chip';
-
-      // Name
-      const nameSpan = document.createElement('span');
-      nameSpan.textContent = p.name;
-      chip.appendChild(nameSpan);
-
-      // Email badge
-      if (p.email) {
-        const emailLink = document.createElement('a');
-        emailLink.className = 'card-player-email';
-        emailLink.href = `mailto:${p.email}`;
-        emailLink.textContent = p.email;
-        chip.appendChild(emailLink);
-      }
-
-      // Contact link (webform/URL) — shown as icon
-      if (p.contact) {
-        const contactLink = document.createElement('a');
-        contactLink.className = 'card-player-contact';
-        contactLink.href = p.contact;
-        contactLink.target = '_blank';
-        contactLink.rel = 'noopener';
-        contactLink.title = `${p.role} — Contact`;
-        contactLink.textContent = '✉';
-        chip.appendChild(contactLink);
-      }
-
-      chip.title = `${p.name} — ${p.role}`;
-      playersRow.appendChild(chip);
+      toggle.textContent = t('showLess');
+      toggle.addEventListener('click', () => loadData());
     });
-    playersDiv.appendChild(playersRow);
-    card.appendChild(playersDiv);
+    evDiv.appendChild(toggle);
   }
+  return evDiv;
+}
 
-  return card;
+function buildStakeholders(stakeholders) {
+  const div = document.createElement('div');
+  div.className = 'card-players';
+  const title = document.createElement('div');
+  title.className = 'card-players-title';
+  title.textContent = t('keyPlayers');
+  div.appendChild(title);
+
+  const row = document.createElement('div');
+  row.className = 'card-players-row';
+  stakeholders.forEach((p, i) => {
+    if (i > 0) {
+      const sep = document.createElement('span');
+      sep.className = 'card-players-sep';
+      sep.textContent = ',';
+      row.appendChild(sep);
+    }
+    const chip = document.createElement('span');
+    chip.className = 'card-player-chip';
+    chip.textContent = p.name;
+    if (p.email) {
+      const em = document.createElement('a');
+      em.className = 'card-player-email';
+      em.href = `mailto:${p.email}`;
+      em.textContent = p.email;
+      chip.appendChild(em);
+    }
+    if (p.contact) {
+      const cl = document.createElement('a');
+      cl.className = 'card-player-contact';
+      cl.href = p.contact;
+      cl.target = '_blank';
+      cl.rel = 'noopener';
+      cl.title = `${p.role} — Contact`;
+      cl.textContent = '✉';
+      chip.appendChild(cl);
+    }
+    chip.title = `${p.name} — ${p.role}`;
+    row.appendChild(chip);
+  });
+  div.appendChild(row);
+  return div;
 }
 
 /* ── Render All ──────────────────────────────────────── */
@@ -385,30 +607,31 @@ function renderAll(data) {
   renderMomentum(data.overallMomentum);
   renderClassificationWarning(data.aiHealth);
 
-  // Update timestamp
   if (data.lastUpdated) {
     const ts = document.getElementById('lastUpdated');
-    ts.textContent = `Updated ${formatTime(data.lastUpdated)} ago`;
+    ts.textContent = `${t('lastUpdated')} ${formatTime(data.lastUpdated)}`;
   }
 
-  // Version tag — show app version + AI version if available
   const vt = document.getElementById('versionTag');
   if (vt) {
-    const appVersion = 'v0.3.0';
+    const appVersion = 'v0.5.0';
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
     vt.textContent = `${appVersion}${aiVersion}`;
   }
 
-  // Activity feed
   buildActivityFeed();
 
-  // Solution cards — all active solutions in a single grid
   const grid = document.getElementById('solutionsGrid');
   if (grid) grid.innerHTML = '';
   const activeIds = data.activeSolutions || data.solutions.map(s => s.id);
   (data.solutions || [])
     .filter(solution => activeIds.includes(solution.id))
-    .sort((a, b) => b.keyMetric.value - a.keyMetric.value)
+    .sort((a, b) => {
+      // Sort by effective_signal total if available, else by event count
+      const aTotal = (a.narrative?.keyEvents || []).reduce((s, e) => s + (e.effective_signal || e.signal_score || 0), 0) || parseInt(a.keyMetric?.value || 0);
+      const bTotal = (b.narrative?.keyEvents || []).reduce((s, e) => s + (e.effective_signal || e.signal_score || 0), 0) || parseInt(b.keyMetric?.value || 0);
+      return bTotal - aTotal;
+    })
     .slice(0, 8)
     .forEach(solution => {
       const card = createSolutionCard(solution);
@@ -416,63 +639,82 @@ function renderAll(data) {
     });
 }
 
+/* ── Language Switcher ───────────────────────────────── */
+function initLanguageSwitcher() {
+  const container = document.getElementById('langSwitcher');
+  if (!container) return;
+
+  const langs = [
+    { code: 'en', label: 'English', dir: 'ltr' },
+    { code: 'he', label: 'עברית', dir: 'rtl' },
+    { code: 'ar', label: 'العربية', dir: 'rtl' },
+  ];
+
+  container.innerHTML = '';
+  langs.forEach(l => {
+    const btn = document.createElement('button');
+    btn.className = 'lang-btn';
+    btn.dataset.lang = l.code;
+    btn.textContent = l.label;
+    btn.title = `${l.label} (${l.dir})`;
+    btn.addEventListener('click', () => applyLanguage(l.code));
+    container.appendChild(btn);
+  });
+}
+
 /* ── Info Modal ──────────────────────────────────────── */
+function renderInfoModal() {
+  const content = document.getElementById('modalContent');
+  content.innerHTML = `
+    <h2>${t('infoTitle')}</h2>
+
+    <h3>${t('infoDataCollection')}</h3>
+    <p>${t('infoDataCollectionText')}</p>
+
+    <h3>${t('infoAI')}</h3>
+    <p>${t('infoAIText')}</p>
+    <ul>
+      <li>${t('infoClassifies')}</li>
+      <li>${t('infoType')}</li>
+      <li>${t('infoSignal')}</li>
+      <li>${t('infoSourceWeight')}</li>
+    </ul>
+    <p>${t('infoEffectiveSignal')}</p>
+
+    <h3>${t('infoClustering')}</h3>
+    <p>${t('infoClusteringText')}</p>
+
+    <h3>${t('infoNarrative')}</h3>
+    <p>${t('infoNarrativeText')}</p>
+    <ul>
+      <li>${t('infoNarrativeLongTerm')}</li>
+      <li>${t('infoNarrativeWeekly')}</li>
+      <li>${t('infoNarrativeOpinions')}</li>
+    </ul>
+
+    <h3>${t('infoMultilingual')}</h3>
+    <p>${t('infoMultilingualText')}</p>
+
+    <h3>${t('infoLimitations')}</h3>
+    <ul>
+      <li>${t('infoLimit1')}</li>
+      <li>${t('infoLimit2')}</li>
+      <li>${t('infoLimit3')}</li>
+    </ul>
+  `;
+}
+
 document.getElementById('infoBtn')?.addEventListener('click', (e) => {
   e.preventDefault();
   const overlay = document.getElementById('modalOverlay');
-  const content = document.getElementById('modalContent');
-  content.innerHTML = `
-    <h2>How Peace Paths Works</h2>
-
-    <h3>📡 Data Collection</h3>
-    <p>We monitor <strong>60 RSS feeds</strong> across the Middle East — a curated selection of news outlets, think tanks, and human rights organizations. Sources include:</p>
-    <ul>
-      <li><strong>News agencies:</strong> BBC, Al Jazeera, France24, Reuters, The Guardian, NYT, Le Monde, Haaretz, JPost, and more</li>
-      <li><strong>Think tanks:</strong> Crisis Group, MERIP, The Diplomat, The Conversation, Global Policy Forum</li>
-      <li><strong>Human rights:</strong> Amnesty International, Iran Human Rights, Center for Human Rights in Iran</li>
-      <li><strong>Regional outlets:</strong> PNN, 972mag, Radio Free Europe, Iran International, Global Voices</li>
-    </ul>
-    <p>Feeds are fetched daily. Articles are collected from a 7-day rolling window.</p>
-
-    <h3>🤖 AI Classification</h3>
-    <p>Each article is analyzed by a large language model (LLM) that:</p>
-    <ul>
-      <li><strong>Classifies</strong> it into a relevant peace initiative category (e.g., "Ceasefire Negotiations", "Humanitarian Aid")</li>
-      <li><strong>Assigns a sentiment:</strong></li>
-    </ul>
-    <div style="display:flex;gap:16px;margin:8px 0 12px;font-size:13px">
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block"></span> <strong>Peace</strong> — positive/constructive</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block"></span> <strong>Neutral</strong> — factual/status quo</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#f87171;display:inline-block"></span> <strong>War</strong> — negative/escalating</span>
-    </div>
-    <p>When the AI is unavailable, articles are classified by keyword matching (lower accuracy).</p>
-
-    <h3>🛤️ Peace Path Progress Track</h3>
-    <p>Each initiative shows a <strong>milestone roadmap</strong> — like a bridge being built. Green dots are completed phases, the pulsing blue dot is the current phase, and faded dots are future milestones yet to reach.</p>
-    <p>The percentage badge shows overall progress. Hover over any milestone to see its full name.</p>
-
-    <h3>📊 Phase & Momentum Scoring</h3>
-    <p>Each peace initiative has a <strong>phase progression model</strong> (e.g., "Crisis" → "Negotiations" → "Agreement" → "Implementation"). The current phase is determined by the AI based on article content.</p>
-    <p><strong>Momentum</strong> (Advancing / Stable / Stalling) is computed from the balance of positive vs. negative events across all initiatives.</p>
-    <p>Event counts reflect actual articles classified in each category — not AI estimates.</p>
-
-    <h3>⚠️ Limitations</h3>
-    <ul>
-      <li>Classification is automated and may misclassify articles</li>
-      <li>Sentiment labels reflect article tone, not ground truth</li>
-      <li>Phase progressions are heuristic, not verified</li>
-      <li>This tool is experimental and for informational purposes only</li>
-    </ul>
-  `;
+  renderInfoModal();
   overlay.classList.add('active');
 });
 
-// Close modal on close button click
 document.getElementById('modalClose')?.addEventListener('click', () => {
   document.getElementById('modalOverlay').classList.remove('active');
 });
 
-// Close modal when clicking outside the content
 document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
   if (e.target === e.currentTarget) {
     document.getElementById('modalOverlay').classList.remove('active');
@@ -480,25 +722,12 @@ document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
 });
 
 /* ── Boot ────────────────────────────────────────────── */
-loadData();
-
-// Auto-refresh every 15 minutes (browser caches 3h, so this catches new data)
-const REFRESH_INTERVAL = 15 * 60 * 1000;
-setInterval(() => {
-  console.log('[Peace Paths] Auto-refreshing…');
+(async function boot() {
+  await loadTranslations();
+  const lang = detectLanguage();
+  applyLanguage(lang);
+  initLanguageSwitcher();
   loadData();
-}, REFRESH_INTERVAL);
+})();
 
-// Version tag is now rendered in renderAll() for access to data.aiVersion
-
-
-
-
-
-
-
-
-
-
-
-
+// Auto-refresh

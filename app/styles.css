@@ -82,6 +82,39 @@ a:hover { text-decoration: underline; }
   text-decoration: underline;
 }
 .header-right { display: flex; align-items: center; gap: 8px; }
+
+/* ── Language Switcher ───────────────────────────────── */
+.lang-switcher {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px;
+  margin: 6px 0 10px;
+}
+.lang-switcher button {
+  background: transparent;
+  color: var(--text-dim);
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-ui);
+}
+.lang-switcher button:hover {
+  color: var(--text-muted);
+  background: var(--border);
+}
+.lang-switcher button.active {
+  background: var(--accent);
+  color: var(--bg);
+}
+
 .last-updated {
   font-size: 11px;
   color: var(--text-dim);
@@ -303,7 +336,7 @@ a:hover { text-decoration: underline; }
 .peace-path__rail-fill {
   position: absolute;
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
   height: 100%;
   background: linear-gradient(90deg, var(--advancing), var(--accent));
   border-radius: 1px;
@@ -315,7 +348,7 @@ a:hover { text-decoration: underline; }
 .peace-path__rail-dash {
   position: absolute;
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
   height: 100%;
   background: repeating-linear-gradient(
     90deg,
@@ -406,7 +439,7 @@ a:hover { text-decoration: underline; }
 .peace-path__pct {
   position: absolute;
   top: 2px;
-  right: 4px;
+  inset-inline-end: 4px;
   font-family: var(--font-head);
   font-size: 9px;
   font-weight: 700;
@@ -640,4 +673,53 @@ a:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) {
   .peace-path__dot.active { animation: none; }
   .peace-path__rail-fill { transition: none; }
+}
+
+/* ── RTL Support ─────────────────────────────────────── */
+[dir="rtl"] {
+  direction: rtl;
+}
+[dir="rtl"] .header {
+  /* In RTL, row already goes right-to-left, putting logo on the right */
+}
+[dir="rtl"] .header-right {
+  flex-direction: row-reverse;
+}
+[dir="rtl"] .momentum-banner {
+  /* In RTL, row already goes right-to-left, so icon (first DOM child) lands on the right */
+}
+[dir="rtl"] .card-top {
+  /* In RTL, row already goes right-to-left */
+}
+[dir="rtl"] .card-events {
+  padding-inline-start: 16px;
+}
+[dir="rtl"] .card-event {
+  /* In RTL, row already goes right-to-left */
+}
+[dir="rtl"] .activity-item {
+  /* In RTL, row already goes right-to-left */
+}
+[dir="rtl"] .peace-path__nodes {
+  /* In RTL, row already goes right-to-left */
+}
+[dir="rtl"] .peace-path__rail-fill {
+  background: linear-gradient(270deg, var(--advancing), var(--accent));
+}
+
+[dir="rtl"] .card-players-row {
+  /* In RTL, row already goes right-to-left */
+}
+[dir="rtl"] .footer-links {
+  /* In RTL, row already goes right-to-left */
+}
+[dir="rtl"] .logo {
+  text-align: right;
+}
+[dir="rtl"] .tagline,
+[dir="rtl"] .info-link {
+  text-align: right;
+}
+[dir="rtl"] .lang-switcher {
+  flex-direction: row-reverse;
 }

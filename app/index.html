@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peace Paths — AI-Powered Peace Tracker v4</title>
-    <meta name="description" content="Tracking progress on concrete peace initiatives in the Middle East with live event updates.">
+    <title>Peace Paths — AI-Powered Peace Tracker v5</title>
+    <meta name="description" content="Tracking progress on concrete peace initiatives in the Middle East with layered narratives.">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛤</text></svg>">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -23,6 +23,13 @@
                 <span class="refresh-badge" id="refreshBadge" title="Auto-refreshes every 15 min">↻</span>
             </div>
         </header>
+
+        <!-- ── Language Switcher (centered) ──────────── -->
+        <div class="lang-switcher" id="langSwitcher" aria-label="Language">
+            <button data-lang="en" class="active" title="English">EN</button>
+            <button data-lang="he" title="עברית">HE</button>
+            <button data-lang="ar" title="العربية">AR</button>
+        </div>
 
         <!-- ── Classification Warning ──────────────── -->
         <div id="classificationWarning" style="display:none;padding:10px 16px;margin:8px 0;border-radius:8px;background:#2d2d1c;border:1px solid #9e6a03;color:#d29922;gap:8px;align-items:flex-start"></div>
