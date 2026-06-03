@@ -1,4 +1,4 @@
-/* ── Peace Paths — Styles v4 ────────────────────────── */
+/* ── Peace Paths — Styles v5 (Narrative Pipeline) ───── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -14,11 +14,16 @@
   --advancing:  #4ade80;
   --stable:     #38bdf8;
   --stalling:   #f87171;
+  --reversing:  #ef4444;
   --unknown:    #64748b;
 
   --sentiment-pos: #4ade80;
   --sentiment-neu: #94a3b8;
   --sentiment-neg: #f87171;
+
+  --type-reporting: #38bdf8;
+  --type-analysis:  #a78bfa;
+  --type-opinion:   #f59e0b;
 
   --font-ui:    'Inter', system-ui, -apple-system, sans-serif;
   --font-head:  'Space Grotesk', sans-serif;
@@ -52,6 +57,14 @@ a:hover { text-decoration: underline; }
   padding: 0 16px 40px;
 }
 
+/* ── RTL Support (handled by CSS logical properties) ─── */
+[dir="rtl"] .card-top {
+  /* In RTL, row already goes right-to-left */
+}
+[dir="rtl"] .lc-header {
+  /* In RTL, row already goes right-to-left */
+}
+
 /* ── Header ──────────────────────────────────────────── */
 .header {
   display: flex;
@@ -68,62 +81,39 @@ a:hover { text-decoration: underline; }
 .logo a { color: var(--text); }
 .logo a:hover { color: var(--accent); text-decoration: none; }
 .tagline { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
-.info-link {
-  font-size: 12px;
-  margin-top: 4px;
-}
-.info-link a {
-  color: var(--text-dim);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-.info-link a:hover {
-  color: var(--accent);
-  text-decoration: underline;
-}
+.info-link { font-size: 12px; margin-top: 4px; }
+.info-link a { color: var(--text-dim); text-decoration: none; transition: color 0.15s; }
+.info-link a:hover { color: var(--accent); text-decoration: underline; }
 .header-right { display: flex; align-items: center; gap: 8px; }
+.last-updated { font-size: 11px; color: var(--text-dim); }
 
 /* ── Language Switcher ───────────────────────────────── */
 .lang-switcher {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   justify-content: center;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 2px;
   margin: 6px 0 10px;
 }
-.lang-switcher button {
+.lang-btn {
   background: transparent;
+  border: 1px solid var(--border);
   color: var(--text-dim);
-  border: none;
+  font-size: 10px;
+  padding: 2px 6px;
   border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
   font-family: var(--font-ui);
+  transition: all 0.15s;
 }
-.lang-switcher button:hover {
-  color: var(--text-muted);
-  background: var(--border);
-}
-.lang-switcher button.active {
-  background: var(--accent);
-  color: var(--bg);
-}
-
-.last-updated {
-  font-size: 11px;
-  color: var(--text-dim);
+.lang-btn:hover { color: var(--text); border-color: var(--text-dim); }
+.lang-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(56,189,248,0.08);
 }
 
-/* ── Activity Feed (global timeline) ─────────────────── */
-.activity-section {
-  margin-bottom: 16px;
-}
+/* ── Activity Feed ───────────────────────────────────── */
+.activity-section { margin-bottom: 16px; }
 .section-header {
   font-family: var(--font-head);
   font-size: 11px;
@@ -139,7 +129,7 @@ a:hover { text-decoration: underline; }
   width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--advancing);
-  margin-right: 6px;
+  margin-inline-end: 6px;
   animation: pulse-dot 2s ease-in-out infinite;
   vertical-align: middle;
 }
@@ -153,12 +143,12 @@ a:hover { text-decoration: underline; }
   flex-direction: column;
   gap: 0;
   position: relative;
-  padding-left: 20px;
+  padding-inline-start: 20px;
 }
 .activity-feed::before {
   content: '';
   position: absolute;
-  left: 6px; top: 4px; bottom: 4px;
+  inset-inline-start: 6px; top: 4px; bottom: 4px;
   width: 1px;
   background: var(--border);
 }
@@ -172,7 +162,7 @@ a:hover { text-decoration: underline; }
 .activity-item::before {
   content: '';
   position: absolute;
-  left: -17px;
+  inset-inline-start: -17px;
   top: 11px;
   width: 7px; height: 7px;
   border-radius: 50%;
@@ -200,11 +190,13 @@ a:hover { text-decoration: underline; }
   color: var(--accent);
   white-space: nowrap;
 }
-.activity-text {
+.activity-text, .activity-link {
   font-size: 13px;
   color: var(--text-muted);
   line-height: 1.4;
+  text-decoration: none;
 }
+.activity-link:hover { color: var(--accent); text-decoration: underline; }
 .activity-more {
   text-align: center;
   padding: 10px 0;
@@ -231,10 +223,7 @@ a:hover { text-decoration: underline; }
   font-weight: 700;
   margin-bottom: 2px;
 }
-.momentum-text p {
-  font-size: 13px;
-  color: var(--text-muted);
-}
+.momentum-text p { font-size: 13px; color: var(--text-muted); }
 .momentum-advancing .momentum-icon { color: var(--advancing); }
 .momentum-advancing h2 { color: var(--advancing); }
 .momentum-stable .momentum-icon { color: var(--stable); }
@@ -242,9 +231,20 @@ a:hover { text-decoration: underline; }
 .momentum-stalling .momentum-icon { color: var(--stalling); }
 .momentum-stalling h2 { color: var(--stalling); }
 
-/* ── Solution Cards ──────────────────────────────────── */
-.category-group { margin-bottom: 6px; }
+/* ── Classification Warning ──────────────────────────── */
+.classification-warning {
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: none;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+}
 
+/* ── Solution Cards (Legacy) ─────────────────────────── */
 .solution-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -257,7 +257,7 @@ a:hover { text-decoration: underline; }
 .solution-card::before {
   content: '';
   position: absolute;
-  left: 0; top: 14px; bottom: 14px;
+  inset-inline-start: 0; top: 14px; bottom: 14px;
   width: 3px;
   border-radius: 2px;
 }
@@ -266,7 +266,6 @@ a:hover { text-decoration: underline; }
 .solution-card.stalling::before { background: var(--stalling); }
 .solution-card:hover { background: var(--card-hover); }
 
-/* Card header */
 .card-top {
   display: flex;
   align-items: center;
@@ -280,7 +279,6 @@ a:hover { text-decoration: underline; }
   font-weight: 700;
   flex: 1;
 }
-/* Metric inline in header */
 .card-metric {
   flex-shrink: 0;
   text-align: right;
@@ -313,15 +311,15 @@ a:hover { text-decoration: underline; }
 .card-direction.advancing { color: var(--advancing); background: rgba(74,222,128,0.1); }
 .card-direction.stable    { color: var(--stable);    background: rgba(56,189,248,0.1); }
 .card-direction.stalling  { color: var(--stalling);  background: rgba(248,113,113,0.1); }
+.card-direction.reversing { color: var(--reversing); background: rgba(239,68,68,0.1); }
 
 /* ── Peace Path Progress Track ─────────────────────── */
 .peace-path {
   position: relative;
   margin: 10px 0 4px;
   padding: 14px 4px 10px;
+  direction: ltr;  /* Always LTR — progress fills left-to-right */
 }
-
-/* The horizontal rail */
 .peace-path__rail {
   position: absolute;
   top: 22px;
@@ -331,43 +329,29 @@ a:hover { text-decoration: underline; }
   background: var(--border);
   z-index: 0;
 }
-
-/* Filled portion of the rail */
 .peace-path__rail-fill {
   position: absolute;
-  top: 0;
-  inset-inline-start: 0;
+  top: 0; left: 0;
   height: 100%;
   background: linear-gradient(90deg, var(--advancing), var(--accent));
   border-radius: 1px;
   transition: width 0.8s ease;
   box-shadow: 0 0 6px rgba(74,222,128,0.25);
 }
-
-/* Dashed future portion */
 .peace-path__rail-dash {
   position: absolute;
-  top: 0;
-  inset-inline-end: 0;
+  top: 0; right: 0;
   height: 100%;
   background: repeating-linear-gradient(
-    90deg,
-    var(--border) 0px,
-    var(--border) 4px,
-    transparent 4px,
-    transparent 8px
+    90deg, var(--border) 0px, var(--border) 4px, transparent 4px, transparent 8px
   );
 }
-
-/* Milestone nodes along the rail */
 .peace-path__nodes {
   display: flex;
   justify-content: space-between;
   position: relative;
   z-index: 1;
 }
-
-/* Individual milestone node */
 .peace-path__node {
   display: flex;
   flex-direction: column;
@@ -376,46 +360,33 @@ a:hover { text-decoration: underline; }
   cursor: default;
   flex: 1;
 }
-
-/* The circle dot */
 .peace-path__dot {
-  width: 14px;
-  height: 14px;
+  width: 14px; height: 14px;
   border-radius: 50%;
   border: 2px solid var(--border);
   background: var(--bg);
   transition: all 0.4s ease;
-  position: relative;
 }
-
-/* Completed milestone */
 .peace-path__dot.done {
   background: var(--advancing);
   border-color: var(--advancing);
   box-shadow: 0 0 8px rgba(74,222,128,0.4);
 }
-
-/* Current milestone (pulsing) */
 .peace-path__dot.active {
   background: var(--accent);
   border-color: var(--accent);
   box-shadow: 0 0 10px rgba(56,189,248,0.5);
   animation: pulse-node 2s ease-in-out infinite;
 }
-
 @keyframes pulse-node {
   0%, 100% { box-shadow: 0 0 6px rgba(56,189,248,0.3); }
   50% { box-shadow: 0 0 14px rgba(56,189,248,0.6); }
 }
-
-/* Future milestone */
 .peace-path__dot.future {
   background: var(--bg);
   border-color: var(--text-dim);
   opacity: 0.5;
 }
-
-/* Phase label below the dot */
 .peace-path__label {
   font-family: var(--font-head);
   font-size: 9px;
@@ -428,18 +399,11 @@ a:hover { text-decoration: underline; }
 .peace-path__label.done { color: var(--advancing); }
 .peace-path__label.active { color: var(--accent); font-weight: 600; }
 .peace-path__label.future { color: var(--text-dim); opacity: 0.5; }
-
-/* Tooltip on hover */
-.peace-path__node:hover .peace-path__label {
-  color: var(--text);
-  opacity: 1;
-}
-
-/* Progress percentage badge */
+.peace-path__node:hover .peace-path__label { color: var(--text); opacity: 1; }
 .peace-path__pct {
   position: absolute;
   top: 2px;
-  inset-inline-end: 4px;
+  right: 4px;
   font-family: var(--font-head);
   font-size: 9px;
   font-weight: 700;
@@ -447,20 +411,9 @@ a:hover { text-decoration: underline; }
   background: rgba(56,189,248,0.08);
   padding: 1px 5px;
   border-radius: 3px;
-  letter-spacing: 0.3px;
 }
 
-/* Old phase-bar (kept for backward compat, unused) */
-.phase-bar {
-  display: none;
-}
-.phase-label {
-  display: none;
-}
-
-
-
-/* ── Recent Events (inline, not behind click) ───────── */
+/* ── Events List ─────────────────────────────────────── */
 .card-events {
   margin-top: 10px;
   padding-top: 8px;
@@ -468,14 +421,6 @@ a:hover { text-decoration: underline; }
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-.card-events-title {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--text-dim);
-  margin-bottom: 2px;
 }
 .card-event {
   display: flex;
@@ -492,7 +437,6 @@ a:hover { text-decoration: underline; }
 .card-event-dot.positive { background: var(--sentiment-pos); }
 .card-event-dot.neutral  { background: var(--sentiment-neu); }
 .card-event-dot.negative { background: var(--sentiment-neg); }
-
 .card-event-sentiment {
   font-family: var(--font-head);
   font-size: 9px;
@@ -514,24 +458,10 @@ a:hover { text-decoration: underline; }
 .card-event-text {
   color: var(--text-muted);
   line-height: 1.4;
-}
-.card-event-text:hover,
-.activity-link:hover {
-  color: var(--accent);
-  text-decoration: underline;
-}
-.card-event-text {
   text-decoration: none;
 }
-.card-event-source {
-  font-size: 10px;
-  color: var(--text-dim);
-  flex-shrink: 0;
-}
-.activity-link {
-  color: var(--text-muted);
-  text-decoration: none;
-}
+.card-event-text:hover { color: var(--accent); text-decoration: underline; }
+.card-event-source { font-size: 10px; color: var(--text-dim); flex-shrink: 0; }
 .card-events-toggle {
   font-size: 11px;
   color: var(--accent);
@@ -566,39 +496,206 @@ a:hover { text-decoration: underline; }
   gap: 2px;
   font-size: 12px;
 }
-.card-players-sep {
-  color: var(--text-dim);
-}
-.card-player-chip {
-  color: var(--accent);
-  text-decoration: none;
-  font-size: 12px;
-  transition: opacity 0.15s;
-}
-.card-player-chip:hover {
-  text-decoration: underline;
-  opacity: 1;
-}
+.card-players-sep { color: var(--text-dim); }
+.card-player-chip { color: var(--accent); font-size: 12px; }
+.card-player-chip:hover { text-decoration: underline; }
 .card-player-email {
   font-size: 10px;
   color: var(--accent);
   text-decoration: none;
-  margin-left: 3px;
+  margin-inline-start: 3px;
   opacity: 0.8;
 }
-.card-player-email:hover {
-  text-decoration: underline;
-  opacity: 1;
-}
+.card-player-email:hover { text-decoration: underline; opacity: 1; }
 .card-player-contact {
   font-size: 11px;
   color: var(--text-dim);
   text-decoration: none;
-  margin-left: 2px;
-  cursor: pointer;
+  margin-inline-start: 2px;
 }
-.card-player-contact:hover {
+.card-player-contact:hover { color: var(--accent); }
+
+/* ── Layered Narrative Card (Concept J) ──────────────── */
+.layered-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.layered-card::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0; top: 14px; bottom: 14px;
+  width: 3px;
+  border-radius: 2px;
+}
+.layered-card.advancing::before { background: var(--advancing); }
+.layered-card.stable::before  { background: var(--stable); }
+.layered-card.stalling::before { background: var(--stalling); }
+.layered-card.reversing::before { background: var(--reversing); }
+.layered-card:hover { background: var(--card-hover); }
+
+/* Header */
+.lc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px 8px;
+}
+.lc-icon { font-size: 20px; flex-shrink: 0; }
+.lc-name {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  flex: 1;
+}
+.lc-metric {
+  flex-shrink: 0;
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 700;
   color: var(--accent);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1;
+}
+.lc-metric small {
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.lc-direction {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.lc-direction.advancing { color: var(--advancing); background: rgba(74,222,128,0.1); }
+.lc-direction.stable    { color: var(--stable);    background: rgba(56,189,248,0.1); }
+.lc-direction.stalling  { color: var(--stalling);  background: rgba(248,113,113,0.1); }
+.lc-direction.reversing { color: var(--reversing); background: rgba(239,68,68,0.1); }
+
+/* Shift badges */
+.lc-shifts {
+  padding: 0 18px 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.lc-shift-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.lc-shift-badge.up {
+  color: var(--advancing);
+  background: rgba(74,222,128,0.1);
+  border: 1px solid rgba(74,222,128,0.2);
+}
+.lc-shift-badge.down {
+  color: var(--stalling);
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.2);
+}
+
+/* Narrative layers */
+.lc-layer {
+  padding: 8px 18px;
+  border-top: 1px solid var(--border);
+}
+.lc-layer-title {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.lc-layer-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 4px;
+}
+
+/* Layer color accents */
+.lc-layer-context { background: rgba(56,189,248,0.02); }
+.lc-layer-signals { background: rgba(74,222,128,0.02); }
+.lc-layer-opinions { background: rgba(245,158,11,0.02); }
+
+/* Event items within layers */
+.lc-event-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px dashed rgba(30,42,56,0.5);
+}
+.lc-event-item:last-child { border-bottom: none; }
+
+.lc-event-title {
+  color: var(--text-muted);
+  line-height: 1.4;
+  flex: 1;
+  text-decoration: none;
+  min-width: 0;
+}
+.lc-event-title:hover { color: var(--accent); text-decoration: underline; }
+
+.lc-source {
+  font-size: 10px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+/* Signal score badge */
+.lc-signal {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(56,189,248,0.1);
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Type badge */
+.type-badge {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.type-reporting { color: var(--type-reporting); background: rgba(56,189,248,0.1); }
+.type-analysis  { color: var(--type-analysis);  background: rgba(167,139,250,0.1); }
+.type-opinion   { color: var(--type-opinion);   background: rgba(245,158,11,0.1); }
+
+/* Attestation count */
+.lc-attestations {
+  font-size: 10px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.lc-cross-attest {
+  color: var(--advancing);
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
 /* ── Footer ──────────────────────────────────────────── */
@@ -658,8 +755,10 @@ a:hover { text-decoration: underline; }
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 600px) {
   .app { padding: 0 10px 20px; }
-  .solution-card { padding: 12px 12px; }
-  .card-row { flex-direction: column; gap: 4px; }
+  .solution-card, .layered-card { padding: 12px 12px; }
+  .lc-header { padding: 12px 12px 6px; }
+  .lc-layer { padding: 8px 12px; }
+  .lc-shifts { padding: 0 12px 8px; }
   .card-metric { text-align: left; display: flex; align-items: baseline; gap: 6px; }
   .momentum-banner { flex-direction: column; text-align: center; gap: 8px; }
   .header { flex-wrap: wrap; gap: 8px; }
@@ -700,13 +799,7 @@ a:hover { text-decoration: underline; }
 [dir="rtl"] .activity-item {
   /* In RTL, row already goes right-to-left */
 }
-[dir="rtl"] .peace-path__nodes {
-  /* In RTL, row already goes right-to-left */
-}
-[dir="rtl"] .peace-path__rail-fill {
-  background: linear-gradient(270deg, var(--advancing), var(--accent));
-}
-
+/* peace-path always LTR (direction: ltr on .peace-path) — no RTL override needed */
 [dir="rtl"] .card-players-row {
   /* In RTL, row already goes right-to-left */
 }
@@ -722,4 +815,10 @@ a:hover { text-decoration: underline; }
 }
 [dir="rtl"] .lang-switcher {
   flex-direction: row-reverse;
+}
+[dir="rtl"] .lc-event-item {
+  /* In RTL, row already goes right-to-left */
+}
+[dir="rtl"] .lc-header {
+  /* In RTL, row already goes right-to-left */
 }

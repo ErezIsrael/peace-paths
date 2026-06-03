@@ -14,7 +14,7 @@
         <!-- ── Header ──────────────────────────────── -->
         <header class="header" aria-label="Header">
             <div>
-                <h1 class="logo"><a href="#">🕊 Peace Paths</a></h1>
+                <h1 class="logo"><a href="#">🕊 <span id="logoText">Peace Paths</span></a></h1>
                 <div class="tagline">Where the peace efforts are headed</div>
                 <div class="info-link"><a href="#" id="infoBtn">ℹ How it works</a></div>
             </div>
@@ -25,21 +25,17 @@
         </header>
 
         <!-- ── Language Switcher (centered) ──────────── -->
-        <div class="lang-switcher" id="langSwitcher" aria-label="Language">
-            <button data-lang="en" class="active" title="English">EN</button>
-            <button data-lang="he" title="עברית">HE</button>
-            <button data-lang="ar" title="العربية">AR</button>
-        </div>
+        <div class="lang-switcher" id="langSwitcher"></div>
 
         <!-- ── Classification Warning ──────────────── -->
-        <div id="classificationWarning" style="display:none;padding:10px 16px;margin:8px 0;border-radius:8px;background:#2d2d1c;border:1px solid #9e6a03;color:#d29922;gap:8px;align-items:flex-start"></div>
+        <div id="classificationWarning" class="classification-warning"></div>
 
         <!-- ── Momentum Banner ─────────────────────── -->
         <div class="momentum-banner" id="momentumBanner">
             <div class="momentum-icon" id="momentumIcon">↗</div>
             <div class="momentum-text">
                 <h2 id="momentumLabel">—</h2>
-                <p id="momentumSummary">Loading...</p>
+                <p id="momentumSummary"></p>
             </div>
         </div>
 
@@ -47,7 +43,7 @@
         <div class="activity-section">
             <div class="section-header"><span class="live-dot"></span>Recent Activity</div>
             <div class="activity-feed" id="activityFeed"></div>
-            <div class="activity-more" id="showMoreActivity">Show more events…</div>
+            <div class="activity-more" id="showMoreActivity"></div>
         </div>
 
         <!-- ── Solutions Grid (dynamic) ────────────── -->
@@ -74,7 +70,7 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
             <div id="modalContent"></div>
-            <button class="modal-close" id="modalClose">Close</button>
+            <button class="modal-close" id="modalClose"></button>
         </div>
     </div>
 
