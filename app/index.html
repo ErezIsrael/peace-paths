@@ -16,7 +16,6 @@
             <div>
                 <h1 class="logo"><a href="#">🕊 <span id="logoText">Peace Paths</span></a></h1>
                 <div class="tagline">Where the peace efforts are headed</div>
-                <div class="info-link"><a href="#" id="infoBtn">ℹ How it works</a></div>
             </div>
             <div class="header-right">
                 <span class="last-updated" id="lastUpdated"></span>
@@ -24,8 +23,11 @@
             </div>
         </header>
 
-        <!-- ── Language Switcher (centered) ──────────── -->
-        <div class="lang-switcher" id="langSwitcher"></div>
+        <!-- ── Controls Bar (lang + info) ──────────── -->
+        <div class="controls-bar">
+            <div class="lang-switcher" id="langSwitcher"></div>
+            <div class="info-link"><a href="#" id="infoBtn">ℹ How it works</a></div>
+        </div>
 
         <!-- ── Classification Warning ──────────────── -->
         <div id="classificationWarning" class="classification-warning"></div>
@@ -55,10 +57,13 @@
         <!-- ── Footer ──────────────────────────────── -->
         <footer class="footer">
             <p>Peace Paths is an experimental project for informational purposes only.</p>
-            <p>Data from <span id="feedCount">60</span> RSS feeds · AI-assisted classification</p>
+            <p>Data from <span id="feedCount">75</span> RSS feeds · AI-assisted classification</p>
             <p>Assessments are algorithmic, not predictions.</p>
             <nav class="footer-links" aria-label="Footer links">
               <span id="versionTag" class="footer-link"></span>
+              <a href="#" id="privacyLink" class="footer-link">Privacy Policy</a>
+              <a href="#" id="termsLink" class="footer-link">Terms of Service</a>
+              <a href="#" id="accessibilityLink" class="footer-link">Accessibility</a>
               <a href="https://github.com/ErezIsrael/peace-paths/issues" target="_blank" rel="noopener" class="footer-link">🐛 Report a Bug</a>
               <a href="https://ko-fi.com/erezse" target="_blank" rel="noopener" class="footer-link">☕ Buy Me Coffee</a>
               <a href="https://peace-meter.pages.dev" target="_blank" rel="noopener" class="footer-link">☮️ Peace Meter</a>

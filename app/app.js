@@ -85,10 +85,18 @@ function applyLanguage(lang) {
     if (ps[1]) ps[1].innerHTML = t('footerData').replace('{n}', `<span id="feedCount">${data?.feedCount || 60}</span>`);
     if (ps[2]) ps[2].textContent = t('footerAlgorithmic');
   }
-  const footerLinks = document.querySelectorAll('.footer-links .footer-link:not(#versionTag)');
+  // Footer legal links
+  const privacyLink = document.getElementById('privacyLink');
+  if (privacyLink) privacyLink.textContent = t('privacyPolicy');
+  const termsLink = document.getElementById('termsLink');
+  if (termsLink) termsLink.textContent = t('termsService');
+  const accessibilityLink = document.getElementById('accessibilityLink');
+  if (accessibilityLink) accessibilityLink.textContent = t('accessibility');
+  // Other footer links
+  const footerLinks = document.querySelectorAll('.footer-links .footer-link:not(#versionTag):not(#privacyLink):not(#termsLink):not(#accessibilityLink)');
   if (footerLinks[0]) footerLinks[0].textContent = t('reportBug');
   if (footerLinks[1]) footerLinks[1].textContent = t('buyCoffee');
-  if (footerLinks[2]) footerLinks[2].textContent = t('peaceMeter');
+  if (footerLinks[2]) footerLinks[
 
   // Activity "show more" button
   const moreBtn = document.getElementById('showMoreActivity');
