@@ -179,7 +179,7 @@ function getLangText(obj, fallback) {
 /* ── Data Loading ────────────────────────────────────── */
 let data = null;
 let activityFeedEvents = [];
-const FEED_MAX = 50;
+const FEED_MAX = 4;
 let feedShowing = FEED_MAX;
 
 async function loadData() {
