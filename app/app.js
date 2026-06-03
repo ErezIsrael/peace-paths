@@ -132,11 +132,11 @@ function detectLanguage() {
   const urlLang = params.get('lang');
   if (urlLang && translations[urlLang]) return urlLang;
 
-  // Check browser preference
+  // Check browser preference (only for he/ar, default to Hebrew otherwise)
   const browser = navigator.language.slice(0, 2);
-  if (translations[browser]) return browser;
+  if (browser === 'he' || browser === 'ar') return browser;
 
-  return 'en';
+  return currentLang;
 }
 
 /* ── Helpers ─────────────────────────────────────────── */
