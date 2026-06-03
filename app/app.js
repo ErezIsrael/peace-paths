@@ -729,11 +729,32 @@ document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
   }
 });
 
+/* ── Theme Toggle ────────────────────────────────────── */
+let currentTheme = localStorage.getItem('theme') || 'dark';
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    btn.title = theme === 'dark' ? t('lightMode') : t('darkMode');
+  }
+}
+
 /* ── Boot ────────────────────────────────────────────── */
 (async function boot() {
   await loadTranslations();
+  applyTheme(currentTheme);
   applyLanguage('he');
   initLanguageSwitcher();
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    });
+  }
   loadData();
 })();
 

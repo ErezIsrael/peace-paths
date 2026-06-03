@@ -73,7 +73,9 @@
     "infoLimit1": "Classification is automated and may misclassify articles",
     "infoLimit2": "Sentiment labels reflect article tone, not ground truth",
     "infoLimit3": "This tool is experimental and for informational purposes only",
-    "crossAttestation": "Cross-attestation"
+    "crossAttestation": "Cross-attestation",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode"
   },
   "he": {
     "siteTitle": "נתיבי השלום",
@@ -149,7 +151,9 @@
     "infoLimit1": "הסיווג הוא אוטומטי ועשוי לסווג מאמרים בצור שגוי",
     "infoLimit2": "תגי רגש משקפים טון מאמר, לא אמת עובדתית",
     "infoLimit3": "כלי זה הוא ניסיוני ולמטרות מידע בלבד",
-    "crossAttestation": "אישור צולב"
+    "crossAttestation": "אישור צולב",
+    "darkMode": "מצב כהה",
+    "lightMode": "מצב בהיר"
   },
   "ar": {
     "siteTitle": "مسارات السلام",
@@ -225,6 +229,8 @@
     "infoLimit1": "التصنيف أوتوماتيكي وقد يصنف المقالات بشكل خاطئ",
     "infoLimit2": "ملصقات المزاج تعكس نبرة المقال، وليس الحقيقة الواقعية",
     "infoLimit3": "هذه الأداة تجريبية ولأغراض معلوماتية فقط",
-    "crossAttestation": "التأكيد المتقاطع"
+    "crossAttestation": "التأكيد المتقاطع",
+    "darkMode": "الوضع الداكن",
+    "lightMode": "الوضع الفاتح"
   }
 }

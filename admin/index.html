@@ -3,27 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Peace Meter Admin</title>
+<title>Peace Paths Admin</title>
 <style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --card-hover: #1c2128; --border: #30363d;
+    --text: #c9d1d9; --text-muted: #6e7681; --text-bright: #f0f6fc;
+    --accent: #a78bfa; --accent-bg: rgba(167,139,250,0.1);
+    --btn-bg: #21262d; --btn-hover: #30363d;
+    --primary: #7c3aed; --primary-hover: #8957e5;
+    --deploy: #238636; --deploy-hover: #2ea043;
+    --run: #6e40c9; --run-hover: #8957e5;
+  }
+  [data-theme="light"] {
+    --bg: #f8f7fc; --card: #ffffff; --card-hover: #f3f0ff; --border: #e2ddf5;
+    --text: #1e1b3a; --text-muted: #5b5780; --text-bright: #1e1b3a;
+    --accent: #7c3aed; --accent-bg: rgba(124,58,237,0.06);
+    --btn-bg: #e8e5f3; --btn-hover: #d8d3ea;
+    --primary: #6d28d9; --primary-hover: #7c3aed;
+    --deploy: #16a34a; --deploy-hover: #15803d;
+    --run: #6d28d9; --run-hover: #7c3aed;
+  }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: system-ui, -apple-system, sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; min-height: 100vh; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; }
 
-  h1 { margin-bottom: 2px; font-size: 20px; color: #f0f6fc; }
-  .subtitle { color: #6e7681; margin-bottom: 16px; font-size: 12px; }
+  h1 { margin-bottom: 2px; font-size: 20px; color: var(--text-bright); }
+  .subtitle { color: var(--text-muted); margin-bottom: 16px; font-size: 12px; }
 
   /* Toolbar */
   .toolbar { display: flex; gap: 6px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
   .toolbar button {
-    background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 5px 12px;
+    background: var(--btn-bg); color: var(--text); border: 1px solid var(--border); padding: 5px 12px;
     border-radius: 6px; cursor: pointer; font-size: 12px;
   }
-  .toolbar button:hover { background: #30363d; }
-  .toolbar button.primary { background: #1f6feb; border-color: #388bfd; color: #fff; }
-  .toolbar button.primary:hover { background: #388bfd; }
-  .toolbar button.deploy { background: #238636; border-color: #2ea043; color: #fff; }
-  .toolbar button.deploy:hover { background: #2ea043; }
-  .toolbar button.run { background: #6e40c9; border-color: #8957e5; color: #fff; }
-  .toolbar button.run:hover { background: #8957e5; }
+  .toolbar button:hover { background: var(--btn-hover); }
+  .toolbar button.primary { background: var(--primary); border-color: var(--primary-hover); color: #fff; }
+  .toolbar button.primary:hover { background: var(--primary-hover); }
+  .toolbar button.deploy { background: var(--deploy); border-color: var(--deploy-hover); color: #fff; }
+  .toolbar button.deploy:hover { background: var(--deploy-hover); }
+  .toolbar button.run { background: var(--run); border-color: var(--run-hover); color: #fff; }
+  .toolbar button.run:hover { background: var(--run-hover); }
   .toolbar button:disabled { opacity: 0.4; cursor: default; }
   .toolbar .sep { width: 1px; height: 22px; background: #30363d; margin: 0 2px; }
 
@@ -138,15 +156,76 @@
     font-family: monospace; font-size: 11px; color: #6e7681; display: none;
   }
   .log-panel.visible { display: block; }
+
+  /* Prompts editor */
+  .prompt-card {
+    margin-bottom: 10px; background: #161b22; border: 1px solid #30363d;
+    border-radius: 8px; overflow: hidden;
+  }
+  .prompt-card-header {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    background: #0d1117; cursor: pointer; user-select: none;
+  }
+  .prompt-card-header:hover { background: #161b22; }
+  .prompt-key {
+    font-family: monospace; font-size: 12px; color: #58a6ff; font-weight: 600;
+  }
+  .prompt-desc {
+    font-size: 11px; color: #6e7681;
+  }
+  .prompt-toggle {
+    margin-left: auto; font-size: 10px; color: #484f58; transition: transform 0.2s;
+  }
+  .prompt-toggle.open { transform: rotate(90deg); }
+  .prompt-card-body {
+    display: none; padding: 10px 12px;
+  }
+  .prompt-card-body.open { display: block; }
+  .prompt-field {
+    margin-bottom: 8px;
+  }
+  .prompt-field label {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 3px;
+    font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .prompt-field label .field-badge {
+    font-size: 9px; padding: 1px 5px; border-radius: 4px; text-transform: none; letter-spacing: 0;
+  }
+  .field-badge.system { background: #1c2d3d; color: #58a6ff; border: 1px solid #1f6feb; }
+  .field-badge.user { background: #2d2d1c; color: #d29922; border: 1px solid #9e6a03; }
+  .field-badge.desc { background: #1c2d1c; color: #3fb950; border: 1px solid #238636; }
+  .prompt-field textarea {
+    width: 100%; padding: 6px 10px; background: #0d1117;
+    border: 1px solid #30363d; border-radius: 5px; color: #c9d1d9;
+    font-size: 12px; font-family: monospace; min-height: 60px; resize: vertical;
+  }
+  .prompt-field textarea:focus { outline: none; border-color: #388bfd; }
+  .prompt-field textarea.dirty { border-color: #d29922; }
+  .prompt-save-btn {
+    float: right; padding: 3px 10px; font-size: 11px;
+  }
 </style>
 </head>
 <body>
 
-<h1>🕊 Peace Meter Admin</h1>
+<h1>🕊 Peace Paths Admin</h1>
 <p class="subtitle">Manage categories · Local only</p>
+<button id="adminThemeToggle" class="toolbar" style="background:var(--btn-bg);color:var(--text);border:1px solid var(--border);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:14px;margin-left:auto;float:right" title="Toggle theme">🌙</button>
+<div style="clear:both"></div>
 
+<!-- Tab bar -->
+<div style="display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid #30363d">
+  <button id="tabCategories" onclick="switchTab('categories')" style="padding:6px 16px;background:#161b22;color:#f0f6fc;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;font-weight:600">Categories</button>
+  <button id="tabAutoUpdate" onclick="switchTab('auto-update')" style="padding:6px 16px;background:#0d1117;color:#8b949e;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px">Auto-Update</button>
+  <button id="tabPrompts" onclick="switchTab('prompts')" style="padding:6px 16px;background:#0d1117;color:#8b949e;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px">Prompts</button>
+  <button id="tabNarratives" onclick="switchTab('narratives')" style="padding:6px 16px;background:#0d1117;color:#8b949e;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px">Narratives</button>
+  <button id="tabVerify" onclick="switchTab('verify')" style="padding:6px 16px;background:#0d1117;color:#8b949e;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px">Verify</button>
+</div>
+
+<!-- Categories Panel -->
+<div id="categoriesPanel">
 <!-- Toolbar -->
-<div class="toolbar">
+<div class="toolbar" id="categoriesToolbar">
   <button class="primary" onclick="openModal()">+ Add</button>
   <button class="primary" onclick="openGenerate()">🤖 Generate</button>
   <div class="sep"></div>
@@ -206,6 +285,85 @@
 
 <!-- Log panel -->
 <div class="log-panel" id="logPanel"></div>
+</div>
+
+<!-- Auto-Update Panel -->
+<div id="autoUpdatePanel" style="display:none">
+  <div class="toolbar" id="autoUpdateToolbar">
+    <span style="font-size:11px;color:#8b949e">Schedule AI analysis. Runs <code style="color:#58a6ff">ai-analyze-prod.py</code> in background, syncs data, optionally deploys live.</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:600px">
+    <!-- Fast (hourly) schedule -->
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:10px;color:#8b949e;text-transform:uppercase">⚡ Hourly (--fast)</span>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="auFastEnabled" onchange="toggleFastUpdate()" style="width:14px;height:14px;accent-color:#388bfd">
+          <span style="font-size:10px;color:#6e7681">On</span>
+        </label>
+      </div>
+      <div style="font-size:10px;color:#6e7681;margin-bottom:2px">Interval (min):</div>
+      <input id="auFastInterval" type="number" min="10" max="4320" value="60" onchange="updateFastConfig()" style="width:80px;padding:4px 8px;background:#0d1117;border:1px solid #30363d;border-radius:5px;color:#c9d1d9;font-size:12px;margin-bottom:6px">
+      <div id="auFastLast" style="font-size:10px;color:#6e7681">Last: Never</div>
+      <div id="auFastNext" style="font-size:10px;color:#6e7681">Next: —</div>
+    </div>
+    <!-- Daily schedule -->
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:10px;color:#8b949e;text-transform:uppercase">📅 Daily (--daily)</span>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="auDailyEnabled" onchange="toggleDailyUpdate()" style="width:14px;height:14px;accent-color:#388bfd">
+          <span style="font-size:10px;color:#6e7681">On</span>
+        </label>
+      </div>
+      <div style="font-size:10px;color:#6e7681;margin-bottom:2px">Interval (hours):</div>
+      <input id="auDailyInterval" type="number" min="1" max="168" value="24" onchange="updateDailyConfig()" style="width:80px;padding:4px 8px;background:#0d1117;border:1px solid #30363d;border-radius:5px;color:#c9d1d9;font-size:12px;margin-bottom:6px">
+      <div id="auDailyLast" style="font-size:10px;color:#6e7681">Last: Never</div>
+      <div id="auDailyNext" style="font-size:10px;color:#6e7681">Next: —</div>
+    </div>
+    <!-- Deploy setting -->
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;grid-column:span 2">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="auDeploy" onchange="updateDeployConfig()" style="width:14px;height:14px;accent-color:#388bfd">
+        <span style="font-size:11px;color:#c9d1d9">🔴 Deploy to Cloudflare KV live after each update</span>
+      </label>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px;justify-content:center">
+    <button class="primary" id="auEnableBothBtn" onclick="enableBothUpdates()" style="font-size:11px">▶ Enable Both</button>
+    <button onclick="disableBothUpdates()" style="font-size:11px;background:#b62324;border-color:#d73a49;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer">⏹ Disable All</button>
+  </div>
+  <div id="auCountdown" style="margin-top:10px;font-size:11px;color:#6e7681;text-align:center"></div>
+</div>
+
+<!-- Prompts Panel -->
+<div id="promptsPanel" style="display:none">
+  <div id="promptsToolbar" class="toolbar">
+    <span style="font-size:11px;color:#8b949e">Edit AI prompts sent to the LLM. Changes save immediately to <code style="color:#58a6ff">prompts.json</code>.</span>
+    <button class="primary" id="saveAllPromptsBtn" onclick="saveAllPrompts()" style="display:none">💾 Save All</button>
+  </div>
+  <div id="promptsList"></div>
+</div>
+
+<!-- Narratives Panel -->
+<div id="narrativesPanel" style="display:none">
+  <div class="toolbar">
+    <span style="font-size:11px;color:#8b949e">Edit narrative fields for each solution. Changes save to <code style="color:#58a6ff">data.json</code>.</span>
+    <button class="primary" id="loadNarrativesBtn" onclick="loadNarratives()">🔄 Load Data</button>
+    <button class="deploy" id="saveNarrativesBtn" onclick="saveNarratives()">💾 Save All</button>
+    <button class="run" id="verifyNarrativesBtn" onclick="verifyNarratives()">🔍 Verify</button>
+  </div>
+  <div id="narrativesList"></div>
+</div>
+
+<!-- Verify Panel -->
+<div id="verifyPanel" style="display:none">
+  <div class="toolbar">
+    <span style="font-size:11px;color:#8b949e">Search the web to verify AI-generated narratives. Uses <code style="color:#58a6ff">SearXNG</code> at local network.</span>
+    <button class="run" id="runVerifyBtn" onclick="runVerification()">🔍 Run Verification</button>
+  </div>
+  <div id="verifyResults" style="padding:10px"></div>
+</div>
 
 <!-- Edit/Add Modal -->
 <div class="modal-overlay" id="editModalOverlay">
@@ -220,7 +378,7 @@
     <label>Name</label>
     <input id="fName" placeholder="e.g. Yemen Conflict">
     <label>Description</label>
-    <textarea id="fDesc" placeholder="What this category covers…"></textarea>
+    <textarea id="fDesc" placeholder="What this category covers…" oninput="autosizeTextareas()"></textarea>
     <label>Phases (comma-separated)</label>
     <input id="fPhases" placeholder="e.g. Fighting, Ceasefire, Rebuilding">
     <label>Keywords (comma-separated)</label>
@@ -362,7 +520,7 @@ function renderTable(filter='') {
         <td style="color:#8b949e;font-family:monospace;font-size:11px">${c.id}</td>
         <td>${c.name}</td>
         <td style="color:#8b949e;font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.description)}">${c.description}</td>
-        <td style="font-size:10px;color:#6e7681">${(c.phases||[]).join(' → ')}</td>
+        <td style="font-size:10px;color:#6e7681">${(c.phases||[]).map(enText).join(' → ')}</td>
         <td style="font-size:10px;color:#6e7681">${(c.keywords||[]).join(', ')}</td>
         <td><div class="actions">
           <button onclick="editCategory('${c.id}')">Edit</button>
@@ -388,7 +546,7 @@ function renderTable(filter='') {
         <td style="color:#8b949e;font-family:monospace;font-size:11px">${c.id}</td>
         <td>${c.name}</td>
         <td style="color:#8b949e;font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.description)}">${c.description}</td>
-        <td style="font-size:10px;color:#6e7681">${(c.phases||[]).join(' → ')}</td>
+        <td style="font-size:10px;color:#6e7681">${(c.phases||[]).map(enText).join(' → ')}</td>
         <td style="font-size:10px;color:#6e7681">${(c.keywords||[]).join(', ')}</td>
         <td><div class="actions">
           <button onclick="editCategory('${c.id}','suggested')">Edit</button>
@@ -405,6 +563,7 @@ function filterTable() {
 }
 
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+function enText(v) { return (v && typeof v === 'object') ? (v.en || JSON.stringify(v)) : String(v || ''); }
 
 /* ── AI Generate ───────────────────────────────────── */
 let lastGenerated = null;
@@ -438,7 +597,7 @@ async function generateCategory() {
     lastGenerated = result;
     const out = document.getElementById('genResult');
     out.style.display = 'block';
-    out.textContent = `ID: ${result.id}\nIcon: ${result.icon}\nDescription: ${result.description}\nPhases: ${(result.phases||[]).join(' → ')}\nKeywords: ${(result.keywords||[]).join(', ')}` + (result._fallback ? '\n\n(fallback — AI unavailable)' : '');
+    out.textContent = `ID: ${result.id}\nIcon: ${result.icon}\nDescription: ${result.description}\nPhases: ${(result.phases||[]).map(enText).join(' → ')}\nKeywords: ${(result.keywords||[]).join(', ')}` + (result._fallback ? '\n\n(fallback — AI unavailable)' : '');
     document.getElementById('genFillBtn').style.display = 'inline-block';
     btn.textContent = '🤖 Regenerate';
   } catch(e) { alert(`Generation failed: ${e}`); }
@@ -457,6 +616,14 @@ function fillModalFromGenerate() {
   document.getElementById('fPhases').value = lastGenerated.phases.join(', ');
   document.getElementById('fKeywords').value = lastGenerated.keywords.join(', ');
   document.getElementById('editModalTitle').textContent = `Add: ${lastGenerated.name}`;
+}
+
+/* ── Autosize Textareas ─────────────────────────────── */
+function autosizeTextareas() {
+  document.querySelectorAll('#editModalOverlay textarea').forEach(ta => {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 300) + 'px';
+  });
 }
 
 /* ── Add / Edit ────────────────────────────────────── */
@@ -478,6 +645,9 @@ function openModal(id, source) {
     document.getElementById('fPhases').value = (cat.phases||[]).join(', ');
     document.getElementById('fKeywords').value = (cat.keywords||[]).join(', ');
     document.getElementById('fCore').checked = cat.core || false;
+    document.getElementById('fKeywords').value = (cat.keywords||[]).join(', ');
+    document.getElementById('fCore').checked = cat.core || false;
+    autosizeTextareas();
     document.getElementById('editModalTitle').textContent = `Edit: ${cat.name}`;
   } else {
     document.getElementById('editId').value = '';
@@ -626,6 +796,15 @@ async function bulkDeleteSelected() {
       });
       const j = await res.json();
       if (!res.ok) { showToast(`Delete failed: ${j.error}`, 'error'); await loadData(); return; }
+    }
+    if (selSug.length) {
+      const res = await fetch(`${API}/taxonomy/bulk-delete`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ ids: selSug.map(c => c.id) })
+      });
+      const j = await res.json();
+      if (!res.ok) { showToast(`Delete suggested failed: ${j.error}`, 'error'); await loadData(); return; }
     }
     showToast(`Deleted ${selCats.length + selSug.length} categories`, 'success');
   } catch(e) { showToast(`Delete failed: ${e}`, 'error'); await loadData(); }
@@ -829,6 +1008,150 @@ async function cancelAnalysis() {
   } catch(e) { showToast(`Cancel failed: ${e}`, 'error'); }
 }
 
+/* ── Tab Switching ─────────────────────────────────── */
+function switchTab(tab) {
+  const panels = {
+    'categories': 'categoriesPanel',
+    'auto-update': 'autoUpdatePanel',
+    'prompts': 'promptsPanel',
+    'narratives': 'narrativesPanel',
+    'verify': 'verifyPanel'
+  };
+  const tabs = {
+    'categories': 'tabCategories',
+    'auto-update': 'tabAutoUpdate',
+    'prompts': 'tabPrompts',
+    'narratives': 'tabNarratives',
+    'verify': 'tabVerify'
+  };
+  for (const [key, panelId] of Object.entries(panels)) {
+    const panel = document.getElementById(panelId);
+    const tabEl = document.getElementById(tabs[key]);
+    panel.style.display = tab === key ? '' : 'none';
+    tabEl.style.background = tab === key ? '#161b22' : '#0d1117';
+    tabEl.style.color = tab === key ? '#f0f6fc' : '#8b949e';
+    tabEl.style.fontWeight = tab === key ? '600' : '400';
+  }
+  if (tab === 'auto-update') loadAutoUpdateStatus();
+  if (tab === 'narratives') loadNarratives();
+}
+
+/* ── Prompts Editor ────────────────────────────────── */
+let promptsData = {};
+const originalPrompts = {};  // snapshot for change detection
+
+async function loadPrompts() {
+  try {
+    const res = await fetch(`${API}/prompts`);
+    promptsData = await res.json();
+    // Deep-copy for change detection
+    Object.assign(originalPrompts, JSON.parse(JSON.stringify(promptsData)));
+    renderPrompts();
+  } catch(e) { showToast('Failed to load prompts', 'error'); }
+}
+
+function renderPrompts() {
+  const container = document.getElementById('promptsList');
+  container.innerHTML = '';
+  const keys = Object.keys(promptsData);
+  for (const key of keys) {
+    const p = promptsData[key];
+    const card = document.createElement('div');
+    card.className = 'prompt-card';
+    card.id = `promptCard_${key}`;
+    const fields = [];
+    if ('description' in p) fields.push({ name: 'description', label: 'Description', badge: 'desc' });
+    if ('system' in p) fields.push({ name: 'system', label: 'System', badge: 'system' });
+    if ('user' in p) fields.push({ name: 'user', label: 'User', badge: 'user' });
+
+    card.innerHTML = `
+      <div class="prompt-card-header" onclick="togglePromptCard('${key}')">
+        <span class="prompt-key">${key}</span>
+        <span class="prompt-desc">${p.description || ''}</span>
+        <span class="prompt-toggle" id="toggle_${key}">▶</span>
+      </div>
+      <div class="prompt-card-body" id="body_${key}">
+        ${fields.map(f => `
+          <div class="prompt-field">
+            <label><span class="field-badge ${f.badge}">${f.label}</span></label>
+            <textarea id="p_${key}_${f.name}" class="prompt-ta" data-key="${key}" data-field="${f.name}"
+              oninput="markDirty('${key}','${f.name}')" onblur="autoSavePrompt('${key}','${f.name}')">${esc(p[f.name] || '')}</textarea>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(card);
+  }
+}
+
+function togglePromptCard(key) {
+  const body = document.getElementById(`body_${key}`);
+  const toggle = document.getElementById(`toggle_${key}`);
+  if (body.classList.contains('open')) {
+    body.classList.remove('open');
+    toggle.classList.remove('open');
+  } else {
+    body.classList.add('open');
+    toggle.classList.add('open');
+    // Resize textareas to show full content
+    body.querySelectorAll('.prompt-ta').forEach(ta => {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 400) + 'px';
+    });
+  }
+}
+
+function markDirty(key, field) {
+  const ta = document.getElementById(`p_${key}_${field}`);
+  const current = ta.value;
+  const orig = originalPrompts[key]?.[field] || '';
+  if (current !== orig) {
+    ta.classList.add('dirty');
+    document.getElementById('saveAllPromptsBtn').style.display = 'inline-block';
+  } else {
+    ta.classList.remove('dirty');
+    // Check if any other field is dirty
+    const taAny = document.querySelector('.prompt-ta.dirty');
+    if (!taAny) document.getElementById('saveAllPromptsBtn').style.display = 'none';
+  }
+  // Auto-resize to fit content (max 400px)
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 400) + 'px';
+}
+
+async function autoSavePrompt(key, field) {
+  const ta = document.getElementById(`p_${key}_${field}`);
+  const value = ta.value;
+  const orig = originalPrompts[key]?.[field] || '';
+  if (value === orig) return;  // no change
+  try {
+    const res = await fetch(`${API}/prompts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, field, value })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Save failed: ${j.error}`, 'error'); return; }
+    originalPrompts[key][field] = value;
+    promptsData[key][field] = value;
+    ta.classList.remove('dirty');
+    // Check if any other field is still dirty
+    const taAny = document.querySelector('.prompt-ta.dirty');
+    if (!taAny) document.getElementById('saveAllPromptsBtn').style.display = 'none';
+  } catch(e) { showToast(`Save failed: ${e}`, 'error'); }
+}
+
+async function saveAllPrompts() {
+  const savePromises = [];
+  document.querySelectorAll('.prompt-ta.dirty').forEach(ta => {
+    const key = ta.dataset.key;
+    const field = ta.dataset.field;
+    savePromises.push(autoSavePrompt(key, field));
+  });
+  await Promise.all(savePromises);
+  showToast('All prompts saved', 'success');
+}
+
 /* ── Keyboard Shortcuts ────────────────────────────── */
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'n') { e.preventDefault(); openModal(); }
@@ -839,9 +1162,486 @@ document.getElementById('editModalOverlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeEditModal();
 });
 
+/* ── Auto-Update ───────────────────────────────────── */
+let auCountdownInterval = null;
+
+async function loadAutoUpdateStatus() {
+  try {
+    const res = await fetch(`${API}/auto-update`);
+    const data = await res.json();
+
+    // Fast schedule
+    document.getElementById('auFastEnabled').checked = data.fast.enabled;
+    document.getElementById('auFastInterval').value = data.fast.interval / 60;
+    document.getElementById('auFastLast').textContent = `Last: ${data.fast.last_run_str}`;
+    document.getElementById('auFastNext').textContent = data.fast.enabled ? `Next: ${data.fast.next_run_str}` : 'Next: —';
+
+    // Daily schedule
+    document.getElementById('auDailyEnabled').checked = data.daily.enabled;
+    document.getElementById('auDailyInterval').value = data.daily.interval / 3600;
+    document.getElementById('auDailyLast').textContent = `Last: ${data.daily.last_run_str}`;
+    document.getElementById('auDailyNext').textContent = data.daily.enabled ? `Next: ${data.daily.next_run_str}` : 'Next: —';
+
+    // Deploy
+    document.getElementById('auDeploy').checked = data.deploy;
+
+    // Countdown — show whichever is sooner
+    const countdownEl = document.getElementById('auCountdown');
+    if (auCountdownInterval) clearInterval(auCountdownInterval);
+    if (data.enabled) {
+      let sooner = null, soonerLabel = '';
+      if (data.fast.enabled && data.fast.next_run) {
+        sooner = data.fast.next_run;
+        soonerLabel = '⚡ hourly';
+      }
+      if (data.daily.enabled && data.daily.next_run) {
+        if (!sooner || data.daily.next_run < sooner) {
+          sooner = data.daily.next_run;
+          soonerLabel = '📅 daily';
+        }
+      }
+      if (sooner) {
+        auCountdownInterval = setInterval(() => {
+          const now = Date.now() / 1000;
+          const rem = Math.max(0, sooner - now);
+          const hrs = Math.floor(rem / 3600);
+          const mins = Math.floor((rem % 3600) / 60);
+          const secs = Math.floor(rem % 60);
+          if (hrs > 0)
+            countdownEl.textContent = `${soonerLabel} in ${hrs}h ${mins}m ${secs}s`;
+          else
+            countdownEl.textContent = `${soonerLabel} in ${mins}m ${secs}s`;
+          if (rem <= 0) countdownEl.textContent = '⏳ Running now…';
+        }, 1000);
+      }
+    } else {
+      countdownEl.textContent = '';
+    }
+  } catch(e) { console.error('Auto-update status load failed', e); }
+}
+
+async function loadAutoUpdateStatus_sync() {
+  const res = await fetch(`${API}/auto-update`);
+  return await res.json();
+}
+
+async function toggleFastUpdate() {
+  const enabled = document.getElementById('auFastEnabled').checked;
+  const interval = parseInt(document.getElementById('auFastInterval').value) * 60;
+  try {
+    const res = await fetch(`${API}/auto-update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        action: enabled ? 'enable-fast' : 'disable-fast',
+        interval,
+        deploy: document.getElementById('auDeploy').checked
+      })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Fast update failed: ${j.error}`, 'error'); return; }
+    showToast(`Hourly ${enabled ? 'enabled' : 'disabled'}`, 'success');
+    await loadAutoUpdateStatus();
+  } catch(e) { showToast(`Toggle failed: ${e}`, 'error'); }
+}
+
+async function toggleDailyUpdate() {
+  const enabled = document.getElementById('auDailyEnabled').checked;
+  const interval = parseInt(document.getElementById('auDailyInterval').value) * 3600;
+  try {
+    const res = await fetch(`${API}/auto-update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        action: enabled ? 'enable-daily' : 'disable-daily',
+        interval,
+        deploy: document.getElementById('auDeploy').checked
+      })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Daily update failed: ${j.error}`, 'error'); return; }
+    showToast(`Daily ${enabled ? 'enabled' : 'disabled'}`, 'success');
+    await loadAutoUpdateStatus();
+  } catch(e) { showToast(`Toggle failed: ${e}`, 'error'); }
+}
+
+async function updateFastConfig() {
+  const interval = parseInt(document.getElementById('auFastInterval').value) * 60;
+  try {
+    const res = await fetch(`${API}/auto-update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'update', fast: { interval } })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Config update failed: ${j.error}`, 'error'); return; }
+    await loadAutoUpdateStatus();
+  } catch(e) { showToast(`Config update failed: ${e}`, 'error'); }
+}
+
+async function updateDailyConfig() {
+  const interval = parseInt(document.getElementById('auDailyInterval').value) * 3600;
+  try {
+    const res = await fetch(`${API}/auto-update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'update', daily: { interval } })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Config update failed: ${j.error}`, 'error'); return; }
+    await loadAutoUpdateStatus();
+  } catch(e) { showToast(`Config update failed: ${e}`, 'error'); }
+}
+
+async function updateDeployConfig() {
+  try {
+    const res = await fetch(`${API}/auto-update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'update', deploy: document.getElementById('auDeploy').checked })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Config update failed: ${j.error}`, 'error'); return; }
+  } catch(e) { showToast(`Config update failed: ${e}`, 'error'); }
+}
+
+async function enableBothUpdates() {
+  try {
+    const res = await fetch(`${API}/auto-update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        action: 'enable',
+        deploy: document.getElementById('auDeploy').checked,
+        fast_interval: parseInt(document.getElementById('auFastInterval').value) * 60,
+        daily_interval: parseInt(document.getElementById('auDailyInterval').value) * 3600
+      })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Enable failed: ${j.error}`, 'error'); return; }
+    showToast('Both schedules enabled', 'success');
+    await loadAutoUpdateStatus();
+  } catch(e) { showToast(`Enable failed: ${e}`, 'error'); }
+}
+
+async function disableBothUpdates() {
+  try {
+    const res = await fetch(`${API}/auto-update`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action: 'disable' })
+    });
+    const j = await res.json();
+    if (!res.ok) { showToast(`Disable failed: ${j.error}`, 'error'); return; }
+    showToast('All schedules disabled', 'success');
+    await loadAutoUpdateStatus();
+  } catch(e) { showToast(`Disable failed: ${e}`, 'error'); }
+}
+
+/* ── Narratives Editor ─────────────────────────────── */
+let narrativesData = null;  // loaded data.json
+const originalNarratives = {};  // snapshot for change detection
+const narrativeDirtyFields = new Set();  // track which fields changed
+
+async function loadNarratives() {
+  try {
+    const res = await fetch(`${API}/data`);
+    narrativesData = await res.json();
+    // Deep-copy for change detection
+    Object.assign(originalNarratives, JSON.parse(JSON.stringify(narrativesData?.solutions || [])));
+    narrativeDirtyFields.clear();
+    renderNarratives();
+  } catch(e) { showToast('Failed to load narratives', 'error'); }
+}
+
+function renderNarratives() {
+  const container = document.getElementById('narrativesList');
+  container.innerHTML = '';
+  if (!narrativesData || !narrativesData.solutions) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:#6e7681">No data loaded. Click "Load Data" to fetch current narratives.</div>';
+    return;
+  }
+
+  for (const sol of narrativesData.solutions) {
+    const card = document.createElement('div');
+    card.className = 'prompt-card';
+    card.id = `narrCard_${sol.id}`;
+    const narrative = sol.narrative || {};
+
+    // Build layers
+    const layers = [];
+    if (narrative.longTerm) layers.push({ key: 'longTerm', label: '📖 Long-Term Arc', icon: '📖' });
+    if (narrative.weeklyHighlight) layers.push({ key: 'weeklyHighlight', label: '⚡ Weekly Highlight', icon: '⚡' });
+    if (narrative.keyEvents && narrative.keyEvents.length) layers.push({ key: 'keyEvents', label: `📰 Key Events (${narrative.keyEvents.length})`, icon: '📰' });
+    if (narrative.keyOpinions && narrative.keyOpinions.length) layers.push({ key: 'keyOpinions', label: `💭 Key Opinions (${narrative.keyOpinions.length})`, icon: '💭' });
+    if (narrative.shifts && narrative.shifts.length) layers.push({ key: 'shifts', label: `🔄 Shifts (${narrative.shifts.length})`, icon: '🔄' });
+
+    const dirty = narrativeDirtyFields.has(sol.id);
+
+    card.innerHTML = `
+      <div class="prompt-card-header" onclick="toggleNarrativeCard('${sol.id}')" style="${dirty ? 'border-left:3px solid #d29922' : ''}">
+        <span style="font-size:16px">${sol.icon}</span>
+        <span class="prompt-key" style="color:#f0f6fc">${sol.name}</span>
+        <span class="prompt-desc">${sol.phases?.[sol.phaseIndex] || '?'} · ${sol.direction}</span>
+        <span style="font-size:10px;color:#6e7681;margin-left:8px">${layers.map(l => l.icon + ' ' + l.label.split(' ')[1]).join(' · ')}</span>
+        ${dirty ? '<span style="color:#d29922;margin-left:auto;font-size:10px">✏ Modified</span>' : ''}
+        <span class="prompt-toggle" id="ntoggle_${sol.id}">▶</span>
+      </div>
+      <div class="prompt-card-body" id="nbody_${sol.id}">
+        ${layers.map(l => `
+          <div class="prompt-field">
+            <label><span class="field-badge desc">${l.label}</span></label>
+            <textarea id="n_${sol.id}_${l.key}" class="prompt-ta" data-sol-id="${sol.id}" data-field="${l.key}"
+              oninput="markNarrativeDirty('${sol.id}','${l.key}')" onblur="autoSaveNarrative('${sol.id}','${l.key}')"
+              style="min-height:80px">${getNarrativeText(sol.id, l.key)}</textarea>
+          </div>
+        `).join('')}
+        ${layers.length === 0 ? '<div style="color:#6e7681;font-size:11px;padding:8px 0">No narrative data — run AI analysis with narrative generation first.</div>' : ''}
+      </div>
+    `;
+    container.appendChild(card);
+  }
+}
+
+function getNarrativeText(solId, field) {
+  if (!narrativesData || !narrativesData.solutions) return '';
+  const sol = narrativesData.solutions.find(s => s.id === solId);
+  if (!sol || !sol.narrative) return '';
+  const val = sol.narrative[field];
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object' && val !== null) {
+    // Trilingual object {en, he, ar} — show English, then others
+    let text = val.en || '';
+    if (val.he) text += '\n[HE] ' + val.he;
+    if (val.ar) text += '\n[AR] ' + val.ar;
+    return text;
+  }
+  if (Array.isArray(val)) return JSON.stringify(val, null, 2);
+  return String(val);
+}
+
+function toggleNarrativeCard(solId) {
+  const body = document.getElementById(`nbody_${solId}`);
+  const toggle = document.getElementById(`ntoggle_${solId}`);
+  if (body.classList.contains('open')) {
+    body.classList.remove('open');
+    toggle.classList.remove('open');
+  } else {
+    body.classList.add('open');
+    toggle.classList.add('open');
+    body.querySelectorAll('.prompt-ta').forEach(ta => {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 400) + 'px';
+    });
+  }
+}
+
+function markNarrativeDirty(solId, field) {
+  narrativeDirtyFields.add(solId);
+  const card = document.getElementById(`narrCard_${solId}`);
+  if (card) {
+    const header = card.querySelector('.prompt-card-header');
+    header.style.borderLeft = '3px solid #d29922';
+    // Add modified indicator
+    let badge = card.querySelector('.modified-badge');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'modified-badge';
+      badge.style.cssText = 'color:#d29922;margin-left:auto;font-size:10px';
+      header.appendChild(badge);
+    }
+    badge.textContent = '✏ Modified';
+  }
+}
+
+async function autoSaveNarrative(solId, field) {
+  const ta = document.getElementById(`n_${solId}_${field}`);
+  const newVal = ta.value;
+  const sol = narrativesData?.solutions?.find(s => s.id === solId);
+  if (!sol) return;
+  if (!sol.narrative) sol.narrative = {};
+  const oldVal = sol.narrative[field];
+  if (newVal === getNarrativeText(solId, field)) return; // no change
+
+  // Parse trilingual format if present
+  if (typeof oldVal === 'object' && oldVal !== null && oldVal.en !== undefined) {
+    // Preserve structure: split by [HE] and [AR] markers
+    const parts = newVal.split('\n');
+    const enPart = parts[0] || '';
+    const hePart = parts.find(p => p.startsWith('[HE] '))?.replace('[HE] ', '') || (oldVal.he || '');
+    const arPart = parts.find(p => p.startsWith('[AR] '))?.replace('[AR] ', '') || (oldVal.ar || '');
+    sol.narrative[field] = { en: enPart, he: hePart, ar: arPart };
+  } else if (Array.isArray(oldVal)) {
+    // Try to parse JSON for arrays
+    try {
+      sol.narrative[field] = JSON.parse(newVal);
+    } catch {
+      sol.narrative[field] = newVal; // fallback to string
+    }
+  } else {
+    sol.narrative[field] = newVal;
+  }
+
+  // Auto-save to server
+  try {
+    const res = await fetch(`${API}/narrative`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ solutionId: solId, field, value: sol.narrative[field] })
+    });
+    const j = await res.json();
+    if (!res.ok) {
+      showToast(`Save failed: ${j.error || res.statusText}`, 'error');
+    }
+  } catch(e) {
+    showToast(`Save failed: ${e}`, 'error');
+  }
+}
+
+async function saveNarratives() {
+  try {
+    const res = await fetch(`${API}/narratives-save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ solutions: narrativesData?.solutions })
+    });
+    const j = await res.json();
+    if (!res.ok) {
+      showToast(`Save failed: ${j.error || res.statusText}`, 'error');
+      return;
+    }
+    // Update original snapshot
+    Object.assign(originalNarratives, JSON.parse(JSON.stringify(narrativesData?.solutions || [])));
+    narrativeDirtyFields.clear();
+    renderNarratives();
+    showToast('Narratives saved', 'success');
+  } catch(e) {
+    showToast(`Save failed: ${e}`, 'error');
+  }
+}
+
+async function verifyNarratives() {
+  showToast('Running web search verification...', 'info');
+  try {
+    const res = await fetch(`${API}/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ solutions: narrativesData?.solutions })
+    });
+    const j = await res.json();
+    if (!res.ok) {
+      showToast(`Verification failed: ${j.error || res.statusText}`, 'error');
+      return;
+    }
+    // Switch to verify tab
+    switchTab('verify');
+    renderVerifyResults(j);
+  } catch(e) {
+    showToast(`Verification failed: ${e}`, 'error');
+  }
+}
+
+/* ── Web Search Verification ───────────────────────── */
+let verifyResults = null;
+
+async function runVerification() {
+  showToast('Running verification...', 'info');
+  try {
+    const res = await fetch(`${API}/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ solutions: narrativesData?.solutions })
+    });
+    const j = await res.json();
+    if (!res.ok) {
+      showToast(`Verification failed: ${j.error || res.statusText}`, 'error');
+      return;
+    }
+    verifyResults = j;
+    renderVerifyResults(j);
+  } catch(e) {
+    showToast(`Verification failed: ${e}`, 'error');
+  }
+}
+
+function renderVerifyResults(results) {
+  const container = document.getElementById('verifyResults');
+  if (!results || !results.verified) {
+    container.innerHTML = '<div style="color:#6e7681;text-align:center;padding:20px">No verification results. Run verification first.</div>';
+    return;
+  }
+
+  let html = `<div style="margin-bottom:12px;padding:8px;background:#161b22;border-radius:6px">
+    <span style="font-size:12px;color:#8b949e">Verified ${results.verified.length} narratives at ${new Date(results.timestamp).toLocaleString()}</span>
+  </div>`;
+
+  for (const v of results.verified) {
+    const score = v.score || 50;
+    const color = score >= 70 ? '#3fb950' : score >= 40 ? '#d29922' : '#f85149';
+    const status = score >= 70 ? '✅ Confirmed' : score >= 40 ? '⚠️ Partial' : '❌ Unverified';
+
+    html += `
+      <div class="prompt-card">
+        <div class="prompt-card-header" onclick="this.nextElementSibling.classList.toggle('open'); this.querySelector('.prompt-toggle')?.classList.toggle('open')">
+          <span style="font-size:16px">${v.icon || '📰'}</span>
+          <span class="prompt-key" style="color:#f0f6fc">${v.name}</span>
+          <span class="prompt-desc" style="color:${color}">${status} (${score}%)</span>
+          <span class="prompt-toggle">▶</span>
+        </div>
+        <div class="prompt-card-body">
+          <div class="prompt-field">
+            <label><span class="field-badge desc">Narrative</span></label>
+            <div style="padding:8px;background:#0d1117;border-radius:6px;font-size:12px;color:#c9d1d9;white-space:pre-wrap">${v.narrativeText || 'N/A'}</div>
+          </div>
+          <div class="prompt-field">
+            <label><span class="field-badge desc">Search Queries</span></label>
+            <div style="padding:8px;background:#0d1117;border-radius:6px;font-size:12px;color:#c9d1d9">
+              ${(v.queries || []).map(q => `<div>🔍 <code style="color:#58a6ff">${q}</code></div>`).join('')}
+            </div>
+          </div>
+          <div class="prompt-field">
+            <label><span class="field-badge desc">Results</span></label>
+            <div style="padding:8px;background:#0d1117;border-radius:6px;font-size:12px;color:#c9d1d9">
+              ${(v.results || []).map(r => `<div style="margin-bottom:4px">📰 <strong>${r.source}</strong>: ${r.title}<br><span style="color:#6e7681">Score: ${r.score}/100</span></div>`).join('')}
+            </div>
+          </div>
+          <div class="prompt-field">
+            <label><span class="field-badge desc">Discrepancies</span></label>
+            <div style="padding:8px;background:#0d1117;border-radius:6px;font-size:12px;color:#c9d1d9">
+              ${(v.discrepancies || []).map(d => `<div style="color:${d.severity === 'high' ? '#f85149' : '#d29922'}">⚠ ${d}</div>`).join('') || '<div style="color:#3fb950">No discrepancies found</div>'}
+            </div>
+          </div>
+          <div class="prompt-field">
+            <label><span class="field-badge desc">Summary</span></label>
+            <div style="padding:8px;background:#0d1117;border-radius:6px;font-size:12px;color:#c9d1d9">${v.summary || 'N/A'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+}
+
+/* ── Theme Toggle ──────────────────────────────────── */
+let adminTheme = localStorage.getItem('adminTheme') || 'dark';
+
+function applyAdminTheme(theme) {
+  adminTheme = theme;
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('adminTheme', theme);
+  const btn = document.getElementById('adminThemeToggle');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+document.getElementById('adminThemeToggle').addEventListener('click', () => {
+  applyAdminTheme(adminTheme === 'dark' ? 'light' : 'dark');
+});
+
 /* ── Boot ──────────────────────────────────────────── */
 (async function() {
+  applyAdminTheme(adminTheme);
   await loadData();
+  await loadPrompts();
 })();
 </script>
 
