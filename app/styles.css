@@ -578,6 +578,11 @@ a:hover { text-decoration: underline; }
   font-size: 12px;
 }
 .card-player-link:hover { text-decoration: underline; }
+.card-player-web {
+  font-size: 10px;
+  margin-inline-start: 2px;
+  opacity: 0.7;
+}
 .card-player-email {
   font-size: 10px;
   color: var(--accent);
