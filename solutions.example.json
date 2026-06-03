@@ -1,57 +1,128 @@
 {
+  "generated": "2026-01-01T00:00:00Z",
+  "overallMomentum": {
+    "direction": "stalling",
+    "score": -2,
+    "summary": {
+      "en": "2 advancing, 2 stalling, 1 regressing — overall stalling",
+      "he": "2 מתקדמים, 2 נעצרים, 1 נסוג — נעצור בסיכום",
+      "ar": "2 يتقدمان، 2 متوقفان، 1 يتراجع — متوقف بشكل عام"
+    }
+  },
   "solutions": [
     {
       "id": "example-category-1",
-      "icon": "🔥",
-      "name": "Example Category One",
-      "phases": ["Emerged", "Developing", "Gaining Traction", "Maturing", "Resolved"],
-      "phaseIndex": 2,
+      "icon": "🕊️",
+      "name": {
+        "en": "Example Peace Process",
+        "he": "תהליך שלום לדוגמה",
+        "ar": "عملية السلام النموذجية"
+      },
+      "phases": [
+        { "en": "Phase One", "he": "שלב ראשון", "ar": "المرحلة الأولى" },
+        { "en": "Phase Two", "he": "שלב שני", "ar": "المرحلة الثانية" },
+        { "en": "Phase Three", "he": "שלב שלישי", "ar": "المرحلة الثالثة" },
+        { "en": "Phase Four", "he": "שלב רביעי", "ar": "المرحلة الرابعة" },
+        { "en": "Phase Five", "he": "שלב חמישי", "ar": "المرحلة الخامسة" }
+      ],
+      "phaseIndex": 1,
       "direction": "advancing",
       "keyMetric": {
-        "label": "Events (7d)",
+        "label": {
+          "en": "Events (7d)",
+          "he": "אירועים (7 ימים)",
+          "ar": "الأحداث (7 أيام)"
+        },
         "value": "5"
       },
-      "summary": "Example summary text from the most recent article.",
+      "summary": "Example summary from the most recent article.",
       "events": [
         {
-          "text": "Example event 1 — article headline or excerpt.",
+          "date": "2026-01-01T12:00:00Z",
+          "text": {
+            "en": "Example event headline",
+            "he": "כותרת אירוע לדוגמה",
+            "ar": "عنوان حدث نموذجي"
+          },
+          "sentiment": "positive",
           "source": "BBC ME",
-          "type": "media",
-          "url": "https://example.com/article-1",
-          "published": "2026-01-01T12:00:00Z",
-          "meRelevance": 0.8,
-          "category": "example-category-1",
-          "sentiment": "positive"
-        },
-        {
-          "text": "Example event 2.",
-          "source": "Al Jazeera",
-          "type": "media",
-          "url": "https://example.com/article-2",
-          "published": "2026-01-02T14:00:00Z",
-          "meRelevance": 0.9,
-          "category": "example-category-1",
-          "sentiment": "neutral"
+          "link": "https://example.com/article-1",
+          "snippet": "Excerpt from the article...",
+          "ai_risk": 3,
+          "type": "reporting",
+          "signal_score": 7,
+          "source_weight": 3,
+          "effective_signal": 7.0,
+          "attestations": [],
+          "cross_attestation_bonus": false,
+          "cluster_size": 1
         }
       ],
       "confidence": "medium",
-      "core": true
+      "core": true,
+      "narrative": {
+        "longTerm": {
+          "en": "Example long-term narrative arc.",
+          "he": "דוגמה לארכיב נרטיבי ארוך טווח.",
+          "ar": "مثال على القوس السردى طويل الأمد."
+        },
+        "weeklyHighlight": {
+          "en": "Example weekly update.",
+          "he": "דוגמה לעדכון שבועי.",
+          "ar": "مثال على تحديث أسبوعي."
+        },
+        "keyEvents": [
+          {
+            "title": {
+              "en": "Key event title",
+              "he": "כותרת אירוע מרכזי",
+              "ar": "عنوان حدث رئيسي"
+            },
+            "link": "https://example.com/key-event",
+            "source": "BBC ME",
+            "date": "2026-01-01",
+            "type": "reporting",
+            "signal_score": 7,
+            "source_weight": 3,
+            "effective_signal": 7.0,
+            "attestations": []
+          }
+        ],
+        "keyOpinions": [
+          {
+            "quote": {
+              "en": "Example opinion quote",
+              "he": "דוגמה לצטטת דעה",
+              "ar": "مثال على اقتباس رأي"
+            },
+            "link": "https://example.com/opinion",
+            "source": "Foreign Policy",
+            "date": "2026-01-01",
+            "type": "opinion",
+            "signal_score": 6,
+            "source_weight": 3,
+            "effective_signal": 6.0
+          }
+        ],
+        "shifts": [
+          {
+            "desc": {
+              "en": "Phase changed: Phase One → Phase Two",
+              "he": "נצפה שינוי: שלב השתנה: שלב ראשון → שלב שני",
+              "ar": "تم رصد تحول: تغير المرحلة: المرحلة الأولى → المرحلة الثانية"
+            },
+            "direction": "positive",
+            "date": "2026-01-01"
+          }
+        ]
+      }
     }
   ],
-  "activeSolutions": ["example-category-1"],
-  "overallMomentum": {
-    "direction": "advancing",
-    "label": "Net Positive",
-    "summary": "1 advancing, 1 stable, 0 stalling (1 active). 2 ME articles from 29 feeds."
-  },
-  "lastUpdated": "2026-01-01T12:00:00+00:00",
-  "source": "ai-analyzer-prod",
-  "feedCount": 2,
-  "aiVersion": "1.0.0",
   "aiHealth": {
+    "refusals": 0,
+    "errors": 0,
     "status": "healthy",
-    "classificationMethod": "ai",
-    "llmResponse": "success",
-    "feedCount": 29
+    "lastRun": "2026-01-01T00:00:00Z",
+    "method": "ai"
   }
 }

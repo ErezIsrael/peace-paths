@@ -37,10 +37,46 @@ nul
 debug_*.txt
 tempfeedspot.html
 
+# Development environments — local only
+test/
+dev-environment/
+
+# Legacy scripts (replaced by ai-analyze-prod.py / test/dev-serve.py)
+ai-analyze.py
+dev-serve.py
+
 # Deployment/scheduler config — machine-specific
 schedule.xml
 auto-deploy.bat
+auto-update.json
 auto-deploy.sh
 install-scheduler.bat
 deploy.bat
 deploy.sh
+run-dev.bat
+run-test.bat
+
+# Generated/reports
+phase-check-report.json
+phase-check.log
+
+# Junk files from bad path handling
+nul
+C:*
+UsersErez*
+-w
+
+# AI pipeline staging outputs
+staging/
+
+# Local demo/debug HTML
+app/demo.html
+
+# One-off scripts (local use only)
+check-phases.py
+
+# Research docs (local reference)
+research/
+
+# Stakeholders data (local reference)
+stakeholders.json
