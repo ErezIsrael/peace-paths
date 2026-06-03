@@ -10,7 +10,7 @@
   },
   "article_user": {
     "description": "User prompt sent to AI for each individual article classification",
-    "user": "Analyze this specific article and determine its category, sentiment, risk (1-10), and Middle East relevance.\n\n<article>\n<title>{TITLE}</title>\n<snippet>{SNIPPET}</snippet>\n{SOURCE_LINE}\n</article>\n\nOutput exactly in this JSON format:\n{{\"me_relevant\": true, \"category\": \"<one-of-the-valid-ids>\", \"sentiment\": \"positive|negative|neutral\", \"risk\": 5}}"
+    "user": "Analyze this specific article and determine its category, sentiment, risk (1-10), and Middle East relevance.\n\n<article>\n<title>{TITLE}</title>\n<snippet>{SNIPPET}</snippet>\n{SOURCE_LINE}\n</article>\n\nAlso translate the article title into English (en), Hebrew (he), and Arabic (ar). Keep it concise — just the title, not a summary.\n\nOutput exactly in this JSON format:\n{{\"me_relevant\": true, \"category\": \"<one-of-the-valid-ids>\", \"sentiment\": \"positive|negative|neutral\", \"risk\": 5, \"text\": {{\"en\": \"...\", \"he\": \"...\", \"ar\": \"...\"}}}}"
   },
   "phases": {
     "description": "LLM determines current phase for each solution based on recent events",

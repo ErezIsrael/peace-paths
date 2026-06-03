@@ -152,6 +152,44 @@ def save_categories(cat_map):
         json.dump(cats_list, f, indent=2, ensure_ascii=False)
 
 
+def translate_phases(cat_map):
+    """Translate all category phases to {en, he, ar} objects via LLM."""
+    all_phases = []
+    for c in cat_map.values():
+        phases = c.get("phases", [])
+        if phases:
+            all_phases.append({"id": c["id"], "name": c["name"], "phases": phases})
+    if not all_phases:
+        return
+
+    # Build prompt: list all categories with their phases
+    lines = []
+    for item in all_phases:
+        phase_list = "\n".join(f"    {i+1}. {p}" for i, p in enumerate(item["phases"]))
+        lines.append(f"Category: {item['name']}\nPhases:\n{phase_list}")
+    prompt_text = "\n\n".join(lines)
+
+    try:
+        result = _llm_chat([
+            {"role": "system", "content": "Translator. Output ONLY valid JSON. No explanation."},
+            {"role": "user", "content": (
+                "Translate each phase name into Hebrew (he) and Arabic (ar).\n"
+                "Keep the English (en) as-is.\n"
+                "Output format:\n"
+                '{"translations": {"category-id": [{"en": "...", "he": "...", "ar": "..."}, ...]}}\n\n'
+                f"Here are the categories and their phases:\n\n{prompt_text}"
+            )},
+        ])
+        translated = json.loads(result)
+        for item in all_phases:
+            cid = item["id"]
+            if cid in translated.get("translations", {}):
+                cat_map[cid]["phases"] = translated["translations"][cid]
+                print(f"  \u2713 Translated phases for {item['name']}")
+    except Exception as e:
+        print(f"  \u26a0 Phase translation failed: {e}. Using English phases.")
+
+
 def load_prompts():
     """Load AI prompts from prompts.json. Returns dict keyed by prompt name.
     Falls back to hardcoded defaults if file is missing.
@@ -236,9 +274,11 @@ _DEFAULT_PROMPTS = {
             "\n"
             "</article>"
             "\n\n"
+            "Also translate the article title into English (en), Hebrew (he), and Arabic (ar). Keep it concise — just the title, not a summary."
+            "\n\n"
             "Output exactly in this JSON format:"
             "\n"
-            '{"me_relevant": true, "category": "<one-of-the-valid-ids>", "sentiment": "positive|negative|neutral", "risk": 5}'
+            '{"me_relevant": true, "category": "<one-of-the-valid-ids>", "sentiment": "positive|negative|neutral", "risk": 5, "text": {"en": "...", "he": "...", "ar": "..."}}'
         ),
     },
     "phases": {
@@ -970,9 +1010,14 @@ def build_output(articles, classifications, cat_map, stakeholders=None):
         if sol not in solution_events:
             sol = "ceasefire"  # unknown category, default to ceasefire
 
+        # Trilingual text from classifier, or fallback to plain title
+        text = classification.get("text")
+        if not text or not isinstance(text, dict):
+            text = article["title"]
+
         solution_events[sol].append({
             "date": article["date"],
-            "text": article["title"],
+            "text": text,
             "sentiment": classification.get("sentiment", "neutral"),
             "source": article["source"],
             "link": article["link"],
@@ -1043,19 +1088,30 @@ def build_output(articles, classifications, cat_map, stakeholders=None):
 
     # Overall momentum
     if counts["advancing"] > counts["stalling"]:
-        m_dir, m_label = "advancing", "Net Positive"
+        m_dir = "advancing"
     elif counts["stalling"] > counts["advancing"]:
-        m_dir, m_label = "stalling", "Net Negative"
+        m_dir = "stalling"
     else:
-        m_dir, m_label = "stable", "Mixed Signals"
+        m_dir = "stable"
+
+    adv, stab, stall = counts["advancing"], counts["stable"], counts["stalling"]
+    n_active = len(active_solutions)
+    n_articles = len(articles)
+    n_feeds = len(load_rss_feeds())
+
+    # Trilingual summary
+    summary = {
+        "en": f"{adv} advancing, {stab} stable, {stall} stalling ({n_active} active). {n_articles} ME articles from {n_feeds} feeds.",
+        "he": f"{adv} מתקדמים, {stab} יציבים, {stall} נעצרים ({n_active} פעילים). {n_articles} כתבות ממזרח תיכון מ-{n_feeds} מקורות.",
+        "ar": f"{adv} متقدم، {stab} مستقر، {stall} متوقف ({n_active} نشط). {n_articles} مقال من الشرق الأوسط من {n_feeds} مصدر.",
+    }
 
     return {
         "solutions": solutions,
         "activeSolutions": active_solutions,
         "overallMomentum": {
             "direction": m_dir,
-            "label": m_label,
-            "summary": f"{counts['advancing']} advancing, {counts['stable']} stable, {counts['stalling']} stalling ({len(active_solutions)} active). {len(articles)} ME articles from {len(load_rss_feeds())} feeds.",
+            "summary": summary,
         },
         "lastUpdated": now.isoformat(),
         "source": "ai-analyzer-prod",
@@ -1189,16 +1245,24 @@ def _merge_with_existing(data, existing, ai_phases=None, stakeholders=None):
     existing["activeSolutions"] = [s["id"] for s in top8]
 
     if counts["advancing"] > counts["stalling"]:
-        m_dir, m_label = "advancing", "Net Positive"
+        m_dir = "advancing"
     elif counts["stalling"] > counts["advancing"]:
-        m_dir, m_label = "stalling", "Net Negative"
+        m_dir = "stalling"
     else:
-        m_dir, m_label = "stable", "Mixed Signals"
+        m_dir = "stable"
+
+    adv, stab, stall = counts["advancing"], counts["stable"], counts["stalling"]
+    n_events = sum(len(s['events']) for s in all_solutions)
+    n_cats = len(all_solutions)
+    n_active = len(active_ids)
 
     existing["overallMomentum"] = {
         "direction": m_dir,
-        "label": m_label,
-        "summary": f"{counts['advancing']} advancing, {counts['stable']} stable, {counts['stalling']} stalling ({len(active_ids)} active). {sum(len(s['events']) for s in all_solutions)} events across {len(all_solutions)} categories.",
+        "summary": {
+            "en": f"{adv} advancing, {stab} stable, {stall} stalling ({n_active} active). {n_events} events across {n_cats} categories.",
+            "he": f"{adv} מתקדמים, {stab} יציבים, {stall} נעצרים ({n_active} פעילים). {n_events} אירועים ב-{n_cats} קטגוריות.",
+            "ar": f"{adv} متقدم، {stab} مستقر، {stall} متوقف ({n_active} نشط). {n_events} حدث عبر {n_cats} فئة.",
+        },
     }
     existing["lastUpdated"] = datetime.now(timezone.utc).isoformat()
     existing["source"] = "ai-analyzer-prod"
@@ -1210,7 +1274,9 @@ def _print_summary(data, articles_count, elapsed):
     """Print run summary."""
     print(f"\n\u2713 Done in {elapsed:.1f}s")
     print(f"  {articles_count} articles \u2192 {len(data['solutions'])} solutions")
-    print(f"  Momentum: {data['overallMomentum']['label']}")
+    m = data['overallMomentum']
+    summary_text = m['summary'] if isinstance(m['summary'], str) else m['summary'].get('en', '')
+    print(f"  Momentum: {m['direction']} — {summary_text}")
 
     for sol in data["solutions"]:
         d = "\U0001f7e2" if sol["direction"] == "advancing" else "\U0001f7e5" if sol["direction"] == "stalling" else "\U0001f7e1"
@@ -1240,11 +1306,20 @@ def main():
                         help="Research each category: rewrite description, phases, and keywords via AI")
     parser.add_argument("--apply-research", action="store_true",
                         help="Apply research results directly to categories.json (use with --research-categories)")
+    parser.add_argument("--verify", action="store_true",
+                        help="Verify AI-generated narratives against web search results")
+    parser.add_argument("--translate-phases", action="store_true",
+                        help="Translate category phases to Hebrew and Arabic via LLM")
     args = parser.parse_args()
 
     # Load categories from categories.json (source of truth)
     cat_map, all_ids, core_ids, all_kws = load_categories()
     print(f"\U0001f4c5 Loaded {len(all_ids)} categories ({len(core_ids)} core) from categories.json")
+
+    # Translate phases to trilingual {en, he, ar}
+    if args.translate_phases:
+        print("🔍 Translating phases...")
+        translate_phases(cat_map)
     stakeholders = load_stakeholders()
     if stakeholders:
         print(f"\U0001f464 Loaded {len(stakeholders)} stakeholder groups")
@@ -1416,9 +1491,12 @@ def main():
             sol = classification.get("solution", "ceasefire")
             if sol not in solution_events_for_ai:
                 sol = "ceasefire"
+            text = classification.get("text")
+            if not text or not isinstance(text, dict):
+                text = article["title"]
             solution_events_for_ai[sol].append({
                 "date": article["date"],
-                "text": article["title"],
+                "text": text,
                 "sentiment": classification.get("sentiment", "neutral"),
             })
         print("\n🧠 Determining phases via AI (daily only)...")
@@ -1520,6 +1598,130 @@ def main():
 
     elapsed = time.time() - start
     _print_summary(data, len(classified_pairs), elapsed)
+
+    # 8. Web Search Verification (optional)
+    if args.verify:
+        print(f"\n🔍 Running web search verification...")
+        verify_results = verify_narratives(data.get("solutions", []))
+        print(f"  Verified {len(verify_results)} solutions")
+        for v in verify_results:
+            status = "✅" if v["score"] >= 70 else "⚠️" if v["score"] >= 40 else "❌"
+            print(f"  {status} {v['name']}: {v['score']}% ({v['verified_count']}/{v['total_claims']} claims)")
+            for d in v.get("discrepancies", []):
+                print(f"    ⚠ {d}")
+
+
+def verify_narratives(solutions):
+    """Verify AI-generated narratives against web search results.
+
+    Uses SearXNG to search for key claims in narratives.
+    Returns verification results with scores and discrepancies.
+    """
+    import urllib.request
+    import urllib.parse
+
+    search_url = os.environ.get("SEARXNG_URL", "http://192.168.2.213:8888")
+    results = []
+
+    for sol in solutions:
+        narrative = sol.get("narrative", {})
+        if not narrative:
+            continue
+
+        # Extract key claims to verify
+        claims = []
+        if narrative.get("longTerm"):
+            lt = narrative["longTerm"]
+            claims.append({"type": "longTerm", "text": lt["en"] if isinstance(lt, dict) else lt})
+        if narrative.get("weeklyHighlight"):
+            wh = narrative["weeklyHighlight"]
+            claims.append({"type": "weeklyHighlight", "text": wh["en"] if isinstance(wh, dict) else wh})
+        for ev in narrative.get("keyEvents", []):
+            title = ev.get("title", "")
+            if isinstance(title, dict):
+                title = title.get("en", "")
+            if title:
+                claims.append({"type": "keyEvent", "text": title})
+        for op in narrative.get("keyOpinions", []):
+            quote = op.get("quote", "")
+            if isinstance(quote, dict):
+                quote = quote.get("en", "")
+            if quote:
+                claims.append({"type": "keyOpinion", "text": quote})
+
+        search_results = []
+        total_score = 0
+        verified_count = 0
+        discrepancies = []
+
+        for claim in claims:
+            query = claim["text"][:120]
+            try:
+                url = f"{search_url}/search?q={urllib.parse.quote(query)}&format=json&categories=general&language=en"
+                req = urllib.request.Request(url)
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    search_data = json.loads(resp.read().decode())
+
+                results_list = search_data.get("results", [])
+                if results_list:
+                    top_result = results_list[0]
+                    result_title = top_result.get("title", "").lower()
+                    claim_lower = claim["text"].lower()
+
+                    # Simple relevance scoring
+                    score = 0
+                    claim_words = set(claim_lower.split())
+                    title_words = set(result_title.split())
+                    if claim_words:
+                        overlap = len(claim_words & title_words) / len(claim_words)
+                        score = int(overlap * 60)
+
+                    # Source credibility bonus
+                    source = top_result.get("source", "").lower()
+                    if any(s in source for s in ["reuters", "ap", "bbc", "al jazeera"]):
+                        score += 15
+                    score = min(score, 100)
+
+                    total_score += score
+                    verified_count += 1
+
+                    if score < 40:
+                        discrepancies.append(f"Low confidence: '{claim['text'][:60]}...'")
+
+                    search_results.append({
+                        "claim": claim["text"][:100],
+                        "claim_type": claim["type"],
+                        "score": score,
+                        "source": top_result.get("source", "Unknown"),
+                        "title": top_result.get("title", ""),
+                        "url": top_result.get("url", ""),
+                        "snippet": top_result.get("snippet", "")[:200]
+                    })
+                else:
+                    discrepancies.append(f"No results: '{claim['text'][:60]}...'")
+            except Exception as e:
+                discrepancies.append(f"Search failed: {str(e)[:50]}")
+
+        avg_score = int(total_score / verified_count) if verified_count > 0 else 0
+        narrative_text = narrative.get("longTerm", "")
+        if isinstance(narrative_text, dict):
+            narrative_text = narrative_text.get("en", "")
+
+        results.append({
+            "id": sol["id"],
+            "name": sol.get("name", ""),
+            "icon": sol.get("icon", "📰"),
+            "score": avg_score,
+            "verified_count": verified_count,
+            "total_claims": len(claims),
+            "narrativeText": narrative_text,
+            "queries": [c["text"][:80] for c in claims],
+            "results": search_results,
+            "discrepancies": discrepancies,
+            "summary": f"{verified_count}/{len(claims)} claims verified. Avg score: {avg_score}%"
+        })
+
+    return results
 
 
 if __name__ == "__main__":
