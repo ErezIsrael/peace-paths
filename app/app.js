@@ -590,14 +590,6 @@ function buildStakeholders(stakeholders) {
       link.textContent = p.name;
       link.title = `${p.name} — ${p.role}`;
       chip.appendChild(link);
-      const glob = document.createElement('a');
-      glob.className = 'card-player-web';
-      glob.href = p.contact;
-      glob.target = '_blank';
-      glob.rel = 'noopener';
-      glob.textContent = '🌐';
-      glob.title = t('website');
-      chip.appendChild(glob);
     } else {
       chip.textContent = p.name;
       chip.title = `${p.name} — ${p.role}`;
