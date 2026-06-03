@@ -210,8 +210,6 @@
 
 <h1>🕊 Peace Paths Admin</h1>
 <p class="subtitle">Manage categories · Local only</p>
-<button id="adminThemeToggle" class="toolbar" style="background:var(--btn-bg);color:var(--text);border:1px solid var(--border);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:14px;margin-left:auto;float:right" title="Toggle theme">🌙</button>
-<div style="clear:both"></div>
 
 <!-- Tab bar -->
 <div style="display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid #30363d">
@@ -247,6 +245,7 @@
   <span class="badge" id="liveBadge" style="display:none;margin-left:4px"></span>
   <div class="sep"></div>
   <input type="text" class="search-input" id="searchInput" placeholder="Search…" oninput="filterTable()">
+  <button id="adminThemeToggle" style="background:var(--btn-bg);color:var(--text);border:1px solid var(--border);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:14px" title="Toggle theme">🌙</button>
   <span class="status" id="analysisStatus"></span>
   <button class="run" id="stopAnalysisBtn" onclick="cancelAnalysis()" style="display:none;background:#b62324">⏹ Stop</button>
 </div>
