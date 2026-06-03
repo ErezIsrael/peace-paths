@@ -76,7 +76,8 @@
     "infoLimit3": "This tool is experimental and for informational purposes only",
     "crossAttestation": "Cross-attestation",
     "darkMode": "Dark mode",
-    "lightMode": "Light mode"
+    "lightMode": "Light mode",
+    "website": "Website"
   },
   "he": {
     "siteTitle": "נתיבי השלום",
@@ -155,7 +156,8 @@
     "infoLimit3": "כלי זה הוא ניסיוני ולמטרות מידע בלבד",
     "crossAttestation": "אישור צולב",
     "darkMode": "מצב כהה",
-    "lightMode": "מצב בהיר"
+    "lightMode": "מצב בהיר",
+    "website": "אתר"
   },
   "ar": {
     "siteTitle": "مسارات السلام",
@@ -234,6 +236,7 @@
     "infoLimit3": "هذه الأداة تجريبية ولأغراض معلوماتية فقط",
     "crossAttestation": "التأكيد المتقاطع",
     "darkMode": "الوضع الداكن",
-    "lightMode": "الوضع الفاتح"
+    "lightMode": "الوضع الفاتح",
+    "website": "موقع"
   }
 }
