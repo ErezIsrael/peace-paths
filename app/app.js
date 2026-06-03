@@ -96,7 +96,7 @@ function applyLanguage(lang) {
   const footerLinks = document.querySelectorAll('.footer-links .footer-link:not(#versionTag):not(#privacyLink):not(#termsLink):not(#accessibilityLink)');
   if (footerLinks[0]) footerLinks[0].textContent = t('reportBug');
   if (footerLinks[1]) footerLinks[1].textContent = t('buyCoffee');
-  if (footerLinks[2]) footerLinks[
+  if (footerLinks[2]) footerLinks[2].textContent = t('contactEmail');
 
   // Activity "show more" button
   const moreBtn = document.getElementById('showMoreActivity');
