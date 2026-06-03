@@ -732,8 +732,7 @@ document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
 /* ── Boot ────────────────────────────────────────────── */
 (async function boot() {
   await loadTranslations();
-  const lang = detectLanguage();
-  applyLanguage(lang);
+  applyLanguage('he');
   initLanguageSwitcher();
   loadData();
 })();
