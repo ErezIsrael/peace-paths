@@ -375,7 +375,13 @@ function createSolutionCard(solution) {
     const path = buildPeacePath(solution);
     if (path) card.appendChild(path);
     const events = buildLegacyEvents(solution);
-    if (events) card.appendChild(events);
+    if (events) {
+      const toggle = document.createElement('div');
+      toggle.className = 'lc-layer-title collapsible-toggle';
+      toggle.textContent = `⚡ ${t('events')}`;
+      card.appendChild(toggle);
+      card.appendChild(events);
+    }
   }
 
   // Stakeholders
@@ -437,43 +443,62 @@ function buildLayeredCard(solution) {
     wrapper.appendChild(layer);
   }
 
-  // This Week layer
+  // Weekly AI Narrative layer (always visible)
   const weekly = getLangText(n.weeklyHighlight, '');
-  if (weekly || (n.keyEvents && n.keyEvents.length)) {
+  if (weekly) {
     const layer = document.createElement('div');
     layer.className = 'lc-layer lc-layer-signals';
-
-    let html = `<div class="lc-layer-title">⚡ ${t('weekly')} ${t('signals')}</div>`;
-    if (weekly) html += `<div class="lc-layer-text">${weekly}</div>`;
-
-    if (n.keyEvents) {
-      n.keyEvents.forEach(ev => {
-        const title = getLangText(ev.title, ev.title);
-        const attCount = ev.attestations ? ev.attestations.length : 0;
-        html += `
-          <div class="lc-event-item">
-            ${typeBadge(ev.type)}
-            <span class="lc-signal">${ev.signal_score || ev.effective_signal || '?'}</span>
-            ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="lc-event-title">${title}</a>` : `<span class="lc-event-title">${title}</span>`}
-            <span class="lc-source">${ev.source}</span>
-            ${attCount ? `<span class="lc-attestations" title="${t('attestations')}">${attCount} ${t('sources')}</span>` : ''}
-            ${ev.cross_attestation_bonus ? `<span class="lc-cross-attest" title="${t('crossAttestation')}">✦</span>` : ''}
-          </div>
-        `;
-      });
-    }
-    layer.innerHTML = html;
+    layer.innerHTML = `
+      <div class="lc-layer-title">📝 ${t('weeklyHighlight')}</div>
+      <div class="lc-layer-text">${weekly}</div>
+    `;
     wrapper.appendChild(layer);
   }
 
-  // Key Perspectives layer
+  // This Week's Signals layer (collapsible)
+  if (n.keyEvents && n.keyEvents.length) {
+    const layer = document.createElement('div');
+    layer.className = 'lc-layer lc-layer-signals';
+    const title = document.createElement('div');
+    title.className = 'lc-layer-title collapsible-toggle';
+    title.textContent = `⚡ ${t('weekly')} ${t('signals')}`;
+    layer.appendChild(title);
+
+    const body = document.createElement('div');
+    body.className = 'collapsible-body';
+
+    n.keyEvents.forEach(ev => {
+      const evTitle = getLangText(ev.title, ev.title);
+      const attCount = ev.attestations ? ev.attestations.length : 0;
+      body.innerHTML += `
+        <div class="lc-event-item">
+          ${typeBadge(ev.type)}
+          <span class="lc-signal">${ev.signal_score || ev.effective_signal || '?'}</span>
+          ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="lc-event-title">${evTitle}</a>` : `<span class="lc-event-title">${evTitle}</span>`}
+          <span class="lc-source">${ev.source}</span>
+          ${attCount ? `<span class="lc-attestations" title="${t('attestations')}">${attCount} ${t('sources')}</span>` : ''}
+          ${ev.cross_attestation_bonus ? `<span class="lc-cross-attest" title="${t('crossAttestation')}">✦</span>` : ''}
+        </div>
+      `;
+    });
+    layer.appendChild(body);
+    wrapper.appendChild(layer);
+  }
+
+  // Key Perspectives layer (collapsible)
   if (n.keyOpinions && n.keyOpinions.length) {
     const layer = document.createElement('div');
     layer.className = 'lc-layer lc-layer-opinions';
-    let html = `<div class="lc-layer-title">💭 ${t('opinions')}</div>`;
+    const title = document.createElement('div');
+    title.className = 'lc-layer-title collapsible-toggle';
+    title.textContent = `💭 ${t('opinions')}`;
+    layer.appendChild(title);
+
+    const body = document.createElement('div');
+    body.className = 'collapsible-body';
     n.keyOpinions.forEach(ev => {
       const quote = getLangText(ev.quote, ev.quote);
-      html += `
+      body.innerHTML += `
         <div class="lc-event-item">
           ${typeBadge('opinion')}
           <span class="lc-signal">${ev.signal_score || ev.effective_signal || '?'}</span>
@@ -482,7 +507,7 @@ function buildLayeredCard(solution) {
         </div>
       `;
     });
-    layer.innerHTML = html;
+    layer.appendChild(body);
     wrapper.appendChild(layer);
   }
 
@@ -516,11 +541,10 @@ function buildLegacyEvents(solution) {
 
   if (!events.length) return null;
   const evDiv = document.createElement('div');
-  evDiv.className = 'card-events';
+  evDiv.className = 'card-events collapsible-body';
   const SENTIMENT_KEYS = { positive: 'sentimentPositive', neutral: 'sentimentNeutral', negative: 'sentimentNegative' };
-  const show = 3;
 
-  events.slice(0, show).forEach(ev => {
+  events.forEach(ev => {
     const src = ev.source ? ` <span class="card-event-source">(${ev.source})</span>` : '';
     const sentKey = ev.sentiment ? (SENTIMENT_KEYS[ev.sentiment] || ev.sentiment) : '';
     const sentLabel = sentKey ? t(sentKey) : '';
@@ -535,34 +559,6 @@ function buildLegacyEvents(solution) {
     `;
     evDiv.appendChild(item);
   });
-
-  if (events.length > show) {
-    const toggle = document.createElement('div');
-    toggle.className = 'card-events-toggle';
-    toggle.textContent = `${events.length - show} ${t('showMore')}`;
-    toggle.addEventListener('click', () => {
-      evDiv.querySelectorAll('.card-event, .card-events-toggle').forEach(el => el.remove());
-      events.forEach(ev => {
-        const src = ev.source ? ` <span class="card-event-source">(${ev.source})</span>` : '';
-        const sentKey = ev.sentiment ? (SENTIMENT_KEYS[ev.sentiment] || ev.sentiment) : '';
-        const sentLabel = sentKey ? t(sentKey) : '';
-        const item = document.createElement('div');
-        item.className = 'card-event';
-        item.innerHTML = `
-          <span class="card-event-dot sentiment-${ev.sentiment || 'neutral'}"></span>
-          ${sentLabel ? `<span class="card-event-sentiment sentiment-${ev.sentiment}">${sentLabel}</span>` : ''}
-          <span class="card-event-time">${formatTime(ev.date)}</span>
-          ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="card-event-text">${getLangText(ev.text)}</a>` : `<span class="card-event-text">${getLangText(ev.text)}</span>`}
-          ${src}
-        `;
-        evDiv.appendChild(item);
-      });
-      evDiv.appendChild(toggle);
-      toggle.textContent = t('showLess');
-      toggle.addEventListener('click', () => loadData());
-    });
-    evDiv.appendChild(toggle);
-  }
   return evDiv;
 }
 
@@ -645,6 +641,9 @@ function renderAll(data) {
       const card = createSolutionCard(solution);
       if (grid) grid.appendChild(card);
     });
+
+  // Re-init collapsible toggles after DOM rebuild
+  initCollapsibles();
 }
 
 /* ── Language Switcher ───────────────────────────────── */
@@ -741,6 +740,33 @@ function applyTheme(theme) {
     btn.textContent = theme === 'dark' ? '☀️' : '🌙';
     btn.title = theme === 'dark' ? t('lightMode') : t('darkMode');
   }
+}
+
+/* ── Collapsible Sections ──────────────────────────── */
+function initCollapsibles() {
+  document.querySelectorAll('.collapsible-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      // Find the next sibling that is the collapsible body
+      let next = toggle.nextElementSibling;
+      if (!next || !next.classList.contains('collapsible-body')) {
+        // Try finding within the same parent
+        const parent = toggle.parentElement;
+        if (parent) {
+          for (const child of parent.children) {
+            if (child === toggle) {
+              next = child.nextElementSibling;
+              break;
+            }
+          }
+        }
+      }
+      if (next && next.classList.contains('collapsible-body')) {
+        const isOpen = next.classList.contains('open');
+        next.classList.toggle('open', !isOpen);
+        toggle.classList.toggle('open', !isOpen);
+      }
+    });
+  });
 }
 
 /* ── Boot ────────────────────────────────────────────── */

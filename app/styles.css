@@ -714,6 +714,52 @@ a:hover { text-decoration: underline; }
 .lc-layer-signals { background: rgba(74,222,128,0.02); }
 .lc-layer-opinions { background: rgba(245,158,11,0.02); }
 
+/* ── Collapsible sections ──────────────────────────── */
+.lc-layer-title, .section-header {
+  cursor: pointer;
+  user-select: none;
+}
+.lc-layer-title::after, .section-header::after {
+  content: '▸';
+  display: inline-block;
+  margin-inline-start: 6px;
+  transition: transform 0.2s;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.lc-layer-title.open::after, .section-header.open::after {
+  transform: rotate(90deg);
+}
+
+/* Collapsible body — hidden by default */
+.collapsible-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+.collapsible-body.open {
+  max-height: 2000px;
+}
+
+/* Activity feed collapsible */
+.activity-feed.collapsible-body {
+  padding-inline-start: 0;
+}
+.activity-feed.collapsible-body::before {
+  display: none;
+}
+.activity-feed.collapsible-body.open::before {
+  display: block;
+}
+
+/* Card events collapsible */
+.card-events.collapsible-body {
+  padding: 0;
+}
+.card-events.collapsible-body.open {
+  padding: 6px 0;
+}
+
 /* Event items within layers */
 .lc-event-item {
   display: flex;
