@@ -400,9 +400,8 @@ function buildLayeredCard(solution) {
   const header = document.createElement('div');
   header.className = 'lc-header';
   const kv = solution.keyMetric || {};
-  // For narrative cards, count keyEvents + keyOpinions (what's actually shown)
   const n = solution.narrative || {};
-  const eventsCount = (n.keyEvents || []).length + (n.keyOpinions || []).length || (solution.events || []).length;
+  const eventsCount = (solution.events || []).length;
   const solutionName = getLangText(solution.name) || solution.name;
   const dirLabel = getDirectionLabel(solution.direction);
   header.innerHTML = `
