@@ -19,7 +19,7 @@ function getDirectionLabel(key) {
 }
 
 // Current language
-let currentLang = 'en';
+let currentLang = 'he';
 let translations = {};
 
 /* ── Translation System ───────────────────────────────── */
