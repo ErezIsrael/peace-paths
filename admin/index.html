@@ -45,32 +45,75 @@
   .toolbar button:disabled { opacity: 0.4; cursor: default; }
   .toolbar .sep { width: 1px; height: 22px; background: #30363d; margin: 0 2px; }
 
-  /* Progress bar */
-  .progress-bar {
+  /* Progress panel */
+  .progress-panel {
     display: none;
     margin: 8px 0;
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .progress-panel.visible { display: block; }
+  .progress-panel-bar {
+    height: 8px;
+    background: var(--bg);
+    border-radius: 4px;
     overflow: hidden;
-    height: 6px;
+    margin-bottom: 10px;
   }
-  .progress-bar.visible { display: block; }
-  .progress-fill {
+  .progress-panel-fill {
     height: 100%;
-    background: linear-gradient(90deg, #388bfd, #8957e5);
+    background: linear-gradient(90deg, var(--primary), var(--run));
     width: 0%;
-    transition: width 0.3s ease;
-    border-radius: 6px;
+    transition: width 0.4s ease;
+    border-radius: 4px;
   }
-  .progress-label {
-    display: none;
+  .progress-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--text-bright);
+    font-weight: 600;
+  }
+  .progress-panel-pct {
+    font-family: monospace;
+    color: var(--accent);
+    font-size: 14px;
+  }
+  .progress-stage {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
     font-size: 11px;
-    color: #8b949e;
-    margin-bottom: 4px;
-    text-align: center;
+    color: var(--text-muted);
   }
-  .progress-label.visible { display: block; }
+  .progress-stage.active {
+    color: var(--text-bright);
+    font-weight: 600;
+  }
+  .progress-stage.done {
+    color: #3fb950;
+  }
+  .progress-stage-icon {
+    width: 16px;
+    text-align: center;
+    font-size: 12px;
+  }
+  .progress-stage-name {
+    flex: 1;
+  }
+  .progress-stage-detail {
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .progress-stage.done .progress-stage-detail {
+    color: #3fb950;
+  }
 
   .toolbar .search-input {
     background: #0d1117; border: 1px solid #30363d; padding: 5px 10px;
@@ -256,10 +299,16 @@
   <span id="aiHealthText"></span>
 </div>
 
-<!-- Progress bar -->
-<div class="progress-label" id="progressLabel">Analyzing… 0%</div>
-<div class="progress-bar" id="progressBar">
-  <div class="progress-fill" id="progressFill"></div>
+<!-- Progress panel -->
+<div class="progress-panel" id="progressPanel">
+  <div class="progress-panel-header">
+    <span id="progressPanelTitle">Running analysis…</span>
+    <span class="progress-panel-pct" id="progressPanelPct">0%</span>
+  </div>
+  <div class="progress-panel-bar">
+    <div class="progress-panel-fill" id="progressPanelFill"></div>
+  </div>
+  <div id="progressStageList"></div>
 </div>
 
 <!-- Combined table: current + suggested -->
@@ -282,8 +331,7 @@
   </table>
 </div>
 
-<!-- Log panel -->
-<div class="log-panel" id="logPanel"></div>
+
 </div>
 
 <!-- Auto-Update Panel -->
@@ -915,76 +963,96 @@ async function deploy(target) {
 }
 
 /* ── AI Analysis ───────────────────────────────────── */
+const STAGE_ORDER = ['fetch','classify','cluster','phase','narrative','shift','translate','output'];
+
+function renderProgressPanel(stages, currentStage, pct) {
+  const panel = document.getElementById('progressPanel');
+  const fill = document.getElementById('progressPanelFill');
+  const title = document.getElementById('progressPanelTitle');
+  const pctEl = document.getElementById('progressPanelPct');
+  const list = document.getElementById('progressStageList');
+
+  fill.style.width = `${pct}%`;
+  pctEl.textContent = `${pct}%`;
+
+  let doneCount = 0;
+  let html = '';
+  for (const key of STAGE_ORDER) {
+    const s = stages[key];
+    if (!s) continue;
+    const state = s.done ? 'done' : (currentStage === key ? 'active' : '');
+    if (s.done) doneCount++;
+    const icon = s.done ? '✅' : (state === 'active' ? s.icon : '⏳');
+    html += `<div class="progress-stage ${state}">`;
+    html += `<span class="progress-stage-icon">${icon}</span>`;
+    html += `<span class="progress-stage-name">${s.label}</span>`;
+    html += `<span class="progress-stage-detail">${s.detail || (state === 'active' ? '…' : '')}</span>`;
+    html += `</div>`;
+  }
+  list.innerHTML = html;
+
+  if (currentStage) {
+    const cs = stages[currentStage];
+    title.textContent = cs ? `${cs.icon} ${cs.label}…` : 'Running analysis…';
+  } else if (pct >= 100) {
+    title.textContent = '✅ Analysis complete';
+  }
+}
+
 async function runAnalysis(mode) {
   const btn = document.getElementById('analysisStatus');
-  const log = document.getElementById('logPanel');
-  const fill = document.getElementById('progressFill');
-  const bar = document.getElementById('progressBar');
-  const label = document.getElementById('progressLabel');
+  const panel = document.getElementById('progressPanel');
   const buttons = ['runFastBtn','runDailyBtn','runTaxonomyBtn'].map(id=>document.getElementById(id));
 
   buttons.forEach(b => b.disabled = true);
   document.getElementById('stopAnalysisBtn').style.display = 'inline-block';
   btn.textContent = 'Running…';
   btn.className = 'status running';
-  log.textContent = '';
-  log.classList.add('visible');
-  bar.classList.add('visible');
-  label.classList.add('visible');
-  fill.style.width = '0%';
-  label.textContent = 'Starting analysis…';
+  panel.classList.add('visible');
+  renderProgressPanel(
+    Object.fromEntries(STAGE_ORDER.map(k => [k, {label:'',icon:'',done:false,count:0,detail:''}])),
+    null, 0
+  );
 
   const res = await fetch(`/api/analysis/run?mode=${mode}`);
   const j = await res.json();
   if (j.error) {
     document.getElementById('stopAnalysisBtn').style.display = 'none';
-    bar.classList.remove('visible');
-    label.classList.remove('visible');
+    panel.classList.remove('visible');
     btn.textContent = j.error;
     btn.className = 'status error';
     buttons.forEach(b => b.disabled = false);
     return;
   }
-  pollStatus(buttons, fill, bar, label);
+  pollStatus(buttons);
 }
 
-async function pollStatus(buttons, fill, bar, label) {
+async function pollStatus(buttons) {
   const btn = document.getElementById('analysisStatus');
-  const log = document.getElementById('logPanel');
+  const panel = document.getElementById('progressPanel');
 
   const check = async () => {
     const res = await fetch(`/api/analysis/status`);
     const s = await res.json();
-    if (s.log) {
-      log.textContent = s.log;
-      log.scrollTop = log.scrollHeight;
-      // Parse progress from log lines like [20/170 (12%)]
-      const lines = s.log.split('\n');
-      for (const l of lines.reverse()) {
-        const m = l.match(/\[(\d+)\/(\d+)\s+\((\d+)%\)/);
-        if (m) {
-          const pct = parseInt(m[3]);
-          fill.style.width = `${pct}%`;
-          label.textContent = `Analyzing… ${pct}% (${m[1]}/${m[2]})`;
-          btn.textContent = `Running… ${pct}% (PID ${s.pid})`;
-          break;
-        }
-      }
-    }
+    const stages = s.stages || {};
+    const currentStage = s.current_stage || null;
+    const pct = s.pct || 0;
+
+    renderProgressPanel(stages, currentStage, pct);
+    btn.textContent = `Running… ${pct}% (PID ${s.pid})`;
+
     if (!s.running) {
-      fill.style.width = '100%';
-      label.textContent = 'Analysis complete ✓';
+      renderProgressPanel(stages, null, 100);
       btn.textContent = 'Done';
       btn.className = 'status done';
       buttons.forEach(b => b.disabled = false);
       document.getElementById('stopAnalysisBtn').style.display = 'none';
-      setTimeout(() => { bar.classList.remove('visible'); label.classList.remove('visible'); }, 3000);
+      setTimeout(() => { panel.classList.remove('visible'); }, 5000);
       showToast('Analysis complete', 'success');
       loadData();
       return;
     }
-    btn.textContent = `Running… (PID ${s.pid})`;
-    setTimeout(check, 2000);
+    setTimeout(check, 1500);
   };
   check();
 }
@@ -997,8 +1065,7 @@ async function cancelAnalysis() {
       document.getElementById('analysisStatus').textContent = 'Cancelled';
       document.getElementById('analysisStatus').className = 'status error';
       document.getElementById('stopAnalysisBtn').style.display = 'none';
-      document.getElementById('progressBar').classList.remove('visible');
-      document.getElementById('progressLabel').classList.remove('visible');
+      document.getElementById('progressPanel').classList.remove('visible');
       ['runFastBtn','runDailyBtn','runTaxonomyBtn'].forEach(id =>
         document.getElementById(id).disabled = false
       );
