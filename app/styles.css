@@ -272,21 +272,26 @@ a:hover { text-decoration: underline; }
 .momentum-banner {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 20px;
+  border-radius: 16px;
+  padding: 20px 24px;
   margin-bottom: 20px;
 }
 .welcome-text {
-  font-size: 13px;
-  line-height: 1.5;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.7;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 .momentum-summary {
-  font-family: var(--font-head);
-  font-size: 14px;
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.7;
+  font-weight: 400;
   color: var(--text);
+  letter-spacing: 0.01em;
 }
 .momentum-advancing .momentum-summary { color: var(--advancing); }
 .momentum-stable .momentum-summary { color: var(--stable); }
