@@ -1759,31 +1759,29 @@ def build_output(clustered_events, cat_map, narratives, ai_phases=None, stakehol
 # ═══════════════════════════════════════════════════════════════════════
 
 def upload_to_cloudflare(data):
-    """Push data.json to Cloudflare KV via REST API (curl-compatible, no Node.js needed)."""
+    """Push data.json to Cloudflare KV via REST API (no Node.js needed).
+    Uses PUT /accounts/:id/storage/kv/namespaces/:id/values/:key
+    """
     if not CLOUDFLARE_TOKEN or not CLOUDFLARE_ACCOUNT:
         print("\n⚠ CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set")
         return False
-    import urllib.request
+    import urllib.request, json
     kv_id = "badf4fb7acfe4d1c905db77ed8d5e70f"
-    url = f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT}/storage/kv/namespaces/{kv_id}/bulk"
+    url = f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT}/storage/kv/namespaces/{kv_id}/values/data.json"
     with open(DATA_JSON_FILE, "rb") as f:
         content = f.read()
-    # Build multipart form data
-    boundary = "----FormBoundary" + hashlib.md5(os.urandom(16)).hexdigest()
-    body = f"--{boundary}\r\n".encode()
-    body += b'Content-Disposition: form-data; name="data.json"\r\n\r\n'
-    body += content + b"\r\n"
-    body += f"--{boundary}--\r\n".encode()
-    req = urllib.request.Request(url, data=body, method="POST")
+    req = urllib.request.Request(url, data=content, method="PUT")
     req.add_header("Authorization", f"Bearer {CLOUDFLARE_TOKEN}")
-    req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
+    req.add_header("Content-Type", "application/json")
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
-            if resp.status == 200:
+            resp_body = json.loads(resp.read())
+            if resp_body.get("success"):
                 print("  ✓ data.json uploaded to KV")
                 return True
             else:
-                print(f"  ⚠ KV upload failed: HTTP {resp.status}")
+                errs = resp_body.get("errors", [])
+                print(f"  ⚠ KV upload failed: {errs}")
                 return False
     except Exception as e:
         print(f"  ⚠ KV upload failed: {e}")
