@@ -56,9 +56,14 @@ try:
 except ImportError:
     HAS_BS4 = False
 
-# Fix Windows console encoding
+# Fix Windows console encoding (works for TTY; fallback for pipes)
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding="utf-8")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except AttributeError:
+        # stdout is a pipe — wrap in UTF-8 encoder
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 # ─── Load .env ──────────────────────────────────────────────────────
 try:
@@ -811,7 +816,8 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
             }
             with open(stage_file, "w", encoding="utf-8") as f:
                 json.dump(stage, f, indent=2, ensure_ascii=False)
-            print(f"  [{processed}/{len(articles)}] {relevant} relevant, {dropped} dropped | {wall:.0f}s elapsed, ETA {eta:.0f}s")
+            pct = processed * 100 // len(articles)
+            print(f"  [{processed}/{len(articles)} ({pct}%)] {relevant} relevant, {dropped} dropped | {wall:.0f}s elapsed, ETA {eta:.0f}s")
 
     # Save final
     final_stage = {
@@ -1753,21 +1759,34 @@ def build_output(clustered_events, cat_map, narratives, ai_phases=None, stakehol
 # ═══════════════════════════════════════════════════════════════════════
 
 def upload_to_cloudflare(data):
-    """Push data.json to Cloudflare KV via wrangler."""
+    """Push data.json to Cloudflare KV via REST API (curl-compatible, no Node.js needed)."""
     if not CLOUDFLARE_TOKEN or not CLOUDFLARE_ACCOUNT:
         print("\n⚠ CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set")
         return False
-    # Use wrangler CLI
-    import subprocess
+    import urllib.request
     kv_id = "badf4fb7acfe4d1c905db77ed8d5e70f"
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    cmd = f'npx wrangler kv key put "data.json" --namespace-id={kv_id} --path="{DATA_JSON_FILE}" --remote'
-    result = subprocess.run(cmd, shell=True, cwd=project_root, capture_output=True, timeout=60)
-    if result.returncode == 0:
-        print("  ✓ data.json uploaded to KV")
-        return True
-    else:
-        print(f"  ⚠ KV upload failed")
+    url = f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT}/storage/kv/namespaces/{kv_id}/bulk"
+    with open(DATA_JSON_FILE, "rb") as f:
+        content = f.read()
+    # Build multipart form data
+    boundary = "----FormBoundary" + hashlib.md5(os.urandom(16)).hexdigest()
+    body = f"--{boundary}\r\n".encode()
+    body += b'Content-Disposition: form-data; name="data.json"\r\n\r\n'
+    body += content + b"\r\n"
+    body += f"--{boundary}--\r\n".encode()
+    req = urllib.request.Request(url, data=body, method="POST")
+    req.add_header("Authorization", f"Bearer {CLOUDFLARE_TOKEN}")
+    req.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            if resp.status == 200:
+                print("  ✓ data.json uploaded to KV")
+                return True
+            else:
+                print(f"  ⚠ KV upload failed: HTTP {resp.status}")
+                return False
+    except Exception as e:
+        print(f"  ⚠ KV upload failed: {e}")
         return False
 
 
