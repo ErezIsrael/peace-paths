@@ -236,24 +236,21 @@ function renderMomentum(momentum) {
   const counts = { advancing: 0, stable: 0, stalling: 0 };
   solutions.forEach(s => { if (counts.hasOwnProperty(s.direction)) counts[s.direction]++; });
 
-  // Welcome intro text
-  const welcomeEl = document.getElementById('welcomeText');
-  welcomeEl.textContent = t('welcomeIntro');
-
-  // Dynamic status line
-  const summaryEl = document.getElementById('momentumSummary');
-  const statusKey = momentum.direction === 'advancing' ? 'welcomeStatusPositive'
-                : momentum.direction === 'stalling' ? 'welcomeStatusNegative'
-                : 'welcomeStatusMixed';
-  const solutionsKey = momentum.direction === 'advancing' ? 'welcomeSolutionsPositive'
-                    : momentum.direction === 'stalling' ? 'welcomeSolutionsNegative'
-                    : 'welcomeSolutionsMixed';
-  const statusText = t(statusKey);
-  let solutionsText = t(solutionsKey)
+  // Pick the right welcome text variant
+  const key = momentum.direction === 'advancing' ? 'welcomeTextPositive'
+            : momentum.direction === 'stalling' ? 'welcomeTextNegative'
+            : 'welcomeTextMixed';
+  let text = t(key)
     .replace('{advancing}', counts.advancing)
     .replace('{stable}', counts.stable)
     .replace('{stalling}', counts.stalling);
-  summaryEl.textContent = statusText + ' ' + solutionsText;
+
+  // Render as two paragraphs (split on blank line)
+  const welcomeEl = document.getElementById('welcomeText');
+  const summaryEl = document.getElementById('momentumSummary');
+  const parts = text.split('\n\n');
+  welcomeEl.textContent = parts[0] || '';
+  summaryEl.textContent = parts[1] || '';
 }
 
 /* ── Activity Feed ───────────────────────────────────── */
