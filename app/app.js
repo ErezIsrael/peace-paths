@@ -224,16 +224,36 @@ function renderClassificationWarning(aiHealth) {
   }
 }
 
-/* ── Momentum Banner ─────────────────────────────────── */
+/* ── Welcome / Momentum Banner ──────────────────────── */
 function renderMomentum(momentum) {
   if (!momentum) return;
   const banner = document.getElementById('momentumBanner');
   const cfg = MOMENTUM_ICONS[momentum.direction] || MOMENTUM_ICONS.stable;
   banner.className = `momentum-banner ${cfg.cls}`;
-  document.getElementById('momentumIcon').textContent = cfg.icon;
-  const mk = MOMENTUM_CONFIG_KEYS[momentum.direction] || 'momentumStable';
-  document.getElementById('momentumLabel').textContent = t(mk);
-  document.getElementById('momentumSummary').textContent = getLangText(momentum.summary) || '';
+
+  // Build counts from solutions
+  const solutions = data.solutions || [];
+  const counts = { advancing: 0, stable: 0, stalling: 0 };
+  solutions.forEach(s => { if (counts.hasOwnProperty(s.direction)) counts[s.direction]++; });
+
+  // Welcome intro text
+  const welcomeEl = document.getElementById('welcomeText');
+  welcomeEl.textContent = t('welcomeIntro');
+
+  // Dynamic status line
+  const summaryEl = document.getElementById('momentumSummary');
+  const statusKey = momentum.direction === 'advancing' ? 'welcomeStatusPositive'
+                : momentum.direction === 'stalling' ? 'welcomeStatusNegative'
+                : 'welcomeStatusMixed';
+  const solutionsKey = momentum.direction === 'advancing' ? 'welcomeSolutionsPositive'
+                    : momentum.direction === 'stalling' ? 'welcomeSolutionsNegative'
+                    : 'welcomeSolutionsMixed';
+  const statusText = t(statusKey);
+  let solutionsText = t(solutionsKey)
+    .replace('{advancing}', counts.advancing)
+    .replace('{stable}', counts.stable)
+    .replace('{stalling}', counts.stalling);
+  summaryEl.textContent = statusText + ' ' + solutionsText;
 }
 
 /* ── Activity Feed ───────────────────────────────────── */

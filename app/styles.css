@@ -275,24 +275,22 @@ a:hover { text-decoration: underline; }
   border-radius: 12px;
   padding: 14px 20px;
   margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
 }
-.momentum-icon { font-size: 28px; flex-shrink: 0; }
-.momentum-text h2 {
+.welcome-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.momentum-summary {
   font-family: var(--font-head);
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
 }
-.momentum-text p { font-size: 13px; color: var(--text-muted); }
-.momentum-advancing .momentum-icon { color: var(--advancing); }
-.momentum-advancing h2 { color: var(--advancing); }
-.momentum-stable .momentum-icon { color: var(--stable); }
-.momentum-stable h2 { color: var(--stable); }
-.momentum-stalling .momentum-icon { color: var(--stalling); }
-.momentum-stalling h2 { color: var(--stalling); }
+.momentum-advancing .momentum-summary { color: var(--advancing); }
+.momentum-stable .momentum-summary { color: var(--stable); }
+.momentum-stalling .momentum-summary { color: var(--stalling); }
 
 /* ── Classification Warning ──────────────────────────── */
 .classification-warning {
@@ -922,7 +920,7 @@ a:hover { text-decoration: underline; }
   flex-direction: row-reverse;
 }
 [dir="rtl"] .momentum-banner {
-  /* In RTL, row already goes right-to-left, so icon (first DOM child) lands on the right */
+  /* No override needed — text flows naturally RTL */
 }
 [dir="rtl"] .card-top {
   /* In RTL, row already goes right-to-left */
