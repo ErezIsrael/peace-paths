@@ -258,6 +258,12 @@ function buildActivityFeed() {
   const all = [];
   (data.solutions || []).forEach(sol => {
     (sol.events || []).forEach(ev => {
+      // Skip events that have no usable text in the current language
+      const txt = ev.text;
+      let hasLangText = false;
+      if (typeof txt === 'string') hasLangText = true;
+      else if (txt && txt[currentLang] && txt[currentLang].trim()) hasLangText = true;
+      if (!hasLangText) return;
       all.push({ ...ev, solutionId: sol.id, solutionName: getLangText(sol.name, sol.name) });
     });
   });
