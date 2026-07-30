@@ -61,5 +61,20 @@
   "Washington Times - Iran": { "lean": "conservative", "region": "us" },
   "The War Zone - Iran": { "lean": "neutral", "region": "us" },
   "Israel Today": { "lean": "right-israeli", "region": "israel" },
-  "972mag": { "lean": "left-israeli", "region": "israel" }
+  "972mag": { "lean": "left-israeli", "region": "israel" },
+  "Zochrot": { "lean": "left-israeli", "region": "israel" },
+  "Dignity (Kav LaOved)": { "lean": "advocacy-hr", "region": "israel" },
+  "IPD (Institute for Peaceful Change)": { "lean": "left-israeli", "region": "israel" },
+  "Pardes": { "lean": "left-israeli", "region": "israel" },
+  "Shatil": { "lean": "left-israeli", "region": "israel" },
+  "Search for Common Ground": { "lean": "neutral", "region": "global" },
+  "WILPF (Women's International League for Peace)": { "lean": "advocacy-hr", "region": "global" },
+  "ECFR (European Council on Foreign Relations)": { "lean": "neutral", "region": "european" },
+  "Near East Foundation": { "lean": "neutral", "region": "us" },
+  "Alliance for Middle East Peace": { "lean": "pro-peace", "region": "us" },
+  "Arab Organization for Human Rights": { "lean": "advocacy-hr", "region": "arab-world" },
+  "ICRC Middle East": { "lean": "neutral", "region": "global" },
+  "HRW (Human Rights Watch)": { "lean": "advocacy-hr", "region": "global" },
+  "UNESCO Middle East": { "lean": "neutral", "region": "global" },
+  "UNIFEM MENA": { "lean": "neutral", "region": "global" }
 }
