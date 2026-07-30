@@ -660,7 +660,7 @@ function fillModalFromGenerate() {
   document.getElementById('fIcon').value = lastGenerated.icon;
   document.getElementById('fName').value = lastGenerated.name;
   document.getElementById('fDesc').value = lastGenerated.description;
-  document.getElementById('fPhases').value = lastGenerated.phases.join(', ');
+      document.getElementById('fPhases').value = (lastGenerated.phases||[]).map(enText).join(', ');
   document.getElementById('fKeywords').value = lastGenerated.keywords.join(', ');
   document.getElementById('editModalTitle').textContent = `Add: ${lastGenerated.name}`;
 }
@@ -689,7 +689,7 @@ function openModal(id, source) {
     document.getElementById('fIcon').value = cat.icon;
     document.getElementById('fName').value = cat.name;
     document.getElementById('fDesc').value = cat.description || '';
-    document.getElementById('fPhases').value = (cat.phases||[]).join(', ');
+    document.getElementById('fPhases').value = (cat.phases||[]).map(enText).join(', ');
     document.getElementById('fKeywords').value = (cat.keywords||[]).join(', ');
     document.getElementById('fCore').checked = cat.core || false;
     document.getElementById('fKeywords').value = (cat.keywords||[]).join(', ');
@@ -718,12 +718,27 @@ function closeEditModal() {
 
 async function saveCategory() {
   const existing = document.getElementById('editId').value;
+  const rawPhases = document.getElementById('fPhases').value.split(',').map(s=>s.trim()).filter(Boolean);
+  // Preserve existing trilingual phases, updating English text from textarea
+  const catId = document.getElementById('fId').value.trim().toLowerCase().replace(/\s+/g,'-');
+  const existingCat = categories.find(x => x.id === catId);
+  const phases = rawPhases.map((en, i) => {
+    if (existingCat && existingCat.phases && existingCat.phases[i]) {
+      const existing = existingCat.phases[i];
+      return {
+        en: en,
+        he: (typeof existing === 'object') ? (existing.he || en) : en,
+        ar: (typeof existing === 'object') ? (existing.ar || en) : en,
+      };
+    }
+    return { en, he: en, ar: en };
+  });
   const payload = {
     id: document.getElementById('fId').value.trim().toLowerCase().replace(/\s+/g,'-'),
     icon: document.getElementById('fIcon').value.trim(),
     name: document.getElementById('fName').value.trim(),
     description: document.getElementById('fDesc').value.trim(),
-    phases: document.getElementById('fPhases').value.split(',').map(s=>s.trim()).filter(Boolean),
+    phases,
     keywords: document.getElementById('fKeywords').value.split(',').map(s=>s.trim()).filter(Boolean),
     core: document.getElementById('fCore').checked,
   };
@@ -755,7 +770,7 @@ async function importFromTaxonomy(id) {
   const taxCat = taxonomy.find(c => c.id === id);
   if (!taxCat) return;
   // Immediate: move to local categories + re-render
-  taxCat.phases = taxCat.phases || ['Emerged', 'Developing', 'Gaining Traction', 'Maturing', 'Resolved'];
+  taxCat.phases = taxCat.phases || [{en:'Emerged',he:'התגלה',ar:'ظهر'},{en:'Developing',he:'בפיתוח',ar:'تتطور'},{en:'Gaining Traction',he:'רוכז תאוצה',ar:'تكتسب زخمًا'},{en:'Maturing',he:'בהבשלה',ar:'تتبلور'},{en:'Resolved',he:'התפתר',ar:'تم حله'}];
   taxCat.keywords = taxCat.keywords || [];
   taxCat.core = false;
   categories.push({ ...taxCat });
@@ -889,7 +904,7 @@ async function bulkImportSelected() {
 
   // Immediate: move to local categories + re-render
   selSug.forEach(c => {
-    c.phases = c.phases || ['Emerged', 'Developing', 'Gaining Traction', 'Maturing', 'Resolved'];
+    c.phases = c.phases || [{en:'Emerged',he:'התגלה',ar:'ظهر'},{en:'Developing',he:'בפיתוח',ar:'تتطور'},{en:'Gaining Traction',he:'רוכז תאוצה',ar:'تكتسب زخمًا'},{en:'Maturing',he:'בהבשלה',ar:'تتبلور'},{en:'Resolved',he:'התפתר',ar:'تم حله'}];
     c.keywords = c.keywords || [];
     c.core = false;
     categories.push(c);
@@ -1448,7 +1463,7 @@ function renderNarratives() {
       <div class="prompt-card-header" onclick="toggleNarrativeCard('${sol.id}')" style="${dirty ? 'border-left:3px solid #d29922' : ''}">
         <span style="font-size:16px">${sol.icon}</span>
         <span class="prompt-key" style="color:#f0f6fc">${sol.name}</span>
-        <span class="prompt-desc">${sol.phases?.[sol.phaseIndex] || '?'} · ${sol.direction}</span>
+        <span class="prompt-desc">${enText(sol.phases?.[sol.phaseIndex]) || '?'} · ${sol.direction}</span>
         <span style="font-size:10px;color:#6e7681;margin-left:8px">${layers.map(l => l.icon + ' ' + l.label.split(' ')[1]).join(' · ')}</span>
         ${dirty ? '<span style="color:#d29922;margin-left:auto;font-size:10px">✏ Modified</span>' : ''}
         <span class="prompt-toggle" id="ntoggle_${sol.id}">▶</span>

@@ -296,7 +296,7 @@ def inject_category(cat_map, cat_id, name, description, icon=None):
     else:
         cat_map[cat_id] = {
             "id": cat_id, "icon": icon or "📌", "name": name,
-            "phases": ["Emerged", "Developing", "Gaining Traction", "Maturing", "Resolved"],
+            "phases": [{"en": "Emerged", "he": "התגלה", "ar": "ظهر"}, {"en": "Developing", "he": "בפיתוח", "ar": "تتطور"}, {"en": "Gaining Traction", "he": "רוכז תאוצה", "ar": "تكتسب زخمًا"}, {"en": "Maturing", "he": "בהבשלה", "ar": "تتبلور"}, {"en": "Resolved", "he": "התפתר", "ar": "تم حله"}],
             "description": description, "keywords": [], "core": False,
         }
 
