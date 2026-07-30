@@ -82,7 +82,7 @@ function applyLanguage(lang) {
   if (footer) {
     const ps = footer.querySelectorAll('p');
     if (ps[0]) ps[0].textContent = t('footerDisclaimer');
-    if (ps[1]) ps[1].innerHTML = t('footerData').replace('{n}', `<span id="feedCount">${data?.feedCount || 60}</span>`);
+    if (ps[1]) ps[1].innerHTML = t('footerData').replace('{n}', `<span id="feedCount">${data?.feedCount || 89}</span>`);
     if (ps[2]) ps[2].textContent = t('footerAlgorithmic');
   }
   // Footer legal links

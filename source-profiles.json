@@ -76,5 +76,19 @@
   "ICRC Middle East": { "lean": "neutral", "region": "global" },
   "HRW (Human Rights Watch)": { "lean": "advocacy-hr", "region": "global" },
   "UNESCO Middle East": { "lean": "neutral", "region": "global" },
-  "UNIFEM MENA": { "lean": "neutral", "region": "global" }
+  "UNIFEM MENA": { "lean": "neutral", "region": "global" },
+  "Daily Sabah (Turkey)": { "lean": "pro-erdogan", "region": "turkey" },
+  "Egypt Independent": { "lean": "neutral", "region": "egypt" },
+  "Syria Direct": { "lean": "anti-regime", "region": "syria" },
+  "Jewish Chronicle": { "lean": "pro-israeli", "region": "uk" },
+  "Elder of Ziyon": { "lean": "right-israeli", "region": "israel" },
+  "The War Zone - ME": { "lean": "neutral", "region": "us" },
+  "Middle East Institute": { "lean": "neutral", "region": "us" },
+  "Google News - Gaza": { "lean": "aggregate", "region": "global" },
+  "Google News - Iran": { "lean": "aggregate", "region": "global" },
+  "Google News - Lebanon": { "lean": "aggregate", "region": "global" },
+  "Google News - Abraham Accords": { "lean": "aggregate", "region": "global" },
+  "Google News - West Bank": { "lean": "aggregate", "region": "global" },
+  "Google News - IMEC": { "lean": "aggregate", "region": "global" },
+  "Google News - Two State": { "lean": "aggregate", "region": "global" }
 }
