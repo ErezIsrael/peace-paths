@@ -49,7 +49,7 @@ function applyLanguage(lang) {
   document.documentElement.lang = lang;
   document.documentElement.dir = getLangDirection();
   localStorage.setItem('peace-paths-lang', lang);
-  document.title = `${t('siteTitle')} — Peace Tracker`;
+  document.title = t('siteTitle');
 
   // Update language switcher
   document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -171,8 +171,27 @@ function formatTime(dateStr) {
 /* ── Multilingual Text Helper ─────────────────────────── */
 function getLangText(obj, fallback) {
   if (typeof obj === 'string') return obj;
-  if (obj && typeof obj === 'object' && obj[currentLang]) return obj[currentLang];
-  if (obj && obj.en) return obj.en;
+  if (!obj || typeof obj !== 'object') return fallback || '';
+
+  // If current language key exists and has content, use it
+  if (obj[currentLang] && obj[currentLang].trim()) {
+    // Guard: for RTL languages, check the text actually contains non-ASCII chars
+    // If he/ar field is pure ASCII and identical to en, it's an untranslated fallback
+    if ((currentLang === 'he' || currentLang === 'ar') && obj.en) {
+      const cur = obj[currentLang];
+      const hasNonAscii = /[\u05D0-\u05EA\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(cur);
+      if (!hasNonAscii && cur === obj.en) {
+        // This is English text masquerading as he/ar — fall through to en
+      } else {
+        return cur;
+      }
+    } else {
+      return obj[currentLang];
+    }
+  }
+
+  // Fallback to English
+  if (obj.en) return obj.en;
   return fallback || '';
 }
 
@@ -258,11 +277,12 @@ function buildActivityFeed() {
   const all = [];
   (data.solutions || []).forEach(sol => {
     (sol.events || []).forEach(ev => {
-      // Skip events that have no usable text in the current language
+      // Skip events that have no usable text at all
       const txt = ev.text;
       let hasLangText = false;
       if (typeof txt === 'string') hasLangText = true;
       else if (txt && txt[currentLang] && txt[currentLang].trim()) hasLangText = true;
+      else if (txt && txt.en && txt.en.trim()) hasLangText = true;
       if (!hasLangText) return;
       all.push({ ...ev, solutionId: sol.id, solutionName: getLangText(sol.name, sol.name) });
     });
@@ -798,7 +818,7 @@ function initCollapsibles() {
   await loadTranslations();
   applyTheme(currentTheme);
   initLanguageSwitcher();
-  applyLanguage('he');
+  applyLanguage(detectLanguage());
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) {
     themeToggle.addEventListener('click', () => {
