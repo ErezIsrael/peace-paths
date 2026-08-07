@@ -918,6 +918,9 @@ a:hover { text-decoration: underline; }
   .peace-path__label { font-size: 7px; max-width: 60px; }
   .peace-path__dot { width: 11px; height: 11px; }
   .peace-path__rail { top: 18px; }
+  .lc-event-title { white-space: normal; overflow: visible; text-overflow: unset; }
+  .activity-text, .activity-link { white-space: normal; overflow: visible; text-overflow: unset; }
+  .card-event-text { white-space: normal; overflow: visible; text-overflow: unset; }
 }
 
 /* ── Accessibility ───────────────────────────────────── */
