@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480" role="img" aria-label="Peace Paths data architecture diagram">
+  <title>Peace Paths Architecture</title>
+  <desc>Data flow: 75 RSS feeds are fetched, filtered by keywords, classified by LLM, grouped into solution cards, stored in Cloudflare KV, and served to the frontend dashboard.</desc>
+
+  <defs>
+    <linearGradient id="archBg" x1="0" y1="0" x2="1200" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#0d1f3c"/>
+    </linearGradient>
+    <linearGradient id="nodeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a3358"/>
+      <stop offset="100%" stop-color="#142a4a"/>
+    </linearGradient>
+    <linearGradient id="arrowGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4fc3f7"/>
+      <stop offset="100%" stop-color="#81d4fa"/>
+    </linearGradient>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0,0 10,3.5 0,7" fill="#4fc3f7" fill-opacity="0.7"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="480" rx="24" fill="url(#archBg)"/>
+
+  <!-- Subtle grid -->
+  <g opacity="0.03">
+    <line x1="0" y1="120" x2="1200" y2="120" stroke="#fff" stroke-width="1"/>
+    <line x1="0" y1="240" x2="1200" y2="240" stroke="#fff" stroke-width="1"/>
+    <line x1="0" y1="360" x2="1200" y2="360" stroke="#fff" stroke-width="1"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Row 1: RSS Feeds (left) -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g transform="translate(40, 60)">
+    <rect width="200" height="120" rx="16" fill="url(#nodeGrad)" stroke="#2a4a70" stroke-width="1.5"/>
+    <text x="100" y="36" text-anchor="middle" font-size="28">📡</text>
+    <text x="100" y="64" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e0e8f0">75 RSS Feeds</text>
+    <text x="100" y="86" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#5a7a9a">News · Think Tanks · UN</text>
+    <text x="100" y="104" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#5a7a9a">OSINT · Regional Media</text>
+  </g>
+
+  <!-- Arrow: Feeds → Keyword Filter -->
+  <line x1="250" y1="120" x2="310" y2="120" stroke="#4fc3f7" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Row 1: Keyword Filter (center-left) -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g transform="translate(320, 60)">
+    <rect width="200" height="120" rx="16" fill="url(#nodeGrad)" stroke="#2a4a70" stroke-width="1.5"/>
+    <text x="100" y="36" text-anchor="middle" font-size="28">🔍</text>
+    <text x="100" y="64" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e0e8f0">Keyword Filter</text>
+    <text x="100" y="86" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#5a7a9a">Pass 1: Relevance</text>
+    <text x="100" y="104" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#5a7a9a">Pre-filter articles</text>
+  </g>
+
+  <!-- Arrow: Filter → LLM -->
+  <line x1="530" y1="120" x2="590" y2="120" stroke="#4fc3f7" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Row 1: LLM Classification (center-right) -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g transform="translate(600, 60)">
+    <rect width="200" height="120" rx="16" fill="url(#nodeGrad)" stroke="#2a4a70" stroke-width="1.5"/>
+    <text x="100" y="36" text-anchor="middle" font-size="28">🤖</text>
+    <text x="100" y="64" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e0e8f0">LLM Inference</text>
+    <text x="100" y="86" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#5a7a9a">Pass 2: Batch (size 10)</text>
+    <text x="100" y="104" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#5a7a9a">llama.cpp · self-hosted</text>
+  </g>
+
+  <!-- Arrow: LLM → Grouping -->
+  <line x1="810" y1="120" x2="870" y2="120" stroke="#4fc3f7" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Row 1: Solution Grouping (right) -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g transform="translate(880, 60)">
+    <rect width="280" height="120" rx="16" fill="url(#nodeGrad)" stroke="#2a4a70" stroke-width="1.5"/>
+    <text x="140" y="36" text-anchor="middle" font-size="28">📊</text>
+    <text x="140" y="64" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e0e8f0">Solution Cards</text>
+    <text x="140" y="86" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#5a7a9a">Phase · Momentum · Narrative</text>
+    <text x="140" y="104" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#5a7a9a">Trilingual (EN/HE/AR)</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Down arrow: Solution Cards → data.json -->
+  <!-- ═══════════════════════════════════════════ -->
+  <line x1="1020" y1="190" x2="1020" y2="240" stroke="#4fc3f7" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Row 2: data.json (center) -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g transform="translate(880, 250)">
+    <rect width="280" height="100" rx="16" fill="url(#nodeGrad)" stroke="#4fc3f7" stroke-width="1.5" stroke-opacity="0.3"/>
+    <text x="140" y="36" text-anchor="middle" font-size="28">📄</text>
+    <text x="140" y="60" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e0e8f0">app/data.json</text>
+    <text x="140" y="80" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#5a7a9a">ai-analyze-prod.py output</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Down arrow: data.json → Cloudflare KV -->
+  <!-- ═══════════════════════════════════════════ -->
+  <line x1="1020" y1="360" x2="1020" y2="400" stroke="#4fc3f7" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Row 3: Cloudflare KV (center-right) -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g transform="translate(880, 400)">
+    <rect width="280" height="60" rx="16" fill="url(#nodeGrad)" stroke="#2a4a70" stroke-width="1.5"/>
+    <text x="140" y="28" text-anchor="middle" font-size="22">☁️</text>
+    <text x="140" y="48" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#e0e8f0">Cloudflare KV</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Left side, bottom: Frontend stack -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g transform="translate(40, 250)">
+    <rect width="280" height="210" rx="16" fill="url(#nodeGrad)" stroke="#2a4a70" stroke-width="1.5"/>
+    <text x="140" y="36" text-anchor="middle" font-size="28">🌐</text>
+    <text x="140" y="64" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="600" fill="#e0e8f0">Frontend</text>
+
+    <!-- Sub-items -->
+    <g transform="translate(20, 80)">
+      <rect width="240" height="36" rx="8" fill="#0d1f3c"/>
+      <text x="120" y="23" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#8ea8c8">Static HTML / JS / CSS</text>
+    </g>
+    <g transform="translate(20, 122)">
+      <rect width="240" height="36" rx="8" fill="#0d1f3c"/>
+      <text x="120" y="23" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#8ea8c8">Pages Function → /data.json</text>
+    </g>
+    <g transform="translate(20, 164)">
+      <rect width="240" height="36" rx="8" fill="#0d1f3c"/>
+      <text x="120" y="23" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#8ea8c8">GitHub → Cloudflare Pages</text>
+    </g>
+  </g>
+
+  <!-- Arrow: KV → Frontend -->
+  <line x1="870" y1="430" x2="340" y2="355" stroke="#4fc3f7" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowBlue)"/>
+  <text x="580" y="370" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#5a7a9a">serves data</text>
+</svg>

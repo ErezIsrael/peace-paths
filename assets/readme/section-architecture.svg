@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="140" viewBox="0 0 1200 140" role="img" aria-label="Architecture section divider">
+  <title>Architecture</title>
+  <desc>Section divider for the Architecture section</desc>
+  <rect width="1200" height="140" fill="transparent"/>
+  <line x1="0" y1="70" x2="440" y2="70" stroke="#1e3a5f" stroke-width="1"/>
+  <g transform="translate(520, 40)">
+    <rect x="0" y="0" width="160" height="60" rx="30" fill="#0d1f3c" stroke="#4fc3f7" stroke-width="1.5" stroke-opacity="0.4"/>
+    <text x="80" y="36" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="22" font-weight="600" fill="#4fc3f7">Architecture</text>
+  </g>
+  <line x1="760" y1="70" x2="1200" y2="70" stroke="#1e3a5f" stroke-width="1"/>
+</svg>
