@@ -2,31 +2,31 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Dark theme (default) */
-  --bg:         #0a0e14;
-  --card:       #111820;
-  --card-hover: #161f2a;
-  --border:     #1e2a38;
-  --text:       #e2e8f0;
-  --text-muted: #94a3b8;
-  --text-dim:   #4a5568;
-  --accent:     #a78bfa;
-  --accent-alt: #c4b5fd;
-  --accent-bg:  rgba(167,139,250,0.08);
-  --accent-glow: rgba(167,139,250,0.25);
+  /* Dark theme (default) — navy palette matching README SVG */
+  --bg:         #0a1628;
+  --card:       #132a4a;
+  --card-hover: #1a3358;
+  --border:     #1e3a5f;
+  --text:       #e0e8f0;
+  --text-muted: #8ea8c8;
+  --text-dim:   #5a7a9a;
+  --accent:     #4fc3f7;
+  --accent-alt: #81d4fa;
+  --accent-bg:  rgba(79,195,247,0.1);
+  --accent-glow: rgba(79,195,247,0.3);
 
-  --advancing:  #4ade80;
-  --stable:     #a78bfa;
-  --stalling:   #f87171;
-  --reversing:  #ef4444;
-  --unknown:    #64748b;
+  --advancing:  #4caf50;
+  --stable:     #ffc107;
+  --stalling:   #ef5350;
+  --reversing:  #e53935;
+  --unknown:    #5a7a9a;
 
-  --sentiment-pos: #4ade80;
-  --sentiment-neu: #94a3b8;
-  --sentiment-neg: #f87171;
+  --sentiment-pos: #4caf50;
+  --sentiment-neu: #8ea8c8;
+  --sentiment-neg: #ef5350;
 
-  --type-reporting: #a78bfa;
-  --type-analysis:  #c4b5fd;
+  --type-reporting: #4fc3f7;
+  --type-analysis:  #81d4fa;
   --type-opinion:   #f59e0b;
 
   --font-ui:    'Inter', system-ui, -apple-system, sans-serif;
@@ -35,31 +35,31 @@
 
 /* ── Light Theme ───────────────────────────────────── */
 [data-theme="light"] {
-  --bg:         #f8f7fc;
-  --card:       #ffffff;
-  --card-hover: #f3f0ff;
-  --border:     #e2ddf5;
-  --text:       #1e1b3a;
-  --text-muted: #5b5780;
-  --text-dim:   #9f9ab8;
-  --accent:     #7c3aed;
-  --accent-alt: #6d28d9;
-  --accent-bg:  rgba(124,58,237,0.06);
-  --accent-glow: rgba(124,58,237,0.2);
+  --bg:         #e8eef5;
+  --card:       #f0f4f8;
+  --card-hover: #e2e8f0;
+  --border:     #c5d3e0;
+  --text:       #0a1628;
+  --text-muted: #4a6a8a;
+  --text-dim:   #7a9aba;
+  --accent:     #0288d1;
+  --accent-alt: #0277bd;
+  --accent-bg:  rgba(2,136,209,0.08);
+  --accent-glow: rgba(2,136,209,0.25);
 
-  --advancing:  #16a34a;
-  --stable:     #7c3aed;
-  --stalling:   #dc2626;
-  --reversing:  #b91c1c;
-  --unknown:    #6b7280;
+  --advancing:  #2e7d32;
+  --stable:     #f57f17;
+  --stalling:   #c62828;
+  --reversing:  #b71c1c;
+  --unknown:    #607d8b;
 
-  --sentiment-pos: #16a34a;
-  --sentiment-neu: #6b7280;
-  --sentiment-neg: #dc2626;
+  --sentiment-pos: #2e7d32;
+  --sentiment-neu: #607d8b;
+  --sentiment-neg: #c62828;
 
-  --type-reporting: #7c3aed;
-  --type-analysis:  #6d28d9;
-  --type-opinion:   #d97706;
+  --type-reporting: #0288d1;
+  --type-analysis:  #0277bd;
+  --type-opinion:   #e65100;
 }
 
 @font-face {
@@ -173,6 +173,7 @@ a:hover { text-decoration: underline; }
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-bg);
+  box-shadow: 0 0 6px var(--accent-glow);
 }
 
 /* ── Activity Feed ───────────────────────────────────── */
@@ -275,11 +276,12 @@ a:hover { text-decoration: underline; }
 
 /* ── Momentum Banner ────────────────────────────────── */
 .momentum-banner {
-  background: var(--card);
+  background: linear-gradient(135deg, var(--card) 0%, var(--card-hover) 100%);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 20px 24px;
   margin-bottom: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
 }
 .welcome-text {
   font-family: var(--font-body);
@@ -324,6 +326,7 @@ a:hover { text-decoration: underline; }
   margin-bottom: 8px;
   transition: all 0.2s ease;
   position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
 /* Alternating card backgrounds */
 .solution-card:nth-child(odd) {
@@ -372,7 +375,7 @@ a:hover { text-decoration: underline; }
   color: var(--accent);
 }
 .card-direction.advancing { color: var(--advancing); background: rgba(74,222,128,0.1); }
-.card-direction.stable    { color: var(--stable);    background: rgba(167,139,250,0.1); }
+.card-direction.stable    { color: var(--stable);    background: rgba(255,193,7,0.1); }
 .card-direction.stalling  { color: var(--stalling);  background: rgba(248,113,113,0.1); }
 .card-direction.reversing { color: var(--reversing); background: rgba(239,68,68,0.1); }
 .card-metric-label {
@@ -418,7 +421,7 @@ a:hover { text-decoration: underline; }
   background: linear-gradient(90deg, var(--advancing), var(--accent));
   border-radius: 1px;
   transition: width 0.8s ease;
-  box-shadow: 0 0 6px var(--accent-glow);
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 .peace-path__rail-dash {
   position: absolute;
@@ -615,6 +618,7 @@ a:hover { text-decoration: underline; }
   overflow: hidden;
   transition: all 0.2s ease;
   position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
 /* Alternating card backgrounds */
 .layered-card:nth-child(odd) {
@@ -677,7 +681,7 @@ a:hover { text-decoration: underline; }
   flex-shrink: 0;
 }
 .lc-direction.advancing { color: var(--advancing); background: rgba(74,222,128,0.1); }
-.lc-direction.stable    { color: var(--stable);    background: rgba(56,189,248,0.1); }
+.lc-direction.stable    { color: var(--stable);    background: rgba(255,193,7,0.1); }
 .lc-direction.stalling  { color: var(--stalling);  background: rgba(248,113,113,0.1); }
 .lc-direction.reversing { color: var(--reversing); background: rgba(239,68,68,0.1); }
 
@@ -887,6 +891,7 @@ a:hover { text-decoration: underline; }
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 .modal h2 { font-family: var(--font-head); font-size: 18px; margin-bottom: 12px; }
 .modal h3 { font-family: var(--font-head); font-size: 14px; margin: 16px 0 6px; color: var(--text); }
