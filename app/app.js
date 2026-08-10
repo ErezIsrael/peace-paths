@@ -304,7 +304,7 @@ function buildActivityFeed() {
       }
       // In RTL mode, do NOT fall back to English — skip untranslated events
       if (!hasLangText) return;
-      all.push({ ...ev, solutionId: sol.id, solutionName: getLangText(sol.name, sol.name) });
+      all.push({ ...ev, solutionId: sol.id, solutionName: getLangText(sol.name, '') });
     });
   });
   all.sort((a, b) => {
@@ -484,7 +484,7 @@ function buildLayeredCard(solution) {
     const shiftsDiv = document.createElement('div');
     shiftsDiv.className = 'lc-shifts';
     n.shifts.slice(0, 3).forEach(s => {
-      const desc = getLangText(s.desc, s.desc);
+      const desc = getLangText(s.desc, '');
       if (!desc) return; // Skip shifts with no translation for current language
       const badge = document.createElement('span');
       badge.className = `lc-shift-badge ${s.direction}`;
@@ -531,7 +531,7 @@ function buildLayeredCard(solution) {
     body.className = 'collapsible-body';
 
     n.keyEvents.forEach(ev => {
-      const evTitle = getLangText(ev.title, ev.title);
+      const evTitle = getLangText(ev.title, '');
       if (!evTitle) return; // Skip events with no translation
       const attCount = ev.attestations ? ev.attestations.length : 0;
       body.innerHTML += `
@@ -561,7 +561,7 @@ function buildLayeredCard(solution) {
     const body = document.createElement('div');
     body.className = 'collapsible-body';
     n.keyOpinions.forEach(ev => {
-      const quote = getLangText(ev.quote, ev.quote);
+      const quote = getLangText(ev.quote, '');
       if (!quote) return; // Skip opinions with no translation
       body.innerHTML += `
         <div class="lc-event-item">
