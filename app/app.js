@@ -179,14 +179,32 @@ function hasScriptText(lang, text) {
   return true; // English — no script check
 }
 
+function sanitizeText(text) {
+  // Handle AI pipeline producing JSON array strings like ["text1", "text2"]
+  // If the string starts with [ and ends with ], try to parse and join
+  if (typeof text !== 'string') return text;
+  const trimmed = text.trim();
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const arr = JSON.parse(trimmed);
+      if (Array.isArray(arr) && arr.length > 0) {
+        return arr.filter(s => typeof s === 'string' && s.trim()).join(' · ');
+      }
+    } catch (e) {
+      // Not valid JSON — return as-is
+    }
+  }
+  return text;
+}
+
 /* ── Multilingual Text Helper ─────────────────────────── */
 function getLangText(obj, fallback) {
-  if (typeof obj === 'string') return obj;
+  if (typeof obj === 'string') return sanitizeText(obj);
   if (!obj || typeof obj !== 'object') return fallback || '';
 
   // If current language key exists and has content, use it
   if (obj[currentLang] && obj[currentLang].trim()) {
-    const cur = obj[currentLang];
+    const cur = sanitizeText(obj[currentLang]);
     // Guard: for RTL languages, verify the field actually contains native script
     // Catches: (a) empty fields, (b) English text stored in he/ar field,
     //         (c) pure-ASCII fallbacks that differ from en
@@ -206,7 +224,7 @@ function getLangText(obj, fallback) {
   if (currentLang === 'he' || currentLang === 'ar') {
     return fallback || '';
   }
-  if (obj.en) return obj.en;
+  if (obj.en) return sanitizeText(obj.en);
   return fallback || '';
 }
 
@@ -297,10 +315,11 @@ function buildActivityFeed() {
       let hasLangText = false;
       if (typeof txt === 'string') {
         // Plain string — check script for RTL languages
-        hasLangText = (currentLang === 'en') || hasScriptText(currentLang, txt);
+        hasLangText = (currentLang === 'en') || hasScriptText(currentLang, sanitizeText(txt));
       } else if (txt && txt[currentLang] && txt[currentLang].trim()) {
-        // Has field for current lang — check script for RTL
-        hasLangText = (currentLang === 'en') || hasScriptText(currentLang, txt[currentLang]);
+        // Has field for current lang — check script for RTL (after sanitizing JSON arrays)
+        const sanitized = sanitizeText(txt[currentLang]);
+        hasLangText = (currentLang === 'en') || hasScriptText(currentLang, sanitized);
       }
       // In RTL mode, do NOT fall back to English — skip untranslated events
       if (!hasLangText) return;
@@ -545,8 +564,11 @@ function buildLayeredCard(solution) {
         </div>
       `;
     });
-    layer.appendChild(body);
-    wrapper.appendChild(layer);
+    // Only append layer if it has at least one event
+    if (body.innerHTML.trim()) {
+      layer.appendChild(body);
+      wrapper.appendChild(layer);
+    }
   }
 
   // Key Perspectives layer (collapsible)
@@ -572,8 +594,11 @@ function buildLayeredCard(solution) {
         </div>
       `;
     });
-    layer.appendChild(body);
-    wrapper.appendChild(layer);
+    // Only append layer if it has at least one opinion
+    if (body.innerHTML.trim()) {
+      layer.appendChild(body);
+      wrapper.appendChild(layer);
+    }
   }
 
   return wrapper;
@@ -687,7 +712,7 @@ function renderAll(data) {
 
   const vt = document.getElementById('versionTag');
   if (vt) {
-    const appVersion = 'v0.5.3';
+    const appVersion = 'v0.5.4';
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
     vt.textContent = `${appVersion}${aiVersion}`;
   }
