@@ -168,6 +168,17 @@ function formatTime(dateStr) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+/* ── Script Detection Regexes ─────────────────────────── */
+const HE_BROADER = /[\u05D0-\u05EA\u05F0-\u05F4\uFB1D-\uFB4F]/; // Hebrew letters + presentation forms
+const AR_BROADER = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/; // Arabic + extended
+
+function hasScriptText(lang, text) {
+  // Returns true if `text` contains characters in the expected script for `lang`
+  if (lang === 'he') return HE_BROADER.test(text);
+  if (lang === 'ar') return AR_BROADER.test(text);
+  return true; // English — no script check
+}
+
 /* ── Multilingual Text Helper ─────────────────────────── */
 function getLangText(obj, fallback) {
   if (typeof obj === 'string') return obj;
@@ -175,22 +186,26 @@ function getLangText(obj, fallback) {
 
   // If current language key exists and has content, use it
   if (obj[currentLang] && obj[currentLang].trim()) {
-    // Guard: for RTL languages, check the text actually contains non-ASCII chars
-    // If he/ar field is pure ASCII and identical to en, it's an untranslated fallback
-    if ((currentLang === 'he' || currentLang === 'ar') && obj.en) {
-      const cur = obj[currentLang];
-      const hasNonAscii = /[\u05D0-\u05EA\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(cur);
-      if (!hasNonAscii && cur === obj.en) {
-        // This is English text masquerading as he/ar — fall through to en
-      } else {
-        return cur;
+    const cur = obj[currentLang];
+    // Guard: for RTL languages, verify the field actually contains native script
+    // Catches: (a) empty fields, (b) English text stored in he/ar field,
+    //         (c) pure-ASCII fallbacks that differ from en
+    if (currentLang === 'he' || currentLang === 'ar') {
+      if (hasScriptText(currentLang, cur)) {
+        return cur; // Genuine Hebrew/Arabic text
       }
+      // No native script found — this is untranslated English masquerading as he/ar
+      // Fall through to English fallback below
     } else {
-      return obj[currentLang];
+      return cur;
     }
   }
 
-  // Fallback to English
+  // Fallback to English — but only if we're in English mode
+  // In he/ar mode, if no valid translation exists, return empty to prevent English leakage
+  if (currentLang === 'he' || currentLang === 'ar') {
+    return fallback || '';
+  }
   if (obj.en) return obj.en;
   return fallback || '';
 }
@@ -277,12 +292,17 @@ function buildActivityFeed() {
   const all = [];
   (data.solutions || []).forEach(sol => {
     (sol.events || []).forEach(ev => {
-      // Skip events that have no usable text at all
+      // Skip events that have no usable text in the current language
       const txt = ev.text;
       let hasLangText = false;
-      if (typeof txt === 'string') hasLangText = true;
-      else if (txt && txt[currentLang] && txt[currentLang].trim()) hasLangText = true;
-      else if (txt && txt.en && txt.en.trim()) hasLangText = true;
+      if (typeof txt === 'string') {
+        // Plain string — check script for RTL languages
+        hasLangText = (currentLang === 'en') || hasScriptText(currentLang, txt);
+      } else if (txt && txt[currentLang] && txt[currentLang].trim()) {
+        // Has field for current lang — check script for RTL
+        hasLangText = (currentLang === 'en') || hasScriptText(currentLang, txt[currentLang]);
+      }
+      // In RTL mode, do NOT fall back to English — skip untranslated events
       if (!hasLangText) return;
       all.push({ ...ev, solutionId: sol.id, solutionName: getLangText(sol.name, sol.name) });
     });
@@ -445,7 +465,7 @@ function buildLayeredCard(solution) {
   const kv = solution.keyMetric || {};
   const n = solution.narrative || {};
   const eventsCount = (solution.events || []).length || (n.keyEvents || []).length + (n.keyOpinions || []).length;
-  const solutionName = getLangText(solution.name) || solution.name;
+  const solutionName = getLangText(solution.name);
   const dirLabel = getDirectionLabel(solution.direction);
   header.innerHTML = `
     <span class="lc-icon">${solution.icon}</span>
@@ -465,6 +485,7 @@ function buildLayeredCard(solution) {
     shiftsDiv.className = 'lc-shifts';
     n.shifts.slice(0, 3).forEach(s => {
       const desc = getLangText(s.desc, s.desc);
+      if (!desc) return; // Skip shifts with no translation for current language
       const badge = document.createElement('span');
       badge.className = `lc-shift-badge ${s.direction}`;
       badge.textContent = `${t('shiftDetected')}: ${desc}`;
@@ -511,6 +532,7 @@ function buildLayeredCard(solution) {
 
     n.keyEvents.forEach(ev => {
       const evTitle = getLangText(ev.title, ev.title);
+      if (!evTitle) return; // Skip events with no translation
       const attCount = ev.attestations ? ev.attestations.length : 0;
       body.innerHTML += `
         <div class="lc-event-item">
@@ -540,6 +562,7 @@ function buildLayeredCard(solution) {
     body.className = 'collapsible-body';
     n.keyOpinions.forEach(ev => {
       const quote = getLangText(ev.quote, ev.quote);
+      if (!quote) return; // Skip opinions with no translation
       body.innerHTML += `
         <div class="lc-event-item">
           ${typeBadge('opinion')}
@@ -563,7 +586,7 @@ function createLegacyCardTop(solution) {
   const eventsCount = (solution.events || []).length;
   let valHtml = eventsCount ? `${eventsCount}` : `${kv.value || '—'}`;
   if (kv.total && !eventsCount) valHtml += ` / ${kv.total}`;
-  const solutionName = getLangText(solution.name) || solution.name;
+  const solutionName = getLangText(solution.name);
   const dirLabel = getDirectionLabel(solution.direction);
   top.innerHTML = `
     <span class="card-icon">${solution.icon}</span>
@@ -587,6 +610,8 @@ function buildLegacyEvents(solution) {
   const SENTIMENT_KEYS = { positive: 'sentimentPositive', neutral: 'sentimentNeutral', negative: 'sentimentNegative' };
 
   events.forEach(ev => {
+    const text = getLangText(ev.text);
+    if (!text) return; // Skip events with no translation for current language
     const src = ev.source ? ` <span class="card-event-source">(${ev.source})</span>` : '';
     const sentKey = ev.sentiment ? (SENTIMENT_KEYS[ev.sentiment] || ev.sentiment) : '';
     const sentLabel = sentKey ? t(sentKey) : '';
@@ -596,7 +621,7 @@ function buildLegacyEvents(solution) {
       <span class="card-event-dot sentiment-${ev.sentiment || 'neutral'}"></span>
       ${sentLabel ? `<span class="card-event-sentiment sentiment-${ev.sentiment}">${sentLabel}</span>` : ''}
       <span class="card-event-time">${formatTime(ev.date)}</span>
-      ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="card-event-text">${getLangText(ev.text)}</a>` : `<span class="card-event-text">${getLangText(ev.text)}</span>`}
+      ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="card-event-text">${text}</a>` : `<span class="card-event-text">${text}</span>`}
       ${src}
     `;
     evDiv.appendChild(item);
@@ -662,7 +687,7 @@ function renderAll(data) {
 
   const vt = document.getElementById('versionTag');
   if (vt) {
-    const appVersion = 'v0.5.2';
+    const appVersion = 'v0.5.3';
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
     vt.textContent = `${appVersion}${aiVersion}`;
   }
