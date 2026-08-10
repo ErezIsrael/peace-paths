@@ -181,17 +181,28 @@ function hasScriptText(lang, text) {
 
 function sanitizeText(text) {
   // Handle AI pipeline producing JSON array strings like ["text1", "text2"]
-  // If the string starts with [ and ends with ], try to parse and join
+  // If the string starts with [ and ends with ], extract the first element
   if (typeof text !== 'string') return text;
   const trimmed = text.trim();
   if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    // First try standard JSON.parse
     try {
       const arr = JSON.parse(trimmed);
       if (Array.isArray(arr) && arr.length > 0) {
         return arr.filter(s => typeof s === 'string' && s.trim()).join(' · ');
       }
     } catch (e) {
-      // Not valid JSON — return as-is
+      // JSON.parse failed (e.g. unescaped quotes inside strings like ארה"ב)
+      // Fallback: strip outer brackets, find first '", "' separator, take first element
+      const inner = trimmed.slice(1, -1).trim();
+      const sepIdx = inner.indexOf('", "');
+      if (sepIdx > 0) {
+        let first = inner.slice(0, sepIdx);
+        first = first.replace(/^"/, '').replace(/"$/, '').trim();
+        if (first) return first;
+      }
+      // Ultimate fallback: just strip brackets and outer quotes
+      return inner.replace(/^"|"$/g, '').trim();
     }
   }
   return text;
@@ -712,7 +723,7 @@ function renderAll(data) {
 
   const vt = document.getElementById('versionTag');
   if (vt) {
-    const appVersion = 'v0.5.4';
+    const appVersion = 'v0.5.5';
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
     vt.textContent = `${appVersion}${aiVersion}`;
   }
