@@ -1054,10 +1054,11 @@ def _make_cluster(cluster_items, source_profiles):
     if has_cross_bonus:
         effective_signal += 2
     
-    # Trilingual text from classifier, or fallback to plain title
+    # Trilingual text from classifier, or fallback to plain title (as trilingual dict)
     text = rep_class.get("text")
     if not text or not isinstance(text, dict):
-        text = rep_article["title"]
+        title = rep_article["title"]
+        text = {"en": title, "he": "", "ar": ""}
 
     return {
         "title": rep_article["title"],
@@ -1167,9 +1168,9 @@ def _fallback_narrative(cat, events, prev_long_term):
     opinions = [e for e in events if e.get("type") == "opinion"][:2]
     
     lt = prev_long_term or f"The {cat['name']} process continues to evolve."
-    
+
     return {
-        "longTerm": {"en": lt, "he": lt, "ar": lt},
+        "longTerm": {"en": lt, "he": "", "ar": ""},
         "weeklyHighlight": {"en": top_event["title"] if top_event else "", "he": "", "ar": ""},
         "keyEvents": [
             {
@@ -1218,9 +1219,10 @@ def detect_shifts(current_solutions, previous_solutions):
             cur_phase = cur_phase_raw.get("en", str(cur_phase_raw)) if isinstance(cur_phase_raw, dict) else cur_phase_raw
             prev_phase_raw = prev["phases"][prev["phaseIndex"]] if prev["phaseIndex"] < len(prev["phases"]) else "?"
             prev_phase = prev_phase_raw.get("en", str(prev_phase_raw)) if isinstance(prev_phase_raw, dict) else prev_phase_raw
+            shift_desc = f"Phase changed: {prev_phase} → {cur_phase}"
             shifts.append({
                 "solutionId": cur["id"],
-                "desc": {"en": f"Phase changed: {prev_phase} → {cur_phase}", "he": "", "ar": ""},
+                "desc": _make_trilingual(shift_desc),
                 "direction": "positive" if cur["phaseIndex"] > prev["phaseIndex"] else "negative",
                 "date": now,
             })
@@ -1230,14 +1232,14 @@ def detect_shifts(current_solutions, previous_solutions):
             if cur["direction"] == "advancing" and prev["direction"] in ("stalling", "stable"):
                 shifts.append({
                     "solutionId": cur["id"],
-                    "desc": {"en": f"Direction improved: {prev['direction']} → advancing", "he": "", "ar": ""},
+                    "desc": _make_trilingual(f"Direction improved: {prev['direction']} → advancing"),
                     "direction": "positive",
                     "date": now,
                 })
             elif cur["direction"] == "stalling" and prev["direction"] in ("advancing", "stable"):
                 shifts.append({
                     "solutionId": cur["id"],
-                    "desc": {"en": f"Direction worsened: {prev['direction']} → stalling", "he": "", "ar": ""},
+                    "desc": _make_trilingual(f"Direction worsened: {prev['direction']} → stalling"),
                     "direction": "negative",
                     "date": now,
                 })
@@ -1256,7 +1258,7 @@ def detect_shifts(current_solutions, previous_solutions):
                 if ev_title not in prev_titles:
                     shifts.append({
                         "solutionId": cur["id"],
-                        "desc": {"en": ev.get("title", {}).get("en", ev.get("title", "")), "he": "", "ar": ""},
+                        "desc": _make_trilingual(ev.get("title", {}).get("en", ev.get("title", ""))),
                         "direction": "negative" if ev.get("sentiment") == "negative" else "positive",
                         "date": ev.get("date", now),
                     })
@@ -1498,10 +1500,144 @@ Rules:
     return trilingual_map
 
 
-def _translate_events_to_trilingual(events, solution_names, max_events_per_solution=10):
-    """Convert solution names and recent event texts to {en, he, ar} format.
-    Only translates the most recent events per solution (those actually displayed in UI).
-    Uses batch translation (10 texts per LLM call) instead of per-text calls."""
+def _validate_and_fix_data(data):
+    """Final validation pass: fix any remaining data quality issues before writing.
+    - Strip JSON array strings from text fields
+    - Ensure no English text in he/ar fields (set to empty if detected)
+    - Ensure all text fields are dicts (not plain strings)"""
+    import re as _re
+
+    def _fix_json_array(text):
+        """If text is a JSON array string like [\"a\", \"b\"], extract first element."""
+        if not isinstance(text, str):
+            return text
+        t = text.strip()
+        if t.startswith('[') and t.endswith(']'):
+            try:
+                arr = json.loads(t)
+                if isinstance(arr, list) and arr:
+                    return next((s for s in arr if isinstance(s, str) and s.strip()), "")
+            except (json.JSONDecodeError, ValueError):
+                pass
+            # Fallback: find first '\", \"' separator
+            inner = t[1:-1].strip()
+            sep = inner.find('", "')
+            if sep > 0:
+                return inner[:sep].strip('"').strip()
+            return inner.strip('"').strip()
+        return text
+
+    def _has_hebrew(text):
+        return any('\u0590' <= c <= '\u05FF' for c in str(text))
+
+    def _has_arabic(text):
+        return any('\u0600' <= c <= '\u06FF' for c in str(text))
+
+    def _fix_trilingual(obj):
+        """Fix a {en, he, ar} dict: strip JSON arrays, ensure no English in he/ar."""
+        if not isinstance(obj, dict):
+            return obj
+        # Fix each field
+        for key in ['en', 'he', 'ar']:
+            if key in obj and isinstance(obj[key], str):
+                obj[key] = _fix_json_array(obj[key])
+        # If he has no Hebrew chars, it's English — set empty
+        if obj.get('he') and not _has_hebrew(obj['he']):
+            obj['he'] = ''
+        # If ar has no Arabic chars, it's English — set empty
+        if obj.get('ar') and not _has_arabic(obj['ar']):
+            obj['ar'] = ''
+        return obj
+
+    for sol in data.get('solutions', []):
+        # Fix events
+        for ev in sol.get('events', []):
+            text = ev.get('text', '')
+            if isinstance(text, str):
+                # Plain string → convert to trilingual dict
+                ev['text'] = {'en': text, 'he': '', 'ar': ''}
+            elif isinstance(text, dict):
+                ev['text'] = _fix_trilingual(text)
+
+        # Fix narrative
+        narr = sol.get('narrative', {})
+        if not isinstance(narr, dict):
+            continue
+
+        for key in ['longTerm', 'weeklyHighlight']:
+            if key in narr and isinstance(narr[key], dict):
+                narr[key] = _fix_trilingual(narr[key])
+
+        for ev in narr.get('keyEvents', []):
+            if isinstance(ev.get('title'), dict):
+                ev['title'] = _fix_trilingual(ev['title'])
+
+        for op in narr.get('keyOpinions', []):
+            if isinstance(op.get('quote'), dict):
+                op['quote'] = _fix_trilingual(op['quote'])
+
+        for sh in narr.get('shifts', []):
+            if isinstance(sh.get('desc'), dict):
+                sh['desc'] = _fix_trilingual(sh['desc'])
+
+
+def _translate_narrative_fields(solutions):
+    """Translate narrative fields (longTerm, weeklyHighlight, keyEvents, keyOpinions, shifts)
+    that have empty he/ar. Runs after build_output to catch any untranslated fields."""
+    texts_to_translate = []  # list of (text_en, callback)
+
+    for sol in solutions:
+        narr = sol.get("narrative", {})
+        if not narr:
+            continue
+
+        # longTerm
+        lt = narr.get("longTerm", {})
+        if isinstance(lt, dict) and lt.get("en") and not lt.get("he", "").strip():
+            texts_to_translate.append((lt["en"], lambda t, obj=lt: obj.update({"he": t.get("he", ""), "ar": t.get("ar", "")})))
+
+        # weeklyHighlight
+        wh = narr.get("weeklyHighlight", {})
+        if isinstance(wh, dict) and wh.get("en") and not wh.get("he", "").strip():
+            texts_to_translate.append((wh["en"], lambda t, obj=wh: obj.update({"he": t.get("he", ""), "ar": t.get("ar", "")})))
+
+        # keyEvents titles
+        for ev in narr.get("keyEvents", []):
+            title = ev.get("title", {})
+            if isinstance(title, dict) and title.get("en") and not title.get("he", "").strip():
+                texts_to_translate.append((title["en"], lambda t, obj=title: obj.update({"he": t.get("he", ""), "ar": t.get("ar", "")})))
+
+        # keyOpinions quotes
+        for op in narr.get("keyOpinions", []):
+            quote = op.get("quote", {})
+            if isinstance(quote, dict) and quote.get("en") and not quote.get("he", "").strip():
+                texts_to_translate.append((quote["en"], lambda t, obj=quote: obj.update({"he": t.get("he", ""), "ar": t.get("ar", "")})))
+
+        # shifts descriptions
+        for sh in narr.get("shifts", []):
+            desc = sh.get("desc", {})
+            if isinstance(desc, dict) and desc.get("en") and not desc.get("he", "").strip():
+                texts_to_translate.append((desc["en"], lambda t, obj=desc: obj.update({"he": t.get("he", ""), "ar": t.get("ar", "")})))
+
+    if not texts_to_translate:
+        return
+
+    # Batch translate unique texts
+    unique_texts = list(dict.fromkeys(t[0] for t in texts_to_translate))
+    print(f"  🌐 Translating {len(unique_texts)} narrative fields to Hebrew & Arabic...")
+    trilingual_map = _batch_translate_dual(unique_texts)
+
+    # Apply translations
+    for text_en, callback in texts_to_translate:
+        if text_en in trilingual_map:
+            callback(trilingual_map[text_en])
+
+
+def _translate_events_to_trilingual(events, solution_names, max_events_per_solution=None):
+    """Convert solution names and event texts to {en, he, ar} format.
+    Translates ALL events with missing/empty he or ar fields.
+    Uses batch translation (5 texts per LLM call) instead of per-text calls.
+    If max_events_per_solution is set, only translates that many per solution (for UI display)."""
     # Collect texts to translate
     texts_to_translate = set()
 
@@ -1512,26 +1648,31 @@ def _translate_events_to_trilingual(events, solution_names, max_events_per_solut
         elif isinstance(s, dict) and (s.get('he') == s.get('en') or s.get('ar') == s.get('en')):
             texts_to_translate.add(s['en'])
 
-    # Events — only recent ones per solution (grouped by solution for limit)
+    # Events — translate ALL events with missing/empty he or ar
     # events is a flat list from all solutions; we need to know boundaries.
     # Caller passes a dict {sol_id: [events]} for proper grouping.
     if isinstance(events, dict):
         for sol_id, ev_list in events.items():
-            recent = ev_list[:max_events_per_solution]
-            for ev in recent:
+            limited = ev_list[:max_events_per_solution] if max_events_per_solution else ev_list
+            for ev in limited:
                 t = ev.get("text", "")
                 if isinstance(t, str) and t:
                     texts_to_translate.add(t)
-                elif isinstance(t, dict) and (t.get('he') == t.get('en') or t.get('ar') == t.get('en')):
-                    texts_to_translate.add(t['en'])
+                elif isinstance(t, dict):
+                    # Check if he or ar is missing, empty, or identical to en
+                    if not t.get('he', '').strip() or not t.get('ar', '').strip() or \
+                       t.get('he', '') == t.get('en', '') or t.get('ar', '') == t.get('en', ''):
+                        texts_to_translate.add(t.get('en', ''))
     else:
-        # Flat list — translate all (legacy path for step 9.5)
+        # Flat list — translate all (legacy path)
         for ev in events:
             t = ev.get("text", "")
             if isinstance(t, str) and t:
                 texts_to_translate.add(t)
-            elif isinstance(t, dict) and (t.get('he') == t.get('en') or t.get('ar') == t.get('en')):
-                texts_to_translate.add(t['en'])
+            elif isinstance(t, dict):
+                if not t.get('he', '').strip() or not t.get('ar', '').strip() or \
+                   t.get('he', '') == t.get('en', '') or t.get('ar', '') == t.get('en', ''):
+                    texts_to_translate.add(t.get('en', ''))
 
     texts_to_translate.discard("")
     if not texts_to_translate:
@@ -2121,14 +2262,17 @@ def main():
         print(f"→ Merging {len(classified_pairs)} events into existing data")
         data = _merge_with_existing(data, existing_data, ai_phases=ai_phases, narratives=narratives, stakeholders=stakeholders)
 
-    # 9.5 Re-translate stale translations in daily mode
-    # (build_output already translated recent events; this catches stale ones)
-    if mode == "daily":
-        events_by_sol = {s["id"]: s.get("events", []) for s in data["solutions"]}
-        sol_names = [s["name"] for s in data["solutions"]]
-        _translate_events_to_trilingual(events_by_sol, sol_names)
-        for i, s in enumerate(data["solutions"]):
-            s["name"] = sol_names[i]
+    # 9.5 Translate all untranslated text fields (both daily and fast mode)
+    # In fast mode, merged events may have empty he/ar — translate them
+    # In daily mode, catches any stale translations
+    events_by_sol = {s["id"]: s.get("events", []) for s in data["solutions"]}
+    sol_names = [s["name"] for s in data["solutions"]]
+    _translate_events_to_trilingual(events_by_sol, sol_names)
+    for i, s in enumerate(data["solutions"]):
+        s["name"] = sol_names[i]
+
+    # Also translate narrative fields that may be missing he/ar
+    _translate_narrative_fields(data["solutions"])
 
     # AI health metadata
     data["aiHealth"] = {
@@ -2140,6 +2284,9 @@ def main():
         "status": "healthy" if ai_refusals == 0 else "warning" if ai_refusals / max(len(articles), 1) < 0.05 else "degraded",
     }
     
+    # Validate: fix any remaining English-in-he fields and JSON array strings
+    _validate_and_fix_data(data)
+
     # Save final output to staging for inspection
     _save_stage("output", data)
     
