@@ -499,7 +499,7 @@ function buildLayeredCard(solution) {
   const archivedItems = (n.keyEvents || []).length + (n.keyOpinions || []).length;
   // Show fresh count; if none, show archived count with indicator
   let countDisplay = freshEvents ? `${freshEvents}` : (archivedItems ? `${archivedItems} ${t('archived')}` : (kv.value || '—'));
-  const solutionName = getLangText(solution.name);
+  const solutionName = getLangText(solution.name) || (typeof solution.name === 'object' && solution.name.en ? sanitizeText(solution.name.en) : '');
   const dirLabel = getDirectionLabel(solution.direction);
   header.innerHTML = `
     <span class="lc-icon">${solution.icon}</span>
@@ -646,7 +646,7 @@ function createLegacyCardTop(solution) {
   const archivedItems = (n.keyEvents || []).length + (n.keyOpinions || []).length;
   let valHtml = eventsCount ? `${eventsCount}` : (archivedItems ? `${archivedItems} ${t('archived')}` : `${kv.value || '—'}`);
   if (kv.total && !eventsCount && !archivedItems) valHtml += ` / ${kv.total}`;
-  const solutionName = getLangText(solution.name);
+  const solutionName = getLangText(solution.name) || (typeof solution.name === 'object' && solution.name.en ? sanitizeText(solution.name.en) : '');
   const dirLabel = getDirectionLabel(solution.direction);
   top.innerHTML = `
     <span class="card-icon">${solution.icon}</span>
