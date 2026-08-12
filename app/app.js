@@ -528,7 +528,11 @@ function buildLayeredCard(solution) {
   }
 
   // Long-term Arc layer
-  const longTerm = getLangText(n.longTerm, '');
+  let longTerm = getLangText(n.longTerm, '');
+  // For archived solutions, fall back to English
+  if (!longTerm && !hasFreshEvents) {
+    longTerm = typeof n.longTerm === 'string' ? n.longTerm : (n.longTerm.en || '');
+  }
   if (longTerm) {
     const layer = document.createElement('div');
     layer.className = 'lc-layer lc-layer-context';
@@ -540,7 +544,12 @@ function buildLayeredCard(solution) {
   }
 
   // Weekly AI Narrative layer (always visible)
-  const weekly = getLangText(n.weeklyHighlight, '');
+  const hasFreshEvents = freshEvents > 0;
+  let weekly = getLangText(n.weeklyHighlight, '');
+  // For archived solutions, fall back to English for weekly highlight
+  if (!weekly && !hasFreshEvents) {
+    weekly = typeof n.weeklyHighlight === 'string' ? n.weeklyHighlight : (n.weeklyHighlight.en || '');
+  }
   if (weekly) {
     const layer = document.createElement('div');
     layer.className = 'lc-layer lc-layer-signals';
@@ -553,7 +562,6 @@ function buildLayeredCard(solution) {
 
   // This Week's Signals layer (collapsible)
   // Show keyEvents from narrative if no fresh events, or both if fresh events exist
-  const hasFreshEvents = freshEvents > 0;
   if (n.keyEvents && n.keyEvents.length) {
     const layer = document.createElement('div');
     layer.className = 'lc-layer lc-layer-signals';
@@ -571,7 +579,11 @@ function buildLayeredCard(solution) {
     body.className = 'collapsible-body';
 
     n.keyEvents.forEach(ev => {
-      const evTitle = getLangText(ev.title, '');
+      // For archived items (no fresh events), fall back to English to avoid empty cards
+      let evTitle = getLangText(ev.title, '');
+      if (!evTitle && !hasFreshEvents) {
+        evTitle = typeof ev.title === 'string' ? ev.title : (ev.title.en || '');
+      }
       if (!evTitle) return; // Skip events with no translation
       const attCount = ev.attestations ? ev.attestations.length : 0;
       body.innerHTML += `
@@ -735,7 +747,7 @@ function renderAll(data) {
 
   const vt = document.getElementById('versionTag');
   if (vt) {
-    const appVersion = 'v0.5.9';
+    const appVersion = 'v0.5.10';
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
     vt.textContent = `${appVersion}${aiVersion}`;
   }
