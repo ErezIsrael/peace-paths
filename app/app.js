@@ -494,7 +494,7 @@ function buildLayeredCard(solution) {
   header.className = 'lc-header';
   const kv = solution.keyMetric || {};
   const n = solution.narrative || {};
-  const eventsCount = (solution.events || []).length || (n.keyEvents || []).length + (n.keyOpinions || []).length;
+  const eventsCount = (solution.events || []).length;
   const solutionName = getLangText(solution.name);
   const dirLabel = getDirectionLabel(solution.direction);
   header.innerHTML = `
@@ -723,7 +723,7 @@ function renderAll(data) {
 
   const vt = document.getElementById('versionTag');
   if (vt) {
-    const appVersion = 'v0.5.6';
+    const appVersion = 'v0.5.7';
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
     vt.textContent = `${appVersion}${aiVersion}`;
   }

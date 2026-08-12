@@ -36,14 +36,20 @@ AI-powered tracker of concrete peace initiatives across the Middle East.
 
 ## Development Workflow
 
-1. **Develop on `dev-environment/`** — Implement features, fix bugs. Serve on port 8769.
-2. **Test on `test/`** — Copy verified frontend to `test/app/`, serve on port 8766 against real AI data from `app/data.json`. Confirm rendering, RTL, translations.
-3. **Push to `app/` (live)** — Only when explicitly told by the user. Commit `app/` to Git → push to GitHub → Cloudflare auto-deploy.
+**Every change follows this mandatory pipeline — no exceptions:**
+
+1. **Implement the fix/feature** — Edit the relevant files in `app/`.
+2. **Bump version** — Increment the version string in `app/app.js` (e.g. `v0.5.0` → `v0.5.1`). Patch for bugfixes, minor for features.
+3. **Commit & push to Git** — `git add`, `git commit` (descriptive message), `git push`. Cloudflare Pages auto-deploys in ~2 sec.
+4. **Verify on live site** — Open `https://peace-paths.pages.dev/` in the browser (use mobile viewport for responsive issues). Confirm the change is visible and correct.
+5. **Only mark the task as DONE after step 4 passes.**
+
+**If verification fails:** Fix the issue, bump version again, commit, push, and re-verify. Do not declare the task complete.
 
 **Rules:**
-- **NEVER push to Git or deploy to production unless the user explicitly tells you to.**
-- **Default to `dev-environment/`** — do not proceed to `test/` or `app/` until all bugs are fixed.
-- Changes flow: `dev-environment/` → `test/` → `app/`.
+- **NEVER commit `app/data.json`** to Git — served from KV.
+- **NEVER deploy frontend via `npx wrangler pages deploy`** — use GitHub push only.
+- `npx wrangler` is for **KV data and Workers only** — never for frontend deployment.
 
 ---
 
@@ -145,14 +151,72 @@ npx wrangler kv key put "data.json" --namespace-id=badf4fb7acfe4d1c905db77ed8d5e
 
 ---
 
-## Automated Updates
+## Automated Updates — ⚠️ RUNS ON AI SERVER, NOT THIS LAPTOP
 
-| Task | Schedule | Script |
-|------|----------|--------|
-| `PeacePaths-FastUpdate` | Every hour | `auto-fast-update.bat` (`--fast`) |
-| `PeacePaths-DailyUpdate` | Daily at 2 AM | `auto-daily-update.bat` (`--daily`) |
+**The update services run on the AI server, NOT on this laptop.**
+This laptop is off most of the time — the site updates regardless.
 
-Registered via `setup-tasks.ps1` (Windows Task Scheduler). Both run from project root.
+### Where the updates run
+
+| Machine | Role | SSH |
+|---------|------|-----|
+| **AI Server** (`192.168.2.121`) | Runs llama.cpp + Peace Paths update timers | `ssh erez@192.168.2.121` |
+| This laptop | Development only — do NOT run updates here | N/A |
+
+### Server-side update services (user-level systemd timers)
+
+The updates run as **user-level systemd timers** on the AI server (`erez@192.168.2.121`):
+
+| Timer | Schedule | Service | Timeout |
+|-------|----------|---------|--------|
+| `peace-paths-fast.timer` | Every hour | `peace-paths-fast.service` | 15 min |
+| `peace-paths-daily.timer` | Daily at 2 AM | `peace-paths-daily.service` | 4 hours |
+
+**Unit files on server:** `/home/erez/.config/systemd/user/peace-paths-{fast,daily}.{timer,service}`
+**Project on server:** `/home/erez/peace-paths/` (same codebase, synced via `scp`)
+
+### Managing the services
+
+```bash
+# Check timer status
+ssh erez@192.168.2.121 "systemctl --user list-timers --all | grep peace"
+
+# Check service logs
+ssh erez@192.168.2.121 "journalctl --user -u peace-paths-fast.service --since '1 day ago' --no-pager | tail -30"
+ssh erez@192.168.2.121 "journalctl --user -u peace-paths-daily.service --since '1 day ago' --no-pager | tail -30"
+
+# Check lock/status
+ssh erez@192.168.2.121 "python3 ~/peace-paths/ai-analyze-prod.py --status"
+
+# Restart timers after editing unit files
+ssh erez@192.168.2.121 "systemctl --user daemon-reload && systemctl --user restart peace-paths-fast.timer peace-paths-daily.timer"
+
+# Stop / Start updates
+ssh erez@192.168.2.121 "~/peace-paths/stop-updates.sh"
+ssh erez@192.168.2.121 "~/peace-paths/start-updates.sh"
+```
+
+### Syncing code to server
+
+After editing `ai-analyze-prod.py` or config files locally:
+```bash
+scp ai-analyze-prod.py prompts.json rss-feeds.json source-profiles.json stakeholders.json taxonomy.json erez@192.168.2.121:~/peace-paths/
+```
+
+### Lock mechanism
+
+The pipeline uses a lock file (`.locks/ai-update.lock`) to prevent concurrent runs:
+- **Fast waits for daily** — if daily is running, fast skips this run (waits up to 4 hours)
+- **Daily always takes priority** — overwrites any existing lock
+- **Stale lock detection** — if no heartbeat for 5 min, lock is considered stale and taken over
+- **Heartbeat logging** — lock file is updated at each pipeline stage (fetching, classifying, clustering, narratives, translating, uploading)
+- **Check status:** `python3 ai-analyze-prod.py --status`
+
+### Old Windows tasks (DECOMMISSIONED)
+
+The old Windows Task Scheduler tasks (`PeacePaths-FastUpdate`, `PeacePaths-DailyUpdate`) on this laptop are **no longer used**.
+They were disabled because this laptop is off most of the time.
+The `auto-fast-update.bat`, `auto-daily-update.bat`, and `setup-tasks.ps1` files are kept for reference only.
 
 ---
 

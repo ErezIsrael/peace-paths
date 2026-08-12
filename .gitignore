@@ -80,3 +80,6 @@ research/
 
 # Stakeholders data (local reference)
 stakeholders.json
+
+# Lock files (runtime only, prevents concurrent updates)
+.locks/
