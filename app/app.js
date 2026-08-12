@@ -772,7 +772,11 @@ function renderAll(data) {
   }
 
   (data.solutions || [])
-    .filter(solution => activeIds.includes(solution.id) && hasContent(solution))
+    .filter(solution => {
+      const pass = activeIds.includes(solution.id) && hasContent(solution);
+      if (!pass) console.warn('[filter] dropped', solution.id, 'activeIds:', activeIds.includes(solution.id), 'hasContent:', hasContent(solution));
+      return pass;
+    })
     .sort((a, b) => {
       // Sort by effective_signal total if available, else by event count
       const aTotal = (a.narrative?.keyEvents || []).reduce((s, e) => s + (e.effective_signal || e.signal_score || 0), 0) || parseInt(a.keyMetric?.value || 0);
