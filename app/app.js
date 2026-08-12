@@ -792,10 +792,12 @@ function renderAll(data) {
         const card = createSolutionCard(solution);
         if (grid) {
           grid.appendChild(card);
-          console.log('[render] appended', solution.id, '-> total:', grid.children.length);
+          window.__debug_appended = window.__debug_appended || [];
+          window.__debug_appended.push(solution.id + ' -> ' + grid.children.length);
         }
       } catch(e) {
-        console.error('[render] failed for', solution.id, e.message);
+        window.__debug_errors = window.__debug_errors || [];
+        window.__debug_errors.push({id: solution.id, err: e.message, stack: e.stack?.substring(0,200)});
       }
     });
 
