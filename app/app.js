@@ -771,10 +771,13 @@ function renderAll(data) {
     return false;
   }
 
+  window.__debug_filter = [];
   (data.solutions || [])
     .filter(solution => {
-      const pass = activeIds.includes(solution.id) && hasContent(solution);
-      if (!pass) console.warn('[filter] dropped', solution.id, 'activeIds:', activeIds.includes(solution.id), 'hasContent:', hasContent(solution));
+      const inActive = activeIds.includes(solution.id);
+      const hc = hasContent(solution);
+      const pass = inActive && hc;
+      window.__debug_filter.push({id: solution.id, inActive: inActive, hasContent: hc, pass: pass, events: (solution.events||[]).length, keyEvents: (solution.narrative||{}).keyEvents ? (solution.narrative.keyEvents||[]).length : 'NO NARRATIVE'});
       return pass;
     })
     .sort((a, b) => {
