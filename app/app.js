@@ -788,8 +788,12 @@ function renderAll(data) {
     })
     .slice(0, 8)
     .forEach(solution => {
-      const card = createSolutionCard(solution);
-      if (grid) grid.appendChild(card);
+      try {
+        const card = createSolutionCard(solution);
+        if (grid) grid.appendChild(card);
+      } catch(e) {
+        console.error('[render] failed for', solution.id, e.message);
+      }
     });
 
   // Re-init collapsible toggles after DOM rebuild
