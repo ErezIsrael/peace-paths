@@ -735,7 +735,7 @@ function renderAll(data) {
 
   const vt = document.getElementById('versionTag');
   if (vt) {
-    const appVersion = 'v0.5.8';
+    const appVersion = 'v0.5.9';
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
     vt.textContent = `${appVersion}${aiVersion}`;
   }
