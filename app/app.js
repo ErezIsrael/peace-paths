@@ -796,6 +796,10 @@ function renderAll(data) {
       }
     });
 
+  // Debug: check grid children count after forEach
+  window.__debug_cards = grid ? grid.children.length : 0;
+  console.log('[debug] Cards after forEach:', window.__debug_cards);
+
   // Re-init collapsible toggles after DOM rebuild
   initCollapsibles();
 }
