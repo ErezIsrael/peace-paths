@@ -494,13 +494,16 @@ function buildLayeredCard(solution) {
   header.className = 'lc-header';
   const kv = solution.keyMetric || {};
   const n = solution.narrative || {};
-  const eventsCount = (solution.events || []).length;
+  const freshEvents = (solution.events || []).length;
+  const archivedItems = (n.keyEvents || []).length + (n.keyOpinions || []).length;
+  // Show fresh count; if none, show archived count with indicator
+  let countDisplay = freshEvents ? `${freshEvents}` : (archivedItems ? `${archivedItems} ${t('archived')}` : (kv.value || '—'));
   const solutionName = getLangText(solution.name);
   const dirLabel = getDirectionLabel(solution.direction);
   header.innerHTML = `
     <span class="lc-icon">${solution.icon}</span>
     <span class="lc-name">${solutionName}</span>
-    <span class="lc-metric">${eventsCount || kv.value || '—'} <small>${getLangText(kv.label, kv.label || '')}</small></span>
+    <span class="lc-metric">${countDisplay} <small>${getLangText(kv.label, kv.label || '')}</small></span>
     <span class="lc-direction ${solution.direction}">${dirLabel}</span>
   `;
   wrapper.appendChild(header);
@@ -549,12 +552,19 @@ function buildLayeredCard(solution) {
   }
 
   // This Week's Signals layer (collapsible)
+  // Show keyEvents from narrative if no fresh events, or both if fresh events exist
+  const hasFreshEvents = freshEvents > 0;
   if (n.keyEvents && n.keyEvents.length) {
     const layer = document.createElement('div');
     layer.className = 'lc-layer lc-layer-signals';
     const title = document.createElement('div');
     title.className = 'lc-layer-title collapsible-toggle';
-    title.textContent = `⚡ ${t('weekly')} ${t('signals')}`;
+    // If no fresh events, label as "recent items" (archived from last daily)
+    if (!hasFreshEvents) {
+      title.textContent = `⚡ ${t('recentItems')} ${t('archived')}`;
+    } else {
+      title.textContent = `⚡ ${t('weekly')} ${t('signals')}`;
+    }
     layer.appendChild(title);
 
     const body = document.createElement('div');
@@ -619,9 +629,11 @@ function createLegacyCardTop(solution) {
   const top = document.createElement('div');
   top.className = 'card-top';
   const kv = solution.keyMetric || {};
+  const n = solution.narrative || {};
   const eventsCount = (solution.events || []).length;
-  let valHtml = eventsCount ? `${eventsCount}` : `${kv.value || '—'}`;
-  if (kv.total && !eventsCount) valHtml += ` / ${kv.total}`;
+  const archivedItems = (n.keyEvents || []).length + (n.keyOpinions || []).length;
+  let valHtml = eventsCount ? `${eventsCount}` : (archivedItems ? `${archivedItems} ${t('archived')}` : `${kv.value || '—'}`);
+  if (kv.total && !eventsCount && !archivedItems) valHtml += ` / ${kv.total}`;
   const solutionName = getLangText(solution.name);
   const dirLabel = getDirectionLabel(solution.direction);
   top.innerHTML = `
@@ -723,7 +735,7 @@ function renderAll(data) {
 
   const vt = document.getElementById('versionTag');
   if (vt) {
-    const appVersion = 'v0.5.7';
+    const appVersion = 'v0.5.8';
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
     vt.textContent = `${appVersion}${aiVersion}`;
   }
@@ -733,8 +745,22 @@ function renderAll(data) {
   const grid = document.getElementById('solutionsGrid');
   if (grid) grid.innerHTML = '';
   const activeIds = data.activeSolutions || data.solutions.map(s => s.id);
+
+  // Helper: check if a solution has any displayable content
+  function hasContent(sol) {
+    if ((sol.events || []).length > 0) return true;
+    const n = sol.narrative || {};
+    if ((n.keyEvents || []).length > 0) return true;
+    if ((n.keyOpinions || []).length > 0) return true;
+    const lt = getLangText(n.longTerm, '');
+    if (lt) return true;
+    const wh = getLangText(n.weeklyHighlight, '');
+    if (wh) return true;
+    return false;
+  }
+
   (data.solutions || [])
-    .filter(solution => activeIds.includes(solution.id))
+    .filter(solution => activeIds.includes(solution.id) && hasContent(solution))
     .sort((a, b) => {
       // Sort by effective_signal total if available, else by event count
       const aTotal = (a.narrative?.keyEvents || []).reduce((s, e) => s + (e.effective_signal || e.signal_score || 0), 0) || parseInt(a.keyMetric?.value || 0);
