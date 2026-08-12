@@ -790,7 +790,10 @@ function renderAll(data) {
     .forEach(solution => {
       try {
         const card = createSolutionCard(solution);
-        if (grid) grid.appendChild(card);
+        if (grid) {
+          grid.appendChild(card);
+          console.log('[render] appended', solution.id, '-> total:', grid.children.length);
+        }
       } catch(e) {
         console.error('[render] failed for', solution.id, e.message);
       }
