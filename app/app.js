@@ -495,6 +495,7 @@ function buildLayeredCard(solution) {
   const kv = solution.keyMetric || {};
   const n = solution.narrative || {};
   const freshEvents = (solution.events || []).length;
+  const hasFreshEvents = freshEvents > 0;
   const archivedItems = (n.keyEvents || []).length + (n.keyOpinions || []).length;
   // Show fresh count; if none, show archived count with indicator
   let countDisplay = freshEvents ? `${freshEvents}` : (archivedItems ? `${archivedItems} ${t('archived')}` : (kv.value || '—'));
@@ -544,7 +545,6 @@ function buildLayeredCard(solution) {
   }
 
   // Weekly AI Narrative layer (always visible)
-  const hasFreshEvents = freshEvents > 0;
   let weekly = getLangText(n.weeklyHighlight, '');
   // For archived solutions, fall back to English for weekly highlight
   if (!weekly && !hasFreshEvents) {
@@ -771,15 +771,8 @@ function renderAll(data) {
     return false;
   }
 
-  window.__debug_filter = [];
   (data.solutions || [])
-    .filter(solution => {
-      const inActive = activeIds.includes(solution.id);
-      const hc = hasContent(solution);
-      const pass = inActive && hc;
-      window.__debug_filter.push({id: solution.id, inActive: inActive, hasContent: hc, pass: pass, events: (solution.events||[]).length, keyEvents: (solution.narrative||{}).keyEvents ? (solution.narrative.keyEvents||[]).length : 'NO NARRATIVE'});
-      return pass;
-    })
+    .filter(solution => activeIds.includes(solution.id) && hasContent(solution))
     .sort((a, b) => {
       // Sort by effective_signal total if available, else by event count
       const aTotal = (a.narrative?.keyEvents || []).reduce((s, e) => s + (e.effective_signal || e.signal_score || 0), 0) || parseInt(a.keyMetric?.value || 0);
@@ -788,22 +781,9 @@ function renderAll(data) {
     })
     .slice(0, 8)
     .forEach(solution => {
-      try {
-        const card = createSolutionCard(solution);
-        if (grid) {
-          grid.appendChild(card);
-          window.__debug_appended = window.__debug_appended || [];
-          window.__debug_appended.push(solution.id + ' -> ' + grid.children.length);
-        }
-      } catch(e) {
-        window.__debug_errors = window.__debug_errors || [];
-        window.__debug_errors.push({id: solution.id, err: e.message, stack: e.stack?.substring(0,200)});
-      }
+      const card = createSolutionCard(solution);
+      if (grid) grid.appendChild(card);
     });
-
-  // Debug: check grid children count after forEach
-  window.__debug_cards = grid ? grid.children.length : 0;
-  console.log('[debug] Cards after forEach:', window.__debug_cards);
 
   // Re-init collapsible toggles after DOM rebuild
   initCollapsibles();
