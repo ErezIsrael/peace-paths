@@ -1705,6 +1705,14 @@ def _validate_and_fix_data(data):
         return obj
 
     for sol in data.get('solutions', []):
+        # Fix solution name — ensure trilingual dict with valid translations
+        name = sol.get('name')
+        if isinstance(name, str):
+            # Plain string → use category name if available, else wrap
+            sol['name'] = {'en': name, 'he': '', 'ar': ''}
+        elif isinstance(name, dict):
+            sol['name'] = _fix_trilingual(name)
+
         # Fix events
         for ev in sol.get('events', []):
             text = ev.get('text', '')
@@ -1800,7 +1808,10 @@ def _translate_events_to_trilingual(events, solution_names, max_events_per_solut
     for s in solution_names:
         if isinstance(s, str):
             texts_to_translate.add(s)
-        elif isinstance(s, dict) and (s.get('he') == s.get('en') or s.get('ar') == s.get('en')):
+        elif isinstance(s, dict) and (
+            s.get('he') == s.get('en') or s.get('ar') == s.get('en') or
+            not s.get('he', '').strip() or not s.get('ar', '').strip()
+        ):
             texts_to_translate.add(s['en'])
 
     # Events — translate ALL events with missing/empty he or ar
