@@ -1689,19 +1689,27 @@ def _validate_and_fix_data(data):
         return any('\u0600' <= c <= '\u06FF' for c in str(text))
 
     def _fix_trilingual(obj):
-        """Fix a {en, he, ar} dict: strip JSON arrays, ensure no English in he/ar."""
+        """Fix a {en, he, ar} dict: strip JSON arrays.
+        Keep English in he/ar as fallback — frontend guard (hasScriptText) handles leakage.
+        Fix common translation errors."""
         if not isinstance(obj, dict):
             return obj
         # Fix each field
         for key in ['en', 'he', 'ar']:
             if key in obj and isinstance(obj[key], str):
                 obj[key] = _fix_json_array(obj[key])
-        # If he has no Hebrew chars, it's English — set empty
-        if obj.get('he') and not _has_hebrew(obj['he']):
-            obj['he'] = ''
-        # If ar has no Arabic chars, it's English — set empty
-        if obj.get('ar') and not _has_arabic(obj['ar']):
-            obj['ar'] = ''
+        # Fix common Hebrew translation errors
+        if obj.get('he'):
+            obj['he'] = obj['he'].replace('אנקסיה', 'סיפוח').replace('אנקסיות', 'סיפוחים')
+        # Fix common Arabic translation errors
+        if obj.get('ar'):
+            obj['ar'] = obj['ar'].replace('أنكسيا', 'ضم')
+        # If he is empty but en exists, copy en as fallback (frontend guard will handle)
+        if not obj.get('he', '').strip() and obj.get('en', '').strip():
+            obj['he'] = obj['en']
+        # If ar is empty but en exists, copy en as fallback
+        if not obj.get('ar', '').strip() and obj.get('en', '').strip():
+            obj['ar'] = obj['en']
         return obj
 
     for sol in data.get('solutions', []):
@@ -2482,9 +2490,10 @@ def main():
     for i, s in enumerate(data["solutions"]):
         s["name"] = sol_names[i]
 
-    # Also translate narrative fields that may be missing he/ar (daily only — fast preserves existing)
-    if mode == "daily":
-        _translate_narrative_fields(data["solutions"])
+    # Translate narrative fields that may be missing he/ar (both modes)
+    # Fast mode: fixes stale narrative fields from previous daily runs
+    # Daily mode: translates newly generated narratives
+    _translate_narrative_fields(data["solutions"])
 
     # AI health metadata
     data["aiHealth"] = {
