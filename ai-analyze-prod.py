@@ -34,7 +34,17 @@ Flags:
   --research-categories — Research each category
   --apply-research — Apply research results to categories.json
 
-Schedule: --fast every hour; --daily every 12h
+Schedule: --fast every hour; --daily daily at 2 AM
+
+IMPORTANT — WHERE THIS RUNS:
+  This script runs on the AI server (192.168.2.121), NOT on the developer laptop.
+  The laptop is off most of the time; the site updates regardless.
+  Server-side systemd timers (user-level) trigger the updates:
+    peace-paths-fast.timer  → every hour  → ~/.config/systemd/user/peace-paths-fast.service
+    peace-paths-daily.timer → daily 2 AM  → ~/.config/systemd/user/peace-paths-daily.service
+  SSH: ssh erez@192.168.2.121
+  Status: python3 ~/peace-paths/ai-analyze-prod.py --status
+  Lock file: .locks/ai-update.lock (fast waits for daily, stale detection at 5min)
 """
 
 import json
@@ -44,6 +54,8 @@ import re
 import html
 import time
 import hashlib
+import fcntl
+import signal
 import concurrent.futures
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -106,6 +118,16 @@ os.makedirs(STAGING_DIR, exist_ok=True)
 MAX_ARTICLES_PER_FEED = 8
 MAX_AGE_DAYS = 7
 FAST_AGE_HOURS = 2
+
+# ─── Lock file (prevents fast from running while daily is active) ───
+# Location: project root, accessible from both systemd and manual runs
+_LOCK_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".locks")
+os.makedirs(_LOCK_DIR, exist_ok=True)
+LOCK_FILE = os.path.join(_LOCK_DIR, "ai-update.lock")
+LOCK_HEARTBEAT_INTERVAL = 60   # seconds between heartbeat writes
+LOCK_STALE_THRESHOLD = 600     # seconds before a lock is considered stale (10 min — LLM calls can be slow)
+LOCK_FAST_MAX_WAIT = 14400     # max seconds fast will wait for daily (4 hours)
+LOCK_FAST_POLL_INTERVAL = 30   # seconds between lock checks in fast mode
 
 # ─── RSS Feeds ───────────────────────────────────────────────────────
 
@@ -183,6 +205,134 @@ def load_prompts():
         return prompts
     else:
         return _DEFAULT_PROMPTS
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Lock Management — prevents fast from running while daily is active
+# ═══════════════════════════════════════════════════════════════════════
+
+def _write_heartbeat(pid, mode, stage=""):
+    """Write heartbeat data to lock file so other processes can check status."""
+    data = {
+        "pid": pid,
+        "mode": mode,
+        "stage": stage,
+        "started_at": time.time(),
+        "heartbeat_at": time.time(),
+    }
+    try:
+        with open(LOCK_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+    except Exception:
+        pass  # non-critical
+
+
+def _heartbeat_thread(pid, mode, stages, interval=LOCK_HEARTBEAT_INTERVAL):
+    """Background thread that writes periodic heartbeats."""
+    import threading
+    def _loop():
+        for stage in stages:
+            time.sleep(interval)
+            _write_heartbeat(pid, mode, stage)
+    t = threading.Thread(target=_loop, daemon=True)
+    t.start()
+    return t
+
+
+def acquire_lock(mode):
+    """Acquire exclusive lock. For 'daily' mode, takes the lock immediately.
+    For 'fast' mode, waits if daily holds the lock (up to LOCK_FAST_MAX_WAIT).
+    Returns True if lock acquired, False if fast should skip.
+    """
+    pid = os.getpid()
+    
+    if mode == "daily":
+        # Daily always takes the lock — overwrites any stale fast lock
+        if os.path.exists(LOCK_FILE):
+            try:
+                with open(LOCK_FILE, "r", encoding="utf-8") as f:
+                    existing = json.load(f)
+                existing_pid = existing.get("pid")
+                existing_mode = existing.get("mode", "unknown")
+                last_hb = existing.get("heartbeat_at", 0)
+                # If existing lock is stale or from a fast run, take it
+                if last_hb and (time.time() - last_hb) > LOCK_STALE_THRESHOLD:
+                    print(f"  🔓 Found stale lock (pid {existing_pid}, mode {existing_mode}, {int(time.time()-last_hb)}s old) — taking over")
+                elif existing_mode == "fast":
+                    print(f"  🔓 Fast lock detected (pid {existing_pid}) — daily takes priority")
+                else:
+                    print(f"  🔓 Previous daily lock (pid {existing_pid}) — taking over")
+            except (json.JSONDecodeError, FileNotFoundError):
+                pass  # corrupted lock, take it
+        
+        _write_heartbeat(pid, "daily", "started")
+        print(f"  🔒 Daily lock acquired (pid {pid})")
+        return True
+    
+    elif mode == "fast":
+        # Fast waits for daily to finish
+        waited = 0
+        while waited < LOCK_FAST_MAX_WAIT:
+            if not os.path.exists(LOCK_FILE):
+                _write_heartbeat(pid, "fast", "started")
+                print(f"  🔒 Fast lock acquired (pid {pid})")
+                return True
+            
+            try:
+                with open(LOCK_FILE, "r", encoding="utf-8") as f:
+                    lock_data = json.load(f)
+                holder_mode = lock_data.get("mode", "unknown")
+                holder_pid = lock_data.get("pid", "?")
+                stage = lock_data.get("stage", "?")
+                last_hb = lock_data.get("heartbeat_at", 0)
+                
+                # Check for stale lock
+                if last_hb and (time.time() - last_hb) > LOCK_STALE_THRESHOLD:
+                    print(f"  🔓 Stale lock detected (pid {holder_pid}, mode {holder_mode}, stage '{stage}', {int(time.time()-last_hb)}s since heartbeat) — taking over")
+                    _write_heartbeat(pid, "fast", "started")
+                    return True
+                
+                if holder_mode == "daily":
+                    remaining = LOCK_FAST_MAX_WAIT - waited
+                    print(f"  ⏳ Daily update running (pid {holder_pid}, stage '{stage}') — fast waiting ({int(remaining)}s remaining)")
+                    time.sleep(LOCK_FAST_POLL_INTERVAL)
+                    waited += LOCK_FAST_POLL_INTERVAL
+                elif holder_mode == "fast":
+                    # Another fast holds the lock — check if stale
+                    if last_hb and (time.time() - last_hb) > LOCK_STALE_THRESHOLD:
+                        print(f"  🔓 Stale fast lock (pid {holder_pid}) — taking over")
+                        _write_heartbeat(pid, "fast", "started")
+                        return True
+                    else:
+                        print(f"  ⏳ Another fast update running (pid {holder_pid}) — waiting")
+                        time.sleep(LOCK_FAST_POLL_INTERVAL)
+                        waited += LOCK_FAST_POLL_INTERVAL
+                else:
+                    # Unknown mode, treat as stale
+                    print(f"  🔓 Unknown lock mode '{holder_mode}' — taking over")
+                    _write_heartbeat(pid, "fast", "started")
+                    return True
+            except (json.JSONDecodeError, FileNotFoundError):
+                _write_heartbeat(pid, "fast", "started")
+                print(f"  🔒 Fast lock acquired (pid {pid})")
+                return True
+        
+        # Timed out — skip this fast run
+        print(f"  ⏭️  Daily update still running after {LOCK_FAST_MAX_WAIT}s — skipping this fast run")
+        return False
+    
+    return True
+
+
+def release_lock(mode):
+    """Release the lock file."""
+    try:
+        if os.path.exists(LOCK_FILE):
+            os.remove(LOCK_FILE)
+            print(f"  🔓 Lock released")
+    except Exception as e:
+        print(f"  ⚠ Failed to release lock: {e}")
+
 
 # ─── Hardcoded default prompts ───
 _DEFAULT_PROMPTS = {
@@ -352,8 +502,8 @@ def _extract_text(raw_html):
 def fetch_rss(url, source, max_items):
     try:
         req = Request(url, headers={"User-Agent": "PeaceMeter/1.0"})
-        with urlopen(req, timeout=10) as f:
-            xml = f.read().decode("utf-8", errors="replace")
+        with urlopen(req, timeout=8) as f:
+            xml = f.read(500000).decode("utf-8", errors="replace")  # Cap at 500KB
     except Exception as e:
         print(f"  ⚠ {source}: {e}")
         return []
@@ -411,11 +561,16 @@ def fetch_all_feeds(age_hours=None):
             executor.submit(fetch_rss, url, name, MAX_ARTICLES_PER_FEED): (name, url, ft)
             for name, url, ft in feeds
         }
-        for future in concurrent.futures.as_completed(futures, timeout=60):
-            try:
-                fetched.extend(future.result())
-            except Exception:
-                pass
+        try:
+            for future in concurrent.futures.as_completed(futures, timeout=45):
+                try:
+                    fetched.extend(future.result(timeout=5))
+                except Exception:
+                    pass
+        except concurrent.futures.TimeoutError:
+            print(f"  ⚠ RSS fetch timeout — got {len(fetched)} articles so far")
+        finally:
+            executor.shutdown(wait=False)
 
     all_articles = []
     no_date = 0
@@ -1899,9 +2054,10 @@ def build_output(clustered_events, cat_map, narratives, ai_phases=None, stakehol
 # Upload to Cloudflare KV
 # ═══════════════════════════════════════════════════════════════════════
 
-def upload_to_cloudflare(data):
+def upload_to_cloudflare(data, max_retries=3):
     """Push data.json to Cloudflare KV via REST API (no Node.js needed).
     Uses PUT /accounts/:id/storage/kv/namespaces/:id/values/:key
+    Retries on transient failures.
     """
     if not CLOUDFLARE_TOKEN or not CLOUDFLARE_ACCOUNT:
         print("\n⚠ CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set")
@@ -1911,22 +2067,29 @@ def upload_to_cloudflare(data):
     url = f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT}/storage/kv/namespaces/{kv_id}/values/data.json"
     with open(DATA_JSON_FILE, "rb") as f:
         content = f.read()
-    req = urllib.request.Request(url, data=content, method="PUT")
-    req.add_header("Authorization", f"Bearer {CLOUDFLARE_TOKEN}")
-    req.add_header("Content-Type", "application/json")
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            resp_body = json.loads(resp.read())
-            if resp_body.get("success"):
-                print("  ✓ data.json uploaded to KV")
-                return True
-            else:
-                errs = resp_body.get("errors", [])
-                print(f"  ⚠ KV upload failed: {errs}")
-                return False
-    except Exception as e:
-        print(f"  ⚠ KV upload failed: {e}")
-        return False
+    
+    for attempt in range(1, max_retries + 1):
+        req = urllib.request.Request(url, data=content, method="PUT")
+        req.add_header("Authorization", f"Bearer {CLOUDFLARE_TOKEN}")
+        req.add_header("Content-Type", "application/json")
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                resp_body = json.loads(resp.read())
+                if resp_body.get("success"):
+                    print("  ✓ data.json uploaded to KV")
+                    return True
+                else:
+                    errs = resp_body.get("errors", [])
+                    print(f"  ⚠ KV upload failed (attempt {attempt}/{max_retries}): {errs}")
+        except Exception as e:
+            print(f"  ⚠ KV upload failed (attempt {attempt}/{max_retries}): {e}")
+        if attempt < max_retries:
+            wait_time = 5 * attempt  # 5s, 10s, 15s
+            print(f"  ⏳ Retrying in {wait_time}s...")
+            time.sleep(wait_time)
+    
+    print(f"  ✗ KV upload failed after {max_retries} attempts — data saved locally")
+    return False
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -2076,7 +2239,20 @@ def main():
     parser.add_argument("--review-taxonomy", action="store_true", help="Propose taxonomy")
     parser.add_argument("--research-categories", action="store_true", help="Research categories")
     parser.add_argument("--apply-research", action="store_true", help="Apply research to categories.json")
+    parser.add_argument("--status", action="store_true", help="Show lock/update status")
     args = parser.parse_args()
+    
+    # ── Status mode ──
+    if args.status:
+        if os.path.exists(LOCK_FILE):
+            with open(LOCK_FILE, "r", encoding="utf-8") as f:
+                lock_data = json.load(f)
+            age = int(time.time() - lock_data.get("heartbeat_at", 0))
+            stale = "⚠️ STALE" if age > LOCK_STALE_THRESHOLD else "✓ active"
+            print(f"Lock: {lock_data.get('mode','?')} | PID: {lock_data.get('pid','?')} | Stage: {lock_data.get('stage','?')} | Last heartbeat: {age}s ago {stale}")
+        else:
+            print("No lock file — no update running")
+        return
     
     global all_kws, source_profiles
     
@@ -2141,6 +2317,10 @@ def main():
     
     print(f"\n{'🚀' if mode == 'daily' else '⚡'} Peace Paths AI Analyzer — {mode.upper()} mode\n")
     
+    # ── Acquire lock (fast waits for daily) ──
+    if not acquire_lock(mode):
+        return  # fast skipped — daily is running
+    
     # Inject custom categories
     if args.categories:
         print("✨ Injecting custom categories:")
@@ -2171,6 +2351,7 @@ def main():
                 solution_contexts[sol["id"]] = f"Phase: {phase_name}. Recent: {'; '.join(recent)}"
     
     # 1. Fetch RSS
+    _write_heartbeat(os.getpid(), mode, "fetching_rss")
     if age_hours is not None:
         print(f"  [fast] fetching last {age_hours}h")
     else:
@@ -2178,6 +2359,7 @@ def main():
     articles = fetch_all_feeds(age_hours=age_hours)
     if not articles:
         print("No articles found.")
+        release_lock(mode)
         return
     _save_stage("articles", articles)
     print(f"  → {len(articles)} articles fetched")
@@ -2199,6 +2381,7 @@ def main():
         return
     
     # 3. AI Classification
+    _write_heartbeat(os.getpid(), mode, "classifying")
     if args.fetch_only:
         classified_pairs = keyword_classify(articles, all_kws)
         ai_refusals = 0
@@ -2212,10 +2395,12 @@ def main():
     _save_stage("classified", [{"article": a, "classification": c} for a, c in classified_pairs])
     
     # 4. Event Clustering
+    _write_heartbeat(os.getpid(), mode, "clustering")
     all_clustered, clustered_by_solution = cluster_events(classified_pairs, source_profiles=source_profiles)
     _save_stage("clustered", [{"solution": s, "events": len(e)} for s, e in clustered_by_solution.items()])
     
     # 5. AI Phase Determination (daily only)
+    _write_heartbeat(os.getpid(), mode, "phases")
     ai_phases = None
     if mode == "daily" and not args.fetch_only:
         solution_events_for_ai = {cid: [] for cid in cat_map}
@@ -2232,6 +2417,7 @@ def main():
             _save_stage("phases", ai_phases)
     
     # 6. Narrative Generation (daily or --narrative flag)
+    _write_heartbeat(os.getpid(), mode, "narratives")
     narratives = {}
     if mode == "daily" or args.narrative:
         narratives = generate_narratives(clustered_by_solution, cat_map, existing_data, force_narrative=args.narrative)
@@ -2262,17 +2448,32 @@ def main():
         print(f"→ Merging {len(classified_pairs)} events into existing data")
         data = _merge_with_existing(data, existing_data, ai_phases=ai_phases, narratives=narratives, stakeholders=stakeholders)
 
-    # 9.5 Translate all untranslated text fields (both daily and fast mode)
-    # In fast mode, merged events may have empty he/ar — translate them
-    # In daily mode, catches any stale translations
-    events_by_sol = {s["id"]: s.get("events", []) for s in data["solutions"]}
-    sol_names = [s["name"] for s in data["solutions"]]
-    _translate_events_to_trilingual(events_by_sol, sol_names)
+    _write_heartbeat(os.getpid(), mode, "translating")
+    # 9.5 Translate untranslated text fields
+    # In fast mode, only translate NEW events (not the entire merged dataset)
+    # In daily mode, translate everything
+    if mode == "fast":
+        # Only translate the newly classified events
+        new_events_by_sol = {}
+        for article, classification in classified_pairs:
+            sol_id = classification.get("solution", "regional")
+            new_events_by_sol.setdefault(sol_id, [])
+            # The event text is already in the classified pair
+            new_events_by_sol[sol_id].append(article)
+        _translate_events_to_trilingual(new_events_by_sol, [], max_events_per_solution=None)
+        # Also translate solution names if missing
+        sol_names = [s["name"] for s in data["solutions"]]
+    else:
+        # Daily: translate all events
+        events_by_sol = {s["id"]: s.get("events", []) for s in data["solutions"]}
+        sol_names = [s["name"] for s in data["solutions"]]
+        _translate_events_to_trilingual(events_by_sol, sol_names)
     for i, s in enumerate(data["solutions"]):
         s["name"] = sol_names[i]
 
-    # Also translate narrative fields that may be missing he/ar
-    _translate_narrative_fields(data["solutions"])
+    # Also translate narrative fields that may be missing he/ar (daily only — fast preserves existing)
+    if mode == "daily":
+        _translate_narrative_fields(data["solutions"])
 
     # AI health metadata
     data["aiHealth"] = {
@@ -2305,6 +2506,7 @@ def main():
     print(f"\n✓ Written to {DATA_FILE} and {DATA_JSON_FILE}")
     
     # Upload to KV
+    _write_heartbeat(os.getpid(), mode, "uploading")
     if not args.skip_upload:
         print(f"\n🚀 Uploading data.json to Cloudflare KV...")
         upload_to_cloudflare(data)
@@ -2313,6 +2515,9 @@ def main():
     
     elapsed = time.time() - start
     _print_summary(data, len(classified_pairs), elapsed)
+    
+    # ── Release lock ──
+    release_lock(mode)
 
 
 if __name__ == "__main__":
