@@ -1752,9 +1752,22 @@ def _validate_and_fix_data(data):
                 sh['desc'] = _fix_trilingual(sh['desc'])
 
 
+def _needs_translation(obj):
+    """Check if a trilingual dict field needs (re)translation.
+    Returns True if he or ar is empty OR contains the same text as en (untranslated)."""
+    if not isinstance(obj, dict) or not obj.get("en"):
+        return False
+    en = obj["en"].strip()
+    for lang in ("he", "ar"):
+        val = obj.get(lang, "").strip()
+        if not val or val == en:
+            return True
+    return False
+
+
 def _translate_narrative_fields(solutions):
     """Translate narrative fields (longTerm, weeklyHighlight, keyEvents, keyOpinions, shifts)
-    that have empty he/ar. Runs after build_output to catch any untranslated fields."""
+    that have empty he/ar OR contain untranslated English. Runs after build_output."""
     texts_to_translate = []  # list of (text_en, callback)
 
     for sol in solutions:
@@ -1764,30 +1777,30 @@ def _translate_narrative_fields(solutions):
 
         # longTerm
         lt = narr.get("longTerm", {})
-        if isinstance(lt, dict) and lt.get("en") and not lt.get("he", "").strip():
+        if _needs_translation(lt):
             texts_to_translate.append((lt["en"], lambda t, obj=lt: obj.update({"he": t.get("he", ""), "ar": t.get("ar", "")})))
 
         # weeklyHighlight
         wh = narr.get("weeklyHighlight", {})
-        if isinstance(wh, dict) and wh.get("en") and not wh.get("he", "").strip():
+        if _needs_translation(wh):
             texts_to_translate.append((wh["en"], lambda t, obj=wh: obj.update({"he": t.get("he", ""), "ar": t.get("ar", "")})))
 
         # keyEvents titles
         for ev in narr.get("keyEvents", []):
             title = ev.get("title", {})
-            if isinstance(title, dict) and title.get("en") and not title.get("he", "").strip():
+            if _needs_translation(title):
                 texts_to_translate.append((title["en"], lambda t, obj=title: obj.update({"he": t.get("he", ""), "ar": t.get("ar", "")})))
 
         # keyOpinions quotes
         for op in narr.get("keyOpinions", []):
             quote = op.get("quote", {})
-            if isinstance(quote, dict) and quote.get("en") and not quote.get("he", "").strip():
+            if _needs_translation(quote):
                 texts_to_translate.append((quote["en"], lambda t, obj=quote: obj.update({"he": t.get("he", ""), "ar": t.get("ar", "")})))
 
         # shifts descriptions
         for sh in narr.get("shifts", []):
             desc = sh.get("desc", {})
-            if isinstance(desc, dict) and desc.get("en") and not desc.get("he", "").strip():
+            if _needs_translation(desc):
                 texts_to_translate.append((desc["en"], lambda t, obj=desc: obj.update({"he": t.get("he", ""), "ar": t.get("ar", "")})))
 
     if not texts_to_translate:

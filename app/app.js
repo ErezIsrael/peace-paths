@@ -154,18 +154,18 @@ function parseDate(dateStr) {
 
 function formatTime(dateStr) {
   const d = parseDate(dateStr);
-  if (!d) return 'recent';
+  if (!d) return t('recent') || 'recent';
   const now = new Date();
   const diffMs = now - d;
   const diffHrs = diffMs / 3600000;
   if (diffHrs < 1) {
     const mins = Math.floor(diffMs / 60000);
-    return mins < 1 ? 'now' : `${mins}m`;
+    return mins < 1 ? (t('now') || 'now') : `${mins}m`;
   }
   if (diffHrs < 24) return `${Math.floor(diffHrs)}h`;
   const days = Math.floor(diffHrs / 24);
   if (days < 7) return `${days}d`;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(currentLang === 'he' ? 'he-IL' : currentLang === 'ar' ? 'ar' : 'en-US', { month: 'short', day: 'numeric' });
 }
 
 /* ── Script Detection Regexes ─────────────────────────── */
@@ -230,11 +230,7 @@ function getLangText(obj, fallback) {
     }
   }
 
-  // Fallback to English — but only if we're in English mode
-  // In he/ar mode, if no valid translation exists, return empty to prevent English leakage
-  if (currentLang === 'he' || currentLang === 'ar') {
-    return fallback || '';
-  }
+  // Fallback: prefer English over hiding the section entirely
   if (obj.en) return sanitizeText(obj.en);
   return fallback || '';
 }
@@ -747,7 +743,7 @@ function renderAll(data) {
 
   const vt = document.getElementById('versionTag');
   if (vt) {
-    const appVersion = 'v0.5.10';
+    const appVersion = 'v0.5.11';
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
     vt.textContent = `${appVersion}${aiVersion}`;
   }
