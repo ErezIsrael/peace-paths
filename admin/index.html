@@ -258,6 +258,7 @@
 <div style="display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid #30363d">
   <button id="tabCategories" onclick="switchTab('categories')" style="padding:6px 16px;background:#161b22;color:#f0f6fc;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;font-weight:600">Categories</button>
   <button id="tabAutoUpdate" onclick="switchTab('auto-update')" style="padding:6px 16px;background:#0d1117;color:#8b949e;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px">Auto-Update</button>
+  <button id="tabServer" onclick="switchTab('server')" style="padding:6px 16px;background:#0d1117;color:#8b949e;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px">🖥 Server</button>
   <button id="tabPrompts" onclick="switchTab('prompts')" style="padding:6px 16px;background:#0d1117;color:#8b949e;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px">Prompts</button>
   <button id="tabNarratives" onclick="switchTab('narratives')" style="padding:6px 16px;background:#0d1117;color:#8b949e;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px">Narratives</button>
   <button id="tabVerify" onclick="switchTab('verify')" style="padding:6px 16px;background:#0d1117;color:#8b949e;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px">Verify</button>
@@ -381,6 +382,52 @@
     <button onclick="disableBothUpdates()" style="font-size:11px;background:#b62324;border-color:#d73a49;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer">⏹ Disable All</button>
   </div>
   <div id="auCountdown" style="margin-top:10px;font-size:11px;color:#6e7681;text-align:center"></div>
+</div>
+
+<!-- Server Updates Panel (AI server 192.168.2.121) -->
+<div id="serverPanel" style="display:none">
+  <div class="toolbar" id="serverToolbar">
+    <span style="font-size:11px;color:#8b949e">Production updates run on the <b>AI server</b> (<code style="color:#58a6ff">192.168.2.121</code>) via systemd timers. Trigger them manually below and stream the live log.</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:700px;margin-top:8px">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px">
+      <div style="font-size:10px;color:#8b949e;text-transform:uppercase;margin-bottom:6px">⚡ Fast update (--fast)</div>
+      <div id="srvFastTimer" style="font-size:10px;color:#6e7681;margin-bottom:10px;white-space:pre-wrap">timer: —</div>
+      <button class="run" id="srvRunFastBtn" onclick="serverRun('fast')" style="font-size:11px">▶ Run now</button>
+      <button id="srvStopFastBtn" onclick="serverStop('fast')" style="font-size:11px;background:#b62324;border-color:#d73a49;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer">⏹ Stop</button>
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px">
+      <div style="font-size:10px;color:#8b949e;text-transform:uppercase;margin-bottom:6px">📅 Daily update (--daily)</div>
+      <div id="srvDailyTimer" style="font-size:10px;color:#6e7681;margin-bottom:10px;white-space:pre-wrap">timer: —</div>
+      <button class="run" id="srvRunDailyBtn" onclick="serverRun('daily')" style="font-size:11px">▶ Run now</button>
+      <button id="srvStopDailyBtn" onclick="serverStop('daily')" style="font-size:11px;background:#b62324;border-color:#d73a49;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer">⏹ Stop</button>
+    </div>
+  </div>
+
+  <div style="margin-top:10px;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px;max-width:700px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:10px;color:#8b949e;text-transform:uppercase">Server status</span>
+      <button onclick="loadServerStatus()" style="background:#21262d;color:#c9d1d9;border:1px solid #30363d;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px">↻ Refresh</button>
+    </div>
+    <pre id="srvStatus" style="margin:0;font-size:11px;color:#c9d1d9;white-space:pre-wrap;font-family:monospace">Loading…</pre>
+  </div>
+
+  <div style="margin-top:10px;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px;max-width:700px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:10px;color:#8b949e;text-transform:uppercase">
+        📜 Log stream
+        <select id="srvLogMode" onchange="srvLogModeChanged()" style="background:#0d1117;border:1px solid #30363d;color:#c9d1d9;border-radius:5px;font-size:11px;padding:2px 6px;margin-left:4px">
+          <option value="fast">fast</option>
+          <option value="daily">daily</option>
+        </select>
+      </span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <span id="srvLogLive" style="font-size:10px;color:#6e7681"></span>
+        <button id="srvLogBtn" onclick="toggleServerLog()" style="background:#6e40c9;border-color:#8957e5;color:#fff;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px">▶ Stream</button>
+      </span>
+    </div>
+    <pre id="srvLog" style="margin:0;height:260px;overflow-y:auto;font-size:11px;color:#8b949e;white-space:pre-wrap;font-family:monospace">Log streaming not started. Click ▶ Stream to tail the last 200 lines and follow new output.</pre>
+  </div>
 </div>
 
 <!-- Prompts Panel -->
@@ -1094,6 +1141,7 @@ function switchTab(tab) {
   const panels = {
     'categories': 'categoriesPanel',
     'auto-update': 'autoUpdatePanel',
+    'server': 'serverPanel',
     'prompts': 'promptsPanel',
     'narratives': 'narrativesPanel',
     'verify': 'verifyPanel'
@@ -1101,6 +1149,7 @@ function switchTab(tab) {
   const tabs = {
     'categories': 'tabCategories',
     'auto-update': 'tabAutoUpdate',
+    'server': 'tabServer',
     'prompts': 'tabPrompts',
     'narratives': 'tabNarratives',
     'verify': 'tabVerify'
@@ -1114,6 +1163,7 @@ function switchTab(tab) {
     tabEl.style.fontWeight = tab === key ? '600' : '400';
   }
   if (tab === 'auto-update') loadAutoUpdateStatus();
+  if (tab === 'server') loadServerStatus();
   if (tab === 'narratives') loadNarratives();
 }
 
@@ -1420,6 +1470,124 @@ async function disableBothUpdates() {
 }
 
 /* ── Narratives Editor ─────────────────────────────── */
+/* ── AI Server updates (192.168.2.121) ─────────────── */
+const SRV_API = '/api/server';
+let srvLogTimer = null;
+let srvLogMode = 'fast';
+let srvLogCursor = 0;        // epoch seconds; 0 = not fetched yet
+let srvLogSeen = new Set();  // dedupe across overlapping polls
+
+async function loadServerStatus() {
+  const pre = document.getElementById('srvStatus');
+  try {
+    const res = await fetch(`${SRV_API}/status`);
+    const data = await res.json();
+    pre.textContent = data.ok ? data.output : `ERROR: ${data.output}`;
+    pre.style.color = data.ok ? '#c9d1d9' : '#f85149';
+    const fastLine = (data.output.split('\n').find(l => l.includes('peace-paths-fast.timer')) || '').trim();
+    const dailyLine = (data.output.split('\n').find(l => l.includes('peace-paths-daily.timer')) || '').trim();
+    document.getElementById('srvFastTimer').textContent = fastLine ? `timer: ${fastLine}` : 'timer: —';
+    document.getElementById('srvDailyTimer').textContent = dailyLine ? `timer: ${dailyLine}` : 'timer: —';
+  } catch(e) {
+    pre.textContent = `Failed to reach AI server: ${e}`;
+    pre.style.color = '#f85149';
+  }
+}
+
+async function serverRun(mode) {
+  const btn = document.getElementById(mode === 'fast' ? 'srvRunFastBtn' : 'srvRunDailyBtn');
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${SRV_API}/run`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ mode })
+    });
+    const j = await res.json();
+    if (!j.ok) { showToast(`Failed: ${j.error}`, 'error'); return; }
+    showToast(`⚡ ${mode === 'fast' ? 'Fast' : 'Daily'} update: ${j.message}`, 'success');
+    // point the log stream at this service and start streaming
+    document.getElementById('srvLogMode').value = mode;
+    srvLogMode = mode;
+    if (srvLogTimer) startServerLog();
+    else toggleServerLog();
+    await loadServerStatus();
+  } catch(e) { showToast(`Run failed: ${e}`, 'error'); }
+  finally { btn.disabled = false; }
+}
+
+async function serverStop(mode) {
+  try {
+    const res = await fetch(`${SRV_API}/stop`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ mode })
+    });
+    const j = await res.json();
+    if (!j.ok) { showToast(`Failed: ${j.error}`, 'error'); return; }
+    showToast(`⏹ ${j.message}`, 'success');
+    await loadServerStatus();
+  } catch(e) { showToast(`Stop failed: ${e}`, 'error'); }
+}
+
+function toggleServerLog() {
+  if (srvLogTimer) { stopServerLog(); return; }
+  startServerLog();
+}
+
+function startServerLog() {
+  stopServerLog();
+  srvLogCursor = 0;
+  srvLogSeen.clear();
+  document.getElementById('srvLog').textContent = '';
+  document.getElementById('srvLogBtn').textContent = '⏸ Stop stream';
+  pollServerLog();
+  srvLogTimer = setInterval(pollServerLog, 2500);
+}
+
+function stopServerLog() {
+  if (srvLogTimer) clearInterval(srvLogTimer);
+  srvLogTimer = null;
+  const btn = document.getElementById('srvLogBtn');
+  if (btn) btn.textContent = '▶ Stream';
+  const live = document.getElementById('srvLogLive');
+  if (live) live.textContent = '';
+}
+
+function srvLogModeChanged() {
+  srvLogMode = document.getElementById('srvLogMode').value;
+  if (srvLogTimer) startServerLog();
+}
+
+async function pollServerLog() {
+  let url = `${SRV_API}/log?mode=${srvLogMode}`;
+  if (srvLogCursor) url += `&since=${srvLogCursor}`;
+  else url += `&lines=200`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.ok) return;
+    const el = document.getElementById('srvLog');
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
+    let fresh = 0;
+    for (const line of data.lines) {
+      if (srvLogSeen.has(line)) continue;
+      srvLogSeen.add(line);
+      if (srvLogSeen.size > 3000) {
+        const it = srvLogSeen.values();
+        for (let i = 0; i < 1000; i++) srvLogSeen.delete(it.next().value);
+      }
+      el.textContent += line + '\n';
+      fresh++;
+    }
+    const live = document.getElementById('srvLogLive');
+    live.textContent = fresh ? `● live (${fresh} new)` : (srvLogCursor ? 'idle — waiting for output…' : '');
+    if (atBottom) el.scrollTop = el.scrollHeight;
+    srvLogCursor = Math.floor(Date.now() / 1000) - 1;
+  } catch(e) {
+    const live = document.getElementById('srvLogLive');
+    if (live) live.textContent = `error: ${e}`;
+  }
+}
+
 let narrativesData = null;  // loaded data.json
 const originalNarratives = {};  // snapshot for change detection
 const narrativeDirtyFields = new Set();  // track which fields changed
