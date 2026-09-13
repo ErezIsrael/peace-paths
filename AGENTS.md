@@ -169,7 +169,7 @@ The updates run as **user-level systemd timers** on the AI server (`erez@192.168
 
 | Timer | Schedule | Service | Timeout |
 |-------|----------|---------|--------|
-| `peace-paths-fast.timer` | Every hour | `peace-paths-fast.service` | 15 min |
+| `peace-paths-fast.timer` | Every 2h 07:00–21:00 + 01:00/05:00 at night (10/day, ±10min jitter) | `peace-paths-fast.service` | 15 min |
 | `peace-paths-daily.timer` | Daily at 2 AM | `peace-paths-daily.service` | 4 hours |
 
 **Unit files on server:** `/home/erez/.config/systemd/user/peace-paths-{fast,daily}.{timer,service}`

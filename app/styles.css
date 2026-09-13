@@ -41,7 +41,7 @@
   --border:     #c5d3e0;
   --text:       #0a1628;
   --text-muted: #4a6a8a;
-  --text-dim:   #7a9aba;
+  --text-dim:   #4a6a8a; /* darker for adequate contrast on light bg */
   --accent:     #0288d1;
   --accent-alt: #0277bd;
   --accent-bg:  rgba(2,136,209,0.08);
@@ -920,7 +920,8 @@ a:hover { text-decoration: underline; }
   .card-metric { text-align: left; display: flex; align-items: baseline; gap: 6px; }
   .momentum-banner { flex-direction: column; text-align: center; gap: 8px; }
   .header { flex-wrap: wrap; gap: 8px; }
-  .controls-bar { flex-direction: column; gap: 6px; }
+  .controls-bar { flex-wrap: wrap; gap: 6px 12px; }
+  .controls-bar .lang-switcher { flex: 1; }
   .activity-solution { display: none; }
   .peace-path__label { font-size: 7px; max-width: 60px; }
   .peace-path__dot { width: 11px; height: 11px; }

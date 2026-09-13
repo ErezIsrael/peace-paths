@@ -2079,6 +2079,7 @@ def build_output(clustered_events, cat_map, narratives, ai_phases=None, stakehol
         "lastUpdated": now.isoformat(),
         "source": "ai-analyzer-prod",
         "aiVersion": SCRIPT_VERSION,
+        "feedCount": len(load_rss_feeds()),
     }
 
 

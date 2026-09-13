@@ -8,6 +8,15 @@ const MOMENTUM_CONFIG_KEYS = {
   stalling: 'momentumStalling',
 };
 
+const APP_VERSION = 'v0.5.19';
+
+// Escape untrusted (feed-derived) text before interpolating into innerHTML
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
 const MOMENTUM_ICONS = {
   advancing: { icon: '🟢', cls: 'momentum-advancing' },
   stable:    { icon: '🟡', cls: 'momentum-stable' },
@@ -82,7 +91,7 @@ function applyLanguage(lang) {
   if (footer) {
     const ps = footer.querySelectorAll('p');
     if (ps[0]) ps[0].textContent = t('footerDisclaimer');
-    if (ps[1]) ps[1].innerHTML = t('footerData').replace('{n}', `<span id="feedCount">${data?.feedCount || 89}</span>`);
+    if (ps[1]) ps[1].innerHTML = t('footerData').replace('{n}', `<span id="feedCount">${data?.feedCount || 75}</span>`);
     if (ps[2]) ps[2].textContent = t('footerAlgorithmic');
   }
   // Footer legal links
@@ -160,11 +169,11 @@ function formatTime(dateStr) {
   const diffHrs = diffMs / 3600000;
   if (diffHrs < 1) {
     const mins = Math.floor(diffMs / 60000);
-    return mins < 1 ? (t('now') || 'now') : `${mins}m`;
+    return mins < 1 ? (t('now') || 'now') : `${mins}m ago`;
   }
-  if (diffHrs < 24) return `${Math.floor(diffHrs)}h`;
+  if (diffHrs < 24) return `${Math.floor(diffHrs)}h ago`;
   const days = Math.floor(diffHrs / 24);
-  if (days < 7) return `${days}d`;
+  if (days < 7) return `${days}d ago`;
   return d.toLocaleDateString(currentLang === 'he' ? 'he-IL' : currentLang === 'ar' ? 'ar' : 'en-US', { month: 'short', day: 'numeric' });
 }
 
@@ -350,10 +359,11 @@ function renderActivityFeed() {
   show.forEach(ev => {
     const item = document.createElement('div');
     item.className = `activity-item sentiment-${ev.sentiment || 'neutral'}`;
+    const evText = esc(getLangText(ev.text));
     item.innerHTML = `
       <span class="activity-time">${formatTime(ev.date)}</span>
-      <span class="activity-solution">${ev.solutionName}</span>
-      ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="activity-link">${getLangText(ev.text)}</a>` : `<span class="activity-text">${getLangText(ev.text)}</span>`}
+      <span class="activity-solution">${esc(ev.solutionName)}</span>
+      ${ev.link ? `<a href="${esc(ev.link)}" target="_blank" rel="noopener" class="activity-link">${evText}</a>` : `<span class="activity-text">${evText}</span>`}
     `;
     container.appendChild(item);
   });
@@ -381,9 +391,9 @@ document.getElementById('showMoreActivity')?.addEventListener('click', () => {
 /* ── Peace Path Progress Track ───────────────────────── */
 function buildPeacePath(solution) {
   const phases = solution.phases || [];
-  const idx = solution.phaseIndex || 0;
   const total = phases.length;
   if (total === 0) return null;
+  const idx = Math.min(Math.max(solution.phaseIndex || 0, 0), total - 1);
 
   const pct = Math.round(((idx + 1) / total) * 100);
 
@@ -392,12 +402,14 @@ function buildPeacePath(solution) {
 
   const rail = document.createElement('div');
   rail.className = 'peace-path__rail';
+  // total === 1 → single phase occupies the whole track (avoid NaN from /0)
+  const fillPct = total > 1 ? (idx / (total - 1)) * 100 : 100;
   const fill = document.createElement('div');
   fill.className = 'peace-path__rail-fill';
-  fill.style.width = `${(idx / (total - 1)) * 100}%`;
+  fill.style.width = `${fillPct}%`;
   const dash = document.createElement('div');
   dash.className = 'peace-path__rail-dash';
-  dash.style.width = `${(1 - idx / (total - 1)) * 100}%`;
+  dash.style.width = `${total > 1 ? Math.max(0, (1 - idx / (total - 1)) * 100) : 0}%`;
   rail.appendChild(fill);
   rail.appendChild(dash);
   track.appendChild(rail);
@@ -498,10 +510,10 @@ function buildLayeredCard(solution) {
   const solutionName = getLangText(solution.name) || (typeof solution.name === 'object' && solution.name.en ? sanitizeText(solution.name.en) : '');
   const dirLabel = getDirectionLabel(solution.direction);
   header.innerHTML = `
-    <span class="lc-icon">${solution.icon}</span>
-    <span class="lc-name">${solutionName}</span>
-    <span class="lc-metric">${countDisplay} <small>${getLangText(kv.label, kv.label || '')}</small></span>
-    <span class="lc-direction ${solution.direction}">${dirLabel}</span>
+    <span class="lc-icon">${esc(solution.icon)}</span>
+    <span class="lc-name">${esc(solutionName)}</span>
+    <span class="lc-metric">${esc(countDisplay)} <small>${esc(getLangText(kv.label, kv.label || ''))}</small></span>
+    <span class="lc-direction ${solution.direction}">${esc(dirLabel)}</span>
   `;
   wrapper.appendChild(header);
 
@@ -535,7 +547,7 @@ function buildLayeredCard(solution) {
     layer.className = 'lc-layer lc-layer-context';
     layer.innerHTML = `
       <div class="lc-layer-title">📖 ${t('longTerm')}</div>
-      <div class="lc-layer-text">${longTerm}</div>
+      <div class="lc-layer-text">${esc(longTerm)}</div>
     `;
     wrapper.appendChild(layer);
   }
@@ -551,7 +563,7 @@ function buildLayeredCard(solution) {
     layer.className = 'lc-layer lc-layer-signals';
     layer.innerHTML = `
       <div class="lc-layer-title">📝 ${t('weeklyHighlight')}</div>
-      <div class="lc-layer-text">${weekly}</div>
+      <div class="lc-layer-text">${esc(weekly)}</div>
     `;
     wrapper.appendChild(layer);
   }
@@ -585,9 +597,9 @@ function buildLayeredCard(solution) {
       body.innerHTML += `
         <div class="lc-event-item">
           ${typeBadge(ev.type)}
-          <span class="lc-signal">${ev.signal_score || ev.effective_signal || '?'}</span>
-          ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="lc-event-title">${evTitle}</a>` : `<span class="lc-event-title">${evTitle}</span>`}
-          <span class="lc-source">${ev.source}</span>
+          <span class="lc-signal">${esc(ev.signal_score || ev.effective_signal || '?')}</span>
+          ${ev.link ? `<a href="${esc(ev.link)}" target="_blank" rel="noopener" class="lc-event-title">${esc(evTitle)}</a>` : `<span class="lc-event-title">${esc(evTitle)}</span>`}
+          <span class="lc-source">${esc(ev.source)}</span>
           ${attCount ? `<span class="lc-attestations" title="${t('attestations')}">${attCount} ${t('sources')}</span>` : ''}
           ${ev.cross_attestation_bonus ? `<span class="lc-cross-attest" title="${t('crossAttestation')}">✦</span>` : ''}
         </div>
@@ -617,9 +629,9 @@ function buildLayeredCard(solution) {
       body.innerHTML += `
         <div class="lc-event-item">
           ${typeBadge('opinion')}
-          <span class="lc-signal">${ev.signal_score || ev.effective_signal || '?'}</span>
-          ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="lc-event-title">"${quote}"</a>` : `<span class="lc-event-title">"${quote}"</span>`}
-          <span class="lc-source">${ev.source}</span>
+          <span class="lc-signal">${esc(ev.signal_score || ev.effective_signal || '?')}</span>
+          ${ev.link ? `<a href="${esc(ev.link)}" target="_blank" rel="noopener" class="lc-event-title">“${esc(quote)}”</a>` : `<span class="lc-event-title">“${esc(quote)}”</span>`}
+          <span class="lc-source">${esc(ev.source)}</span>
         </div>
       `;
     });
@@ -645,10 +657,10 @@ function createLegacyCardTop(solution) {
   const solutionName = getLangText(solution.name) || (typeof solution.name === 'object' && solution.name.en ? sanitizeText(solution.name.en) : '');
   const dirLabel = getDirectionLabel(solution.direction);
   top.innerHTML = `
-    <span class="card-icon">${solution.icon}</span>
-    <span class="card-name">${solutionName}</span>
-    <span class="card-metric"><span class="card-metric-value">${valHtml}</span><span class="card-metric-label">${getLangText(kv.label, kv.label || '')}</span></span>
-    <span class="card-direction ${solution.direction}">${dirLabel}</span>
+    <span class="card-icon">${esc(solution.icon)}</span>
+    <span class="card-name">${esc(solutionName)}</span>
+    <span class="card-metric"><span class="card-metric-value">${esc(valHtml)}</span><span class="card-metric-label">${esc(getLangText(kv.label, kv.label || ''))}</span></span>
+    <span class="card-direction ${solution.direction}">${esc(dirLabel)}</span>
   `;
   return top;
 }
@@ -668,7 +680,7 @@ function buildLegacyEvents(solution) {
   events.forEach(ev => {
     const text = getLangText(ev.text);
     if (!text) return; // Skip events with no translation for current language
-    const src = ev.source ? ` <span class="card-event-source">(${ev.source})</span>` : '';
+    const src = ev.source ? ` <span class="card-event-source">(${esc(ev.source)})</span>` : '';
     const sentKey = ev.sentiment ? (SENTIMENT_KEYS[ev.sentiment] || ev.sentiment) : '';
     const sentLabel = sentKey ? t(sentKey) : '';
     const item = document.createElement('div');
@@ -677,7 +689,7 @@ function buildLegacyEvents(solution) {
       <span class="card-event-dot sentiment-${ev.sentiment || 'neutral'}"></span>
       ${sentLabel ? `<span class="card-event-sentiment sentiment-${ev.sentiment}">${sentLabel}</span>` : ''}
       <span class="card-event-time">${formatTime(ev.date)}</span>
-      ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" class="card-event-text">${text}</a>` : `<span class="card-event-text">${text}</span>`}
+      ${ev.link ? `<a href="${esc(ev.link)}" target="_blank" rel="noopener" class="card-event-text">${esc(text)}</a>` : `<span class="card-event-text">${esc(text)}</span>`}
       ${src}
     `;
     evDiv.appendChild(item);
@@ -743,9 +755,8 @@ function renderAll(data) {
 
   const vt = document.getElementById('versionTag');
   if (vt) {
-    const appVersion = 'v0.5.11';
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
-    vt.textContent = `${appVersion}${aiVersion}`;
+    vt.textContent = `${APP_VERSION}${aiVersion}`;
   }
 
   buildActivityFeed();
@@ -850,16 +861,56 @@ function renderInfoModal() {
   `;
 }
 
+/* ── Modal open/close with focus management ───────────── */
+let modalTriggerEl = null;
+
+function openModal() {
+  const overlay = document.getElementById('modalOverlay');
+  modalTriggerEl = document.activeElement;
+  overlay.classList.add('active');
+  document.getElementById('modalClose')?.focus();
+}
+
+function closeModal() {
+  const overlay = document.getElementById('modalOverlay');
+  if (!overlay.classList.contains('active')) return;
+  overlay.classList.remove('active');
+  if (modalTriggerEl && typeof modalTriggerEl.focus === 'function') modalTriggerEl.focus();
+  modalTriggerEl = null;
+}
+
 document.getElementById('infoBtn')?.addEventListener('click', (e) => {
   e.preventDefault();
-  const overlay = document.getElementById('modalOverlay');
   renderInfoModal();
-  overlay.classList.add('active');
+  openModal();
 });
 
-document.getElementById('modalClose')?.addEventListener('click', () => {
-  document.getElementById('modalOverlay').classList.remove('active');
+function renderLegalModal(titleKey, bodyKey) {
+  const content = document.getElementById('modalContent');
+  content.innerHTML = `
+    <h2>${esc(t(titleKey))}</h2>
+    <p>${esc(t(bodyKey))}</p>
+  `;
+  openModal();
+}
+
+// Footer legal links
+for (const [id, titleKey, bodyKey] of [
+  ['privacyLink', 'privacyPolicy', 'privacyPolicyBody'],
+  ['termsLink', 'termsService', 'termsServiceBody'],
+  ['accessibilityLink', 'accessibility', 'accessibilityBody'],
+]) {
+  document.getElementById(id)?.addEventListener('click', (e) => {
+    e.preventDefault();
+    renderLegalModal(titleKey, bodyKey);
+  });
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
 });
+
+document.getElementById('modalClose')?.addEventListener('click', closeModal);
 
 document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
   if (e.target === e.currentTarget) {
@@ -884,7 +935,8 @@ function applyTheme(theme) {
 /* ── Collapsible Sections ──────────────────────────── */
 function initCollapsibles() {
   document.querySelectorAll('.collapsible-toggle').forEach(toggle => {
-    toggle.addEventListener('click', () => {
+    // onclick (not addEventListener) so re-renders replace instead of stack handlers
+    toggle.onclick = () => {
       // Find the next sibling that is the collapsible body
       let next = toggle.nextElementSibling;
       if (!next || !next.classList.contains('collapsible-body')) {
@@ -904,7 +956,7 @@ function initCollapsibles() {
         next.classList.toggle('open', !isOpen);
         toggle.classList.toggle('open', !isOpen);
       }
-    });
+    };
   });
 }
 
@@ -923,4 +975,16 @@ function initCollapsibles() {
   loadData();
 })();
 
-// Auto-refresh
+// Auto-refresh — re-fetch every 15 min; re-render only if data actually changed
+setInterval(async () => {
+  if (!data) return;
+  try {
+    const res = await fetch('./data.json', { cache: 'no-store' });
+    if (!res.ok) return;
+    const fresh = await res.json();
+    if (fresh.lastUpdated !== data.lastUpdated) {
+      data = fresh;
+      renderAll(fresh);
+    }
+  } catch (e) { /* keep current data on failure */ }
+}, 15 * 60 * 1000);
