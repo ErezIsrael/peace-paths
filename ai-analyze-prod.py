@@ -1311,7 +1311,9 @@ def generate_narratives(clustered_by_solution, cat_map, existing_data, force_nar
         events_text = ""
         for i, ev in enumerate(featured, 1):
             att_str = f" (+{len(ev.get('attestations', []))} sources)" if ev.get("attestations") else ""
-            events_text += f"  [{i}] [{ev['type']}] signal={ev['effective_signal']} {ev['title']} — {ev['source']} ({ev.get('date', '')[:10]}){att_str}\n"
+            snip = (ev.get("snippet") or "").strip()[:140]
+            snip_str = f" — {snip}" if snip else ""
+            events_text += f"  [{i}] [{ev['type']}] signal={ev['effective_signal']} {ev['title']} ({ev['source']}, {ev.get('date', '')[:10]}){att_str}{snip_str}\n"
         
         # Build shifts text
         shifts_text = json.dumps(prev_shifts, ensure_ascii=False)[:500]
