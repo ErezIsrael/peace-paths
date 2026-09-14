@@ -1429,33 +1429,49 @@ def detect_shifts(current_solutions, previous_solutions):
         if not prev:
             continue
         
-        # Phase changed
+        # Phase changed — write natively in each language (no translation step)
+        def _phase_trilingual(phases, idx):
+            raw = phases[idx] if idx < len(phases) else "?"
+            if isinstance(raw, dict):
+                return {"en": raw.get("en", "?"), "he": raw.get("he", raw.get("en", "?")), "ar": raw.get("ar", raw.get("en", "?"))}
+            return {"en": str(raw), "he": str(raw), "ar": str(raw)}
         if cur.get("phaseIndex") != prev.get("phaseIndex"):
-            cur_phase_raw = cur["phases"][cur["phaseIndex"]] if cur["phaseIndex"] < len(cur["phases"]) else "?"
-            cur_phase = cur_phase_raw.get("en", str(cur_phase_raw)) if isinstance(cur_phase_raw, dict) else cur_phase_raw
-            prev_phase_raw = prev["phases"][prev["phaseIndex"]] if prev["phaseIndex"] < len(prev["phases"]) else "?"
-            prev_phase = prev_phase_raw.get("en", str(prev_phase_raw)) if isinstance(prev_phase_raw, dict) else prev_phase_raw
-            shift_desc = f"Phase changed: {prev_phase} → {cur_phase}"
+            cp = _phase_trilingual(cur["phases"], cur["phaseIndex"])
+            pp = _phase_trilingual(prev["phases"], prev["phaseIndex"])
+            shift_desc = {
+                "en": f"Phase changed: {pp['en']} to {cp['en']}",
+                "he": f"שינוי שלב: {pp['he']} אל {cp['he']}",
+                "ar": f"تغيّرت المرحلة: من {pp['ar']} إلى {cp['ar']}",
+            }
             shifts.append({
                 "solutionId": cur["id"],
-                "desc": _make_trilingual(shift_desc),
+                "desc": shift_desc,
                 "direction": "positive" if cur["phaseIndex"] > prev["phaseIndex"] else "negative",
                 "date": now,
             })
         
         # Direction flipped
         if cur.get("direction") != prev.get("direction"):
+            dir_words = {"advancing": {"en": "advancing", "he": "מתקדם", "ar": "يتقدم"},
+                         "stable": {"en": "stable", "he": "יציב", "ar": "مستقر"},
+                         "stalling": {"en": "stalling", "he": "מתעכב", "ar": "متوقف"}}
             if cur["direction"] == "advancing" and prev["direction"] in ("stalling", "stable"):
+                p, c = dir_words[prev["direction"]], dir_words["advancing"]
                 shifts.append({
                     "solutionId": cur["id"],
-                    "desc": _make_trilingual(f"Direction improved: {prev['direction']} → advancing"),
+                    "desc": {"en": f"Direction improved: {p['en']} to {c['en']}",
+                             "he": f"המצב השתפר: {p['he']} אל {c['he']}",
+                             "ar": f"تحسّن الاتجاه: من {p['ar']} إلى {c['ar']}"},
                     "direction": "positive",
                     "date": now,
                 })
             elif cur["direction"] == "stalling" and prev["direction"] in ("advancing", "stable"):
+                p, c = dir_words[prev["direction"]], dir_words["stalling"]
                 shifts.append({
                     "solutionId": cur["id"],
-                    "desc": _make_trilingual(f"Direction worsened: {prev['direction']} → stalling"),
+                    "desc": {"en": f"Direction worsened: {p['en']} to {c['en']}",
+                             "he": f"המצב החמיר: {p['he']} אל {c['he']}",
+                             "ar": f"تدهور الاتجاه: من {p['ar']} إلى {c['ar']}"},
                     "direction": "negative",
                     "date": now,
                 })
@@ -1472,9 +1488,14 @@ def detect_shifts(current_solutions, previous_solutions):
                 if isinstance(ev_title, dict):
                     ev_title = ev_title.get("en", "")
                 if ev_title not in prev_titles:
+                    ev_title_full = ev.get("title", {})
+                    if isinstance(ev_title_full, str):
+                        ev_title_full = {"en": ev_title_full, "he": ev_title_full, "ar": ev_title_full}
                     shifts.append({
                         "solutionId": cur["id"],
-                        "desc": _make_trilingual(ev.get("title", {}).get("en", ev.get("title", ""))),
+                        "desc": {"en": ev_title_full.get("en", ev_title),
+                                  "he": ev_title_full.get("he", ev_title_full.get("en", ev_title)),
+                                  "ar": ev_title_full.get("ar", ev_title_full.get("en", ev_title))},
                         "direction": "negative" if ev.get("sentiment") == "negative" else "positive",
                         "date": ev.get("date", now),
                     })
@@ -1731,7 +1752,7 @@ Output ONLY a JSON object with exactly two keys, each a JSON array of translatio
 
 Rules:
 - Output ONLY the JSON object, nothing else
-- DO NOT translate word-for-word. Rewrite each line the way a native Hebrew / Arabic journalist would write it: natural word order, common vocabulary, short active sentences. Restructure the sentence as needed; only the meaning must stay exact.
+- DO NOT translate word-for-word. Rewrite each line the way a native Hebrew / Arabic journalist would write it: natural word order, simple common words, short active sentences. Restructure the sentence as needed; only the meaning must stay exact.
 - Preserve the exact meaning - never guess or add. If the English is awkward, make the translation clear, not awkward.
 - Use each language's usual local forms for names and organizations (e.g. IAEA -> in Hebrew סוכנות האנרגיה האטומית הבינלאומית, in Arabic الوكالة الدولية للطاقة الذرية). Common abbreviations like G20, MoU, UN, NCAG stay as-is.
 - BANNED literal calques in Hebrew (use common words instead): התנעול, פונקציונרים, רטוריקה, חיכוך, פולריזציה, ארכיטקטורה, סנקציה (use סנקציות). Banned in Arabic: احتكاك, استقطاب, بنية, خنق (use ضغط).
@@ -2302,14 +2323,14 @@ def _merge_with_existing(data, existing, ai_phases=None, narratives=None, stakeh
             sol["summary"] = _st["en"] if isinstance(_st, dict) else _st
             sol["events"] = sol["events"][1:]  # exclude summary
         
-        # Preserve narrative from existing data (fast mode skips narrative generation)
+        # Use the freshly generated narrative when available; only keep the
+        # existing one (fast mode without --narrative) when nothing was generated.
         existing_narrative = sol.get("narrative")
         if narratives and sol["id"] in narratives:
-            existing_lt = sol.get("narrative", {}).get("longTerm")
             new_narrative = narratives[sol["id"]]
-            # In fast mode, preserve existing longTerm
-            if existing_lt:
-                new_narrative["longTerm"] = existing_lt
+            if not new_narrative.get("longTerm") and existing_narrative:
+                # Generated narrative missing longTerm — keep the old one
+                new_narrative["longTerm"] = existing_narrative.get("longTerm")
             sol["narrative"] = new_narrative
         elif existing_narrative:
             # Fast mode: keep existing narrative intact
