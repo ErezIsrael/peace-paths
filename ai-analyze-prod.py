@@ -1722,7 +1722,7 @@ Civil Society → المجتمع المدني"""
         chunk = unique[chunk_start:chunk_start + chunk_size]
         input_json = json.dumps(chunk, ensure_ascii=False)
 
-        prompt = f"""Translate each English text to BOTH Hebrew and Arabic.
+        prompt = f"""Translate each English news line to BOTH Hebrew and Arabic.
 
 Input (JSON array): {input_json}
 
@@ -1731,10 +1731,11 @@ Output ONLY a JSON object with exactly two keys, each a JSON array of translatio
 
 Rules:
 - Output ONLY the JSON object, nothing else
-- Use proper grammar and natural phrasing in each language
-- Translate ALL words, do not leave English words
-- Keep abbreviations like G20, MoU, UN, NCAG as-is
-- Inside string values, NEVER use unescaped double quotes. In Hebrew use a single quote for abbreviations (write צה'ל, never the double-quoted form).
+- DO NOT translate word-for-word. Rewrite each line the way a native Hebrew / Arabic journalist would write it: natural word order, common vocabulary, short active sentences. Restructure the sentence as needed; only the meaning must stay exact.
+- Preserve the exact meaning - never guess or add. If the English is awkward, make the translation clear, not awkward.
+- Use each language's usual local forms for names and organizations (e.g. IAEA -> in Hebrew סוכנות האנרגיה האטומית הבינלאומית, in Arabic الوكالة الدولية للطاقة الذرية). Common abbreviations like G20, MoU, UN, NCAG stay as-is.
+- BANNED literal calques in Hebrew (use common words instead): התנעול, פונקציונרים, רטוריקה, חיכוך, פולריזציה, ארכיטקטורה, סנקציה (use סנקציות). Banned in Arabic: احتكاك, استقطاب, بنية, خنق (use ضغط).
+- Inside string values, NEVER use unescaped double quotes. In Hebrew use a single quote for abbreviations (write צה'ל, never the double-quoted form). Never mix other scripts (Chinese, Cyrillic) into the text.
 {he_glossary}
 {ar_glossary}"""
         result = _llm_chat([
@@ -1759,17 +1760,25 @@ Rules:
         for orig, he, ar in zip(chunk, he_lines, ar_lines):
             he = he.strip()
             ar = ar.strip()
-            def _clean(s, script_lo, script_hi, other_lo, other_hi):
+            def _clean(s, script_lo, script_hi):
                 if not s or s == orig:
                     return None
                 if not any(script_lo <= c <= script_hi for c in s):
                     return None
-                # Reject cross-script contamination (e.g. Arabic chars inside Hebrew)
-                if any(other_lo <= c <= other_hi for c in s):
-                    return None
+                # Reject cross-script contamination (Arabic in Hebrew, Hebrew in Arabic,
+                # CJK/Cyrillic anywhere)
+                for c in s:
+                    o = ord(c)
+                    if o in range(0x4E00, 0x9FFF) or o in range(0x0400, 0x04FF):
+                        return None
+                    if script_lo == '\u0590' and o in range(0x0600, 0x0700):
+                        return None
+                    if script_lo == '\u0600' and o in range(0x0590, 0x0600):
+                        return None
                 return s
-            he = _clean(he, '\u0590', '\u05FF', '\u0600', '\u06FF') or _translate(orig, "hebrew")
-            ar = _clean(ar, '\u0600', '\u06FF', '\u0590', '\u05FF') or _translate(orig, "arabic")
+            he = _clean(he, '\u0590', '\u05FF') or _translate(orig, "hebrew")
+            ar = _clean(ar, '\u0600', '\u06FF') or _translate(orig, "arabic")
+
             trilingual_map[orig] = {"en": orig, "he": he, "ar": ar}
             _translation_cache[f"he:{orig[:200]}"] = he
             _translation_cache[f"ar:{orig[:200]}"] = ar
