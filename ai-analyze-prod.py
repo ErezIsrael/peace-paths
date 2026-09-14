@@ -717,9 +717,16 @@ def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, ba
     n = len(articles)
     txt = ""
     for j, a in enumerate(articles):
-        txt += f"<article_{j+1}>\n<title>{a['title']}</title>\n<snippet>{a.get('snippet','')[:300]}</snippet>\n<source>{a['source']}</source>\n</article_{j+1}>\n"
+        source = a.get("source", "")
+        profile = ""
+        if source_profiles and source in source_profiles:
+            sp = source_profiles[source]
+            profile = f" (bias: {sp.get('lean','unknown')}, {sp.get('region','unknown')})"
+        txt += f"<article_{j+1}>\n<title>{a['title']}</title>\n<snippet>{a.get('snippet','')[:300]}</snippet>\n<source>{source}{profile}</source>\n</article_{j+1}>\n"
 
-    user = f"Classify these {n} articles.\n\n{txt}\nFor EACH article output: me_relevant, category, sentiment, type, signal_score.\nUse ONLY these category IDs: {', '.join(valid_ids)}\nOutput a JSON array in SAME ORDER. No article_num field.\n"
+    user = PROMPTS["batch_user"]["user"].format(
+        BATCH_SIZE=n, ARTICLES_TEXT=txt, CATEGORY_IDS=", ".join(valid_ids)
+    )
 
     body = {
         "model": AI_MODEL,
@@ -727,44 +734,47 @@ def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, ba
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user},
         ],
-        "max_tokens": 8000,
+        "max_tokens": 2000,
         "temperature": 0.0,
+        "response_format": {"type": "json_object"},
+        "chat_template_kwargs": {"enable_thinking": False},
     }
 
-    headers = {"Content-Type": "application/json"}
-    if LLAMA_API_KEY:
-        headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
+    raw = None
+    parsed = None
+    for attempt in range(2):
+        response = _post_llm(body, timeout=300)
+        if response is None:
+            return None
+        raw = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+        if raw.startswith("```"):
+            lines = raw.split("\n")
+            raw = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
+        parsed = _safe_json(raw)
+        if parsed is not None:
+            break
+        print(f"  ⚠ Batch response truncated/unparseable (attempt {attempt + 1}/2) — retrying")
+    if isinstance(parsed, dict) and isinstance(parsed.get("results"), list):
+        parsed = parsed["results"]
+    if isinstance(parsed, list) and len(parsed) == n:
+        # Fill in defaults
+        results = []
+        for item in parsed:
+            item.setdefault("type", "reporting")
+            item.setdefault("signal_score", 5)
+            item.setdefault("source_weight", 2)
+            results.append(item)
+        return results
 
-    req = Request(f"{LLAMA_CPP_URL}/v1/chat/completions", data=json.dumps(body).encode(), headers=headers)
+    # Parse failed — return None to trigger fallback (preserve raw for debugging)
     try:
-        with urlopen(req, timeout=300) as f:
-            response = json.loads(f.read().decode())
-    except Exception as e:
-        print(f"  AI unavailable in batch: {e}")
-        return None
-
-    raw = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
-    if raw.startswith("```"):
-        lines = raw.split("\n")
-        raw = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
-
-    first, last = raw.find("["), raw.rfind("]")
-    if first != -1 and last > first:
-        try:
-            parsed = json.loads(raw[first:last+1])
-            if isinstance(parsed, list) and len(parsed) == n:
-                # Fill in defaults
-                results = []
-                for item in parsed:
-                    item.setdefault("type", "reporting")
-                    item.setdefault("signal_score", 5)
-                    item.setdefault("source_weight", 2)
-                    results.append(item)
-                return results
-        except json.JSONDecodeError:
-            pass
-
-    # Parse failed — return None to trigger fallback
+        os.makedirs(STAGING_DIR, exist_ok=True)
+        dbg = os.path.join(STAGING_DIR, f"batch_raw_{int(time.time())}.txt")
+        with open(dbg, "w", encoding="utf-8") as f:
+            f.write(raw)
+        print(f"  ⚠ Batch JSON parse failed (expected {n} results, got {len(parsed) if isinstance(parsed, list) else 'non-list'}) — raw saved to {dbg}")
+    except Exception:
+        pass
     return None
 
 
@@ -796,18 +806,11 @@ def _classify_article(article, system_prompt, valid_ids, source_profiles=None):
         ],
         "max_tokens": 1500,
         "temperature": 0.0,
+        "chat_template_kwargs": {"enable_thinking": False},
     }
 
-    headers = {"Content-Type": "application/json"}
-    if LLAMA_API_KEY:
-        headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
-
-    req = Request(f"{LLAMA_CPP_URL}/v1/chat/completions", data=json.dumps(body).encode(), headers=headers)
-    try:
-        with urlopen(req, timeout=120) as f:
-            response = json.loads(f.read().decode())
-    except Exception as e:
-        print(f"  AI unavailable: {e}")
+    response = _post_llm(body, timeout=120)
+    if response is None:
         return None
 
     result_text = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
@@ -837,7 +840,7 @@ def _classify_article(article, system_prompt, valid_ids, source_profiles=None):
 def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
     """Two-pass classification: keyword filter → batch LLM for uncertain articles.
     Pass 1: Pre-filter (EXCLUDE_KW) + keyword classify (conf>=2)
-    Pass 2: Batch LLM classify remaining articles (batch_size=10)
+    Pass 2: Batch LLM classify remaining articles (batch_size=25)
     Falls back to single-article LLM if batch parse fails."""
     EXCLUDE_KW = [
         "world cup", "fifa", "afcon", "premier league", "man city", "guardiola",
@@ -862,7 +865,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
         "operation roaring lion", "strait of hormuz",
     ]
     KW_THRESHOLD = 2  # Minimum keyword confidence for pass-1 acceptance
-    BATCH_SIZE = 10
+    BATCH_SIZE = 25
 
     print(f"\U0001f916 Classifying {len(articles)} articles (two-pass: keyword + batch LLM)...")
     pairs = []
@@ -872,6 +875,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
     kw_classified = 0
     ai_failures = 0
     ai_refusals = 0
+    kw_fallback = 0
     stage_file = os.path.join(STAGING_DIR, "classification.json")
     start_time = time.time()
 
@@ -938,8 +942,17 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
                             result = _classify_article(article, system_prompt, valid_ids, source_profiles)
                             if result: ai_failures = 0
                         if result is None:
-                            dropped += 1
-                            continue
+                            # Soft keyword fallback (conf>=1) — never drop data when LLM is busy
+                            cat_id = _fallback_classify(article, all_kws)
+                            if cat_id:
+                                result = {"me_relevant": True, "category": cat_id,
+                                          "sentiment": "neutral", "type": "reporting",
+                                          "signal_score": 5, "source_weight": 2,
+                                          "_kw_fallback": True}
+                                kw_fallback += 1
+                            else:
+                                dropped += 1
+                                continue
                     r, d = _add_classified(pairs, result, article, valid_ids)
                     relevant += r
                     dropped += d
@@ -983,7 +996,8 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
         "refusals": ai_refusals,
         "pre_filtered": pre_filtered,
         "kw_classified": kw_classified,
-        "llm_classified": relevant - kw_classified,
+        "llm_classified": relevant - kw_classified - kw_fallback,
+        "kw_fallback": kw_fallback,
         "wall_seconds": round(time.time() - start_time, 1),
         "pairs_count": len(pairs),
     }
@@ -991,12 +1005,14 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
         json.dump(final_stage, f, indent=2, ensure_ascii=False)
     print(f"  💾 Staged → staging/classification.json")
 
-    print(f"  Total: {relevant} relevant ({kw_classified} kw + {relevant-kw_classified} LLM), "
+    print(f"  Total: {relevant} relevant ({kw_classified} kw + {relevant-kw_classified-kw_fallback} LLM + {kw_fallback} kw-fallback), "
           f"{dropped} dropped, {ai_refusals} refusals, {pre_filtered} pre-filtered")
     if ai_refusals > 0:
         pct = ai_refusals / max(len(articles), 1) * 100
         print(f"  🚨 AI content filter: {ai_refusals} articles ({pct:.1f}%)")
-    return pairs, ai_refusals
+    if kw_fallback > 0:
+        print(f"  ⚠ {kw_fallback} articles keyword-fallback (LLM unavailable)")
+    return pairs, ai_refusals, kw_fallback
 
 
 def _add_classified(pairs, result, article, valid_ids):
@@ -1280,11 +1296,22 @@ def generate_narratives(clustered_by_solution, cat_map, existing_data, force_nar
         current_phase_raw = phases[phase_index] if phase_index < len(phases) else "Unknown"
         current_phase = current_phase_raw.get("en", str(current_phase_raw)) if isinstance(current_phase_raw, dict) else current_phase_raw
         
-        # Build events text (top 10 by effective_signal)
+        # Focus on NEW events since last run (fall back to top events if none are new)
+        prev_links = set()
+        if existing_data:
+            for sol in existing_data.get("solutions", []):
+                if sol["id"] == sol_id:
+                    for e in sol.get("events", []):
+                        if e.get("link"):
+                            prev_links.add(e["link"].strip().lower())
+        new_events = [e for e in events_sorted if e.get("link", "").strip().lower() not in prev_links]
+        featured = (new_events or events_sorted)[:10]
+
+        # Build numbered events text (code attaches metadata from these indices later)
         events_text = ""
-        for ev in events_sorted[:10]:
+        for i, ev in enumerate(featured, 1):
             att_str = f" (+{len(ev.get('attestations', []))} sources)" if ev.get("attestations") else ""
-            events_text += f"  [{ev['type']}] signal={ev['effective_signal']} {ev['title']} — {ev['source']}{att_str}\n"
+            events_text += f"  [{i}] [{ev['type']}] signal={ev['effective_signal']} {ev['title']} — {ev['source']} ({ev.get('date', '')[:10]}){att_str}\n"
         
         # Build shifts text
         shifts_text = json.dumps(prev_shifts, ensure_ascii=False)[:500]
@@ -1303,9 +1330,43 @@ def generate_narratives(clustered_by_solution, cat_map, existing_data, force_nar
         result = _llm_chat([
             {"role": "system", "content": PROMPTS["narrative"]["system"]},
             {"role": "user", "content": prompt}
-        ], max_tokens=8000, timeout=240)
+        ], max_tokens=2000, timeout=240)
+        
+        if result is None:
+            # Single retry (concurrent requests on the shared LLM can truncate responses)
+            time.sleep(15)
+            result = _llm_chat([
+                {"role": "system", "content": PROMPTS["narrative"]["system"]},
+                {"role": "user", "content": prompt}
+            ], max_tokens=2000, timeout=240)
         
         if result:
+            # Attach REAL event metadata from selected indices (no LLM metadata copying)
+            def _by_indices(key, default):
+                out = []
+                for ix in result.get(key) or []:
+                    if isinstance(ix, int) and 1 <= ix <= len(featured):
+                        out.append(featured[ix - 1])
+                return out or default
+            reporting = [e for e in featured if e.get("type") in ("reporting", "analysis")]
+            opinions = [e for e in featured if e.get("type") == "opinion"]
+            result["keyEvents"] = [
+                {"title": {"en": e["title"], "he": "", "ar": ""},
+                 "link": e.get("link", ""), "source": e.get("source", ""), "date": e.get("date", ""),
+                 "type": e.get("type", "reporting"), "signal_score": e.get("signal_score", 5),
+                 "source_weight": e.get("source_weight", 2), "effective_signal": e.get("effective_signal", 5),
+                 "attestations": e.get("attestations", [])}
+                for e in _by_indices("keyEventIndices", reporting[:3])
+            ]
+            result["keyOpinions"] = [
+                {"quote": {"en": e["title"], "he": "", "ar": ""},
+                 "link": e.get("link", ""), "source": e.get("source", ""), "date": e.get("date", ""),
+                 "type": "opinion", "signal_score": e.get("signal_score", 5),
+                 "source_weight": e.get("source_weight", 2), "effective_signal": e.get("effective_signal", 5)}
+                for e in _by_indices("keyOpinionIndices", opinions[:2])
+            ]
+            result.pop("keyEventIndices", None)
+            result.pop("keyOpinionIndices", None)
             narratives[sol_id] = result
             print(f"  ✓ {cat['name']}: narrative generated")
         else:
@@ -1448,21 +1509,79 @@ def compute_direction(events):
     return "stable"
 
 
+def _post_llm(body, timeout=180, retries=3, backoff=30):
+    """POST to llama.cpp with retry + backoff.
+    The server is single-slot and shared with other clients (agent sessions);
+    a busy server returns 503 or refuses connections. Wait and retry instead
+    of failing immediately.
+    Returns parsed response dict or None."""
+    headers = {"Content-Type": "application/json"}
+    if LLAMA_API_KEY:
+        headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
+    last_err = None
+    for attempt in range(retries):
+        try:
+            req = Request(f"{LLAMA_CPP_URL}/v1/chat/completions", data=json.dumps(body).encode(), headers=headers)
+            with urlopen(req, timeout=timeout) as f:
+                return json.loads(f.read().decode())
+        except Exception as e:
+            last_err = e
+            if attempt < retries - 1:
+                wait = backoff * (attempt + 1)
+                print(f"  ⏳ LLM busy/unreachable ({e}) — retry {attempt + 1}/{retries - 1} in {wait}s")
+                time.sleep(wait)
+    print(f"  AI unavailable: {last_err}")
+    return None
+
+
+def _repair_json(raw):
+    """Fix a common model bug: unescaped double quotes inside Hebrew/Arabic
+    strings, e.g. צה\"ל (IDF). Escape quotes that sit between script chars."""
+    import re
+    out = raw
+    for _ in range(3):
+        new = re.sub(r'([\u0590-\u05FF\u0600-\u06FF])"([\u0590-\u05FF\u0600-\u06FF])',
+                     lambda m: m.group(1) + '\\' + '"' + m.group(2), out)
+        if new == out:
+            break
+        out = new
+    return out
+
+
+def _safe_json(raw):
+    """Parse a JSON object/array from LLM output, with targeted repair.
+    Returns parsed value or None."""
+    raw = raw.strip()
+    if raw.startswith("```"):
+        lines = raw.split("\n")
+        raw = "\n".join(lines[1:-1]).strip() if len(lines) > 2 else "".join(lines[1:]).strip()
+    candidates = [raw]
+    first, last = raw.find("{"), raw.rfind("}")
+    if first != -1 and last > first:
+        candidates.append(raw[first:last+1])
+    fb, fl = raw.find("["), raw.rfind("]")
+    if fb != -1 and fl > fb:
+        candidates.append(raw[fb:fl+1])
+    for c in candidates:
+        try:
+            return json.loads(c)
+        except json.JSONDecodeError:
+            pass
+        try:
+            return json.loads(_repair_json(c))
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
 def _llm_chat(messages, max_tokens=4000, temperature=0.0, timeout=180, raw_text=False):
     body = {
         "model": AI_MODEL, "messages": messages,
         "max_tokens": max_tokens, "temperature": temperature,
+        "chat_template_kwargs": {"enable_thinking": False},
     }
-    headers = {"Content-Type": "application/json"}
-    if LLAMA_API_KEY:
-        headers["Authorization"] = f"Bearer {LLAMA_API_KEY}"
-    
-    req = Request(f"{LLAMA_CPP_URL}/v1/chat/completions", data=json.dumps(body).encode(), headers=headers)
-    try:
-        with urlopen(req, timeout=timeout) as f:
-            response = json.loads(f.read().decode())
-    except Exception as e:
-        print(f"  AI unavailable: {e}")
+    response = _post_llm(body, timeout=timeout)
+    if response is None:
         return None
     
     result_text = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
@@ -1473,13 +1592,18 @@ def _llm_chat(messages, max_tokens=4000, temperature=0.0, timeout=180, raw_text=
     if raw_text:
         return result_text
     
-    first_brace = result_text.find('{')
-    last_brace = result_text.rfind('}')
-    if first_brace != -1 and last_brace > first_brace:
-        try:
-            return json.loads(result_text[first_brace:last_brace+1])
-        except json.JSONDecodeError:
-            pass
+    parsed = _safe_json(result_text)
+    if parsed is not None:
+        return parsed
+    # Debug: preserve raw response on parse failure
+    try:
+        os.makedirs(STAGING_DIR, exist_ok=True)
+        dbg = os.path.join(STAGING_DIR, f"llm_raw_{int(time.time())}.txt")
+        with open(dbg, "w", encoding="utf-8") as f:
+            f.write(result_text)
+        print(f"  ⚠ LLM JSON parse failed — raw response saved to {dbg}")
+    except Exception:
+        pass
     return None
 
 
@@ -1557,22 +1681,16 @@ def _batch_translate(texts, target_lang):
 def _batch_translate_dual(texts):
     """Translate a list of English texts to both Hebrew and Arabic in batch.
     Returns dict {text: {en, he, ar}}.
-    Uses two LLM calls per chunk (one Hebrew, one Arabic) instead of two per text.
-    Uses JSON array output for reliable parsing."""
+    Uses ONE LLM call per chunk producing both languages (was two).
+    Uses JSON object output {"he": [...], "ar": [...]} for reliable parsing."""
     import json, re
     if not texts:
         return {}
     unique = list(dict.fromkeys(texts))
     trilingual_map = {}
-    chunk_size = 5
+    chunk_size = 10
 
-    for lang, lang_name in [("he", "Hebrew"), ("ar", "Arabic")]:
-        for chunk_start in range(0, len(unique), chunk_size):
-            chunk = unique[chunk_start:chunk_start + chunk_size]
-            input_json = json.dumps(chunk, ensure_ascii=False)
-            # Domain glossary for political/diplomatic terminology
-            if lang == "he":
-                glossary = """Use these exact Hebrew terms:
+    he_glossary = """Hebrew terms:
 Annexation → סיפוח (NOT אנקסיה)
 Ceasefire → הפסקת אש
 Mediation → גישור
@@ -1585,8 +1703,8 @@ Stabilization → ייצוב
 Framework Agreement → הסכם מסגרת
 Trade Integration → אינטגרציה מסחרית
 Civil Society → החברה האזרחית"""
-            elif lang == "ar":
-                glossary = """Use these exact Arabic terms:
+
+    ar_glossary = """Arabic terms:
 Annexation → ضم (NOT مرفق)
 Ceasefire → وقف إطلاق النار
 Mediation → وساطة
@@ -1599,58 +1717,62 @@ Stabilization → استقرار
 Framework Agreement → اتفاقية إطار
 Trade Integration → تكامل تجاري
 Civil Society → المجتمع المدني"""
-            else:
-                glossary = ""
 
-            prompt = f"""Translate each English text to {lang_name}.
+    for chunk_start in range(0, len(unique), chunk_size):
+        chunk = unique[chunk_start:chunk_start + chunk_size]
+        input_json = json.dumps(chunk, ensure_ascii=False)
+
+        prompt = f"""Translate each English text to BOTH Hebrew and Arabic.
 
 Input (JSON array): {input_json}
 
-Output ONLY a JSON array of {lang_name} translations in the same order.
-Example: ["translation1", "translation2", "translation3"]
+Output ONLY a JSON object with exactly two keys, each a JSON array of translations in the SAME order as the input:
+{{"he": ["...", "..."], "ar": ["...", "..."]}}
 
 Rules:
-- Output ONLY the JSON array, nothing else
-- Use proper {lang_name} grammar and natural phrasing
+- Output ONLY the JSON object, nothing else
+- Use proper grammar and natural phrasing in each language
 - Translate ALL words, do not leave English words
 - Keep abbreviations like G20, MoU, UN, NCAG as-is
-{glossary}"""
+- Inside string values, NEVER use unescaped double quotes. In Hebrew use a single quote for abbreviations (write צה'ל, never the double-quoted form).
+{he_glossary}
+{ar_glossary}"""
+        result = _llm_chat([
+            {"role": "system", "content": "You are a professional translator from English to Hebrew and Arabic specializing in Middle East political and diplomatic terminology. Output ONLY JSON objects."},
+            {"role": "user", "content": prompt}
+        ], max_tokens=3000, timeout=120)
+        if not isinstance(result, dict):
+            time.sleep(10)
             result = _llm_chat([
-                {"role": "system", "content": f"You are a professional translator from English to {lang_name} specializing in Middle East political and diplomatic terminology. Output ONLY JSON arrays."},
+                {"role": "system", "content": "You are a professional translator from English to Hebrew and Arabic specializing in Middle East political and diplomatic terminology. Output ONLY JSON objects."},
                 {"role": "user", "content": prompt}
-            ], max_tokens=2000, timeout=120, raw_text=True)
+            ], max_tokens=3000, timeout=120)
 
-            translated_lines = ["" for _ in chunk]
-            if isinstance(result, str) and result.strip():
-                # Try JSON parse first
-                try:
-                    clean = result.strip().strip('`').strip()
-                    if clean.startswith('['):
-                        translated_lines = json.loads(clean)
-                        if not isinstance(translated_lines, list):
-                            translated_lines = ["" for _ in chunk]
-                except (json.JSONDecodeError, ValueError):
-                    # Fallback: split by newline or |
-                    translated_lines = [t.strip() for t in re.split(r'\|', result.strip())]
-                    # Strip leading numbers
-                    translated_lines = [re.sub(r'^\d+[\s.\u00b7]+', '', t) for t in translated_lines]
+        he_lines = [""] * len(chunk)
+        ar_lines = [""] * len(chunk)
+        if isinstance(result, dict):
+            if isinstance(result.get("he"), list):
+                he_lines = [str(t) for t in result["he"][:len(chunk)]]
+            if isinstance(result.get("ar"), list):
+                ar_lines = [str(t) for t in result["ar"][:len(chunk)]]
 
-            for orig, trans in zip(chunk, translated_lines[:len(chunk)]):
-                if not isinstance(trans, str):
-                    trans = str(trans)
-                trans = trans.strip()
-                is_valid = trans != orig and trans != ""
-                if is_valid:
-                    if lang == "he":
-                        is_valid = any('\u0590' <= c <= '\u05FF' for c in trans)
-                    else:
-                        is_valid = any('\u0600' <= c <= '\u06FF' for c in trans)
-                if not is_valid:
-                    trans = _translate(orig, "hebrew" if lang == "he" else "arabic")
-                if orig not in trilingual_map:
-                    trilingual_map[orig] = {"en": orig, "he": "", "ar": ""}
-                trilingual_map[orig][lang] = trans
-                _translation_cache[f"{lang}:{orig[:200]}"] = trans
+        for orig, he, ar in zip(chunk, he_lines, ar_lines):
+            he = he.strip()
+            ar = ar.strip()
+            def _clean(s, script_lo, script_hi, other_lo, other_hi):
+                if not s or s == orig:
+                    return None
+                if not any(script_lo <= c <= script_hi for c in s):
+                    return None
+                # Reject cross-script contamination (e.g. Arabic chars inside Hebrew)
+                if any(other_lo <= c <= other_hi for c in s):
+                    return None
+                return s
+            he = _clean(he, '\u0590', '\u05FF', '\u0600', '\u06FF') or _translate(orig, "hebrew")
+            ar = _clean(ar, '\u0600', '\u06FF', '\u0590', '\u05FF') or _translate(orig, "arabic")
+            trilingual_map[orig] = {"en": orig, "he": he, "ar": ar}
+            _translation_cache[f"he:{orig[:200]}"] = he
+            _translation_cache[f"ar:{orig[:200]}"] = ar
 
     return trilingual_map
 
@@ -1909,7 +2031,7 @@ def determine_phases_ai(solution_events, cat_map):
             continue
         recent = sorted(events, key=lambda e: e["date"], reverse=True)[:8]
         _extract_text = lambda e: e.get('text', {}).get('en', '') if isinstance(e.get('text'), dict) else e.get('text', '')
-        event_lines = "\n".join(f"    - [{e['sentiment']}] {_extract_text(e)}" for e in recent)
+        event_lines = "\n".join(f"    - [{str(e['date'])[:10]}] [{e['sentiment']}] {_extract_text(e)}" for e in recent)
         phase_names = "\n".join(f"  {i}: {p.get('en', p) if isinstance(p, dict) else p}" for i, p in enumerate(phases))
         blocks.append(
             f"<solution id=\"{sol_id}\">\n  Name: {cat['name']}\n  Phases:\n{phase_names}\n"
@@ -2218,6 +2340,7 @@ def _merge_with_existing(data, existing, ai_phases=None, narratives=None, stakeh
     existing["lastUpdated"] = datetime.now(timezone.utc).isoformat()
     existing["source"] = "ai-analyzer-prod"
     existing["aiVersion"] = SCRIPT_VERSION
+    existing["feedCount"] = data.get("feedCount") or len(load_rss_feeds())
     return existing
 
 
@@ -2419,11 +2542,12 @@ def main():
         classified_pairs = keyword_classify(articles, all_kws)
         ai_refusals = 0
     else:
-        classified_pairs, ai_refusals = classify_articles(articles, system_prompt, valid_ids, source_profiles)
+        classified_pairs, ai_refusals, kw_fallback = classify_articles(articles, system_prompt, valid_ids, source_profiles)
         if not classified_pairs:
             print("  ⚠ AI failed, using keyword fallback")
             classified_pairs = keyword_classify(articles, all_kws)
             ai_refusals = 0
+            kw_fallback = len(classified_pairs)
     # Save classified pairs (serializable form)
     _save_stage("classified", [{"article": a, "classification": c} for a, c in classified_pairs])
     
@@ -2509,14 +2633,23 @@ def main():
     # Daily mode: translates newly generated narratives
     _translate_narrative_fields(data["solutions"])
 
-    # AI health metadata
+    # AI health metadata — honestly report partial keyword fallback when LLM is busy/down
+    if args.fetch_only:
+        classification_method = "keyword-fallback"
+    elif kw_fallback == 0:
+        classification_method = "ai"
+    elif kw_fallback < len(classified_pairs):
+        classification_method = "ai-partial-fallback"
+    else:
+        classification_method = "keyword-fallback"
     data["aiHealth"] = {
         "refusals": ai_refusals,
         "totalClassified": len(classified_pairs),
         "refusalRate": round(ai_refusals / max(len(articles), 1) * 100, 1),
+        "keywordFallback": kw_fallback,
         "lastRun": datetime.now(timezone.utc).isoformat(),
-        "classificationMethod": "ai" if not args.fetch_only else "keyword-fallback",
-        "status": "healthy" if ai_refusals == 0 else "warning" if ai_refusals / max(len(articles), 1) < 0.05 else "degraded",
+        "classificationMethod": classification_method,
+        "status": "healthy" if (ai_refusals == 0 and kw_fallback == 0) else "warning" if kw_fallback / max(len(articles), 1) < 0.5 else "degraded",
     }
     
     # Validate: fix any remaining English-in-he fields and JSON array strings
