@@ -37,12 +37,12 @@ Flags:
 Schedule: --fast every hour; --daily daily at 2 AM
 
 IMPORTANT — WHERE THIS RUNS:
-  This script runs on the AI server (192.168.2.121), NOT on the developer laptop.
+  This script runs on the AI server (<AI_SERVER_IP>), NOT on the developer laptop.
   The laptop is off most of the time; the site updates regardless.
   Server-side systemd timers (user-level) trigger the updates:
     peace-paths-fast.timer  → every hour  → ~/.config/systemd/user/peace-paths-fast.service
     peace-paths-daily.timer → daily 2 AM  → ~/.config/systemd/user/peace-paths-daily.service
-  SSH: ssh erez@192.168.2.121
+  SSH: ssh erez@<AI_SERVER_IP>
   Status: python3 ~/peace-paths/ai-analyze-prod.py --status
   Lock file: .locks/ai-update.lock (fast waits for daily, stale detection at 5min)
 """

@@ -8,7 +8,7 @@ const MOMENTUM_CONFIG_KEYS = {
   stalling: 'momentumStalling',
 };
 
-const APP_VERSION = 'v0.5.19';
+const APP_VERSION = 'v0.5.20';
 
 // Escape untrusted (feed-derived) text before interpolating into innerHTML
 function esc(s) {

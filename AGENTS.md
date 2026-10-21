@@ -160,12 +160,16 @@ This laptop is off most of the time — the site updates regardless.
 
 | Machine | Role | SSH |
 |---------|------|-----|
-| **AI Server** (`192.168.2.121`) | Runs llama.cpp + Peace Paths update timers | `ssh erez@192.168.2.121` |
+| **AI Server** (`<AI_SERVER_IP>`) | Runs llama.cpp + Peace Paths update timers | `ssh erez@<AI_SERVER_IP>` |
 | This laptop | Development only — do NOT run updates here | N/A |
+
+> **Do not hardcode the AI server's LAN IP in this repo** — find it in the server's `.env` (`LLAMA_CPP_URL`).
+
+> **Do not hardcode the AI server LAN IP in this repo.** Find it in the server's  (see ).
 
 ### Server-side update services (user-level systemd timers)
 
-The updates run as **user-level systemd timers** on the AI server (`erez@192.168.2.121`):
+The updates run as **user-level systemd timers** on the AI server (`erez@<AI_SERVER_IP>`):
 
 | Timer | Schedule | Service | Timeout |
 |-------|----------|---------|--------|
@@ -179,28 +183,28 @@ The updates run as **user-level systemd timers** on the AI server (`erez@192.168
 
 ```bash
 # Check timer status
-ssh erez@192.168.2.121 "systemctl --user list-timers --all | grep peace"
+ssh erez@<AI_SERVER_IP> "systemctl --user list-timers --all | grep peace"
 
 # Check service logs
-ssh erez@192.168.2.121 "journalctl --user -u peace-paths-fast.service --since '1 day ago' --no-pager | tail -30"
-ssh erez@192.168.2.121 "journalctl --user -u peace-paths-daily.service --since '1 day ago' --no-pager | tail -30"
+ssh erez@<AI_SERVER_IP> "journalctl --user -u peace-paths-fast.service --since '1 day ago' --no-pager | tail -30"
+ssh erez@<AI_SERVER_IP> "journalctl --user -u peace-paths-daily.service --since '1 day ago' --no-pager | tail -30"
 
 # Check lock/status
-ssh erez@192.168.2.121 "python3 ~/peace-paths/ai-analyze-prod.py --status"
+ssh erez@<AI_SERVER_IP> "python3 ~/peace-paths/ai-analyze-prod.py --status"
 
 # Restart timers after editing unit files
-ssh erez@192.168.2.121 "systemctl --user daemon-reload && systemctl --user restart peace-paths-fast.timer peace-paths-daily.timer"
+ssh erez@<AI_SERVER_IP> "systemctl --user daemon-reload && systemctl --user restart peace-paths-fast.timer peace-paths-daily.timer"
 
 # Stop / Start updates
-ssh erez@192.168.2.121 "~/peace-paths/stop-updates.sh"
-ssh erez@192.168.2.121 "~/peace-paths/start-updates.sh"
+ssh erez@<AI_SERVER_IP> "~/peace-paths/stop-updates.sh"
+ssh erez@<AI_SERVER_IP> "~/peace-paths/start-updates.sh"
 ```
 
 ### Syncing code to server
 
 After editing `ai-analyze-prod.py` or config files locally:
 ```bash
-scp ai-analyze-prod.py prompts.json rss-feeds.json source-profiles.json stakeholders.json taxonomy.json erez@192.168.2.121:~/peace-paths/
+scp ai-analyze-prod.py prompts.json rss-feeds.json source-profiles.json stakeholders.json taxonomy.json erez@<AI_SERVER_IP>:~/peace-paths/
 ```
 
 ### Lock mechanism

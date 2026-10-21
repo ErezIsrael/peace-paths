@@ -384,10 +384,10 @@
   <div id="auCountdown" style="margin-top:10px;font-size:11px;color:#6e7681;text-align:center"></div>
 </div>
 
-<!-- Server Updates Panel (AI server 192.168.2.121) -->
+<!-- Server Updates Panel (AI server — LAN IP in .env, never hardcoded) -->
 <div id="serverPanel" style="display:none">
   <div class="toolbar" id="serverToolbar">
-    <span style="font-size:11px;color:#8b949e">Production updates run on the <b>AI server</b> (<code style="color:#58a6ff">192.168.2.121</code>) via systemd timers. Trigger them manually below and stream the live log.</span>
+    <span style="font-size:11px;color:#8b949e">Production updates run on the <b>AI server</b> via systemd timers. Trigger them manually below and stream the live log.</span>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:700px;margin-top:8px">
     <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px">
@@ -1470,7 +1470,7 @@ async function disableBothUpdates() {
 }
 
 /* ── Narratives Editor ─────────────────────────────── */
-/* ── AI Server updates (192.168.2.121) ─────────────── */
+/* ── AI Server updates (LAN IP in .env, never hardcoded) ─── */
 const SRV_API = '/api/server';
 let srvLogTimer = null;
 let srvLogMode = 'fast';
