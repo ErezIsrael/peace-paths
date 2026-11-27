@@ -256,6 +256,34 @@ Rules that keep this working:
   collapsible is a real `<button aria-expanded aria-controls>`. Keep the contrast floor
   `--text-dim ≥ 5.9:1` on `--card` and don't reintroduce `href="#"` action links or
   `div onclick` toggles.
+- **Fast-run cost:** a steady-state fast run is ~10 s, not ~130 s. It stays that way only if
+  `.state/seen.json` and `.state/translation-cache.json` survive (see below). If the journal
+  starts showing whole-window re-classification, those stores are gone or the keys changed.
+- **Batch classification:** `_batch_classify()` appends its own output contract to the classifier
+  system prompt (one `{"results": […]}` array, one object per article, same order). The shared
+  single-article prompt plus `response_format: json_object` makes the model answer for the first
+  article only, and the whole batch is then redone one call per article. Check the journal for
+  `⚠ Batch JSON parse failed` after any prompt change.
+- **Event resolution:** similarity is IDF-weighted over title+snippet inside a solution bucket,
+  threshold 0.52, entity-gated, with a headline-subset rule. Judge any change with
+  `python tools/check-clustering.py --fixture tests/fixtures/articles-2026-11-27.json` — it prints
+  the old rule's merge groups next to the new rule's. 0.45 already merges different events that
+  merely share a topic.
+
+### Pipeline runtime state (`.state/`, gitignored, server-owned)
+
+Never hand-edit or commit these; they are the pipeline's memory between runs, and the server's
+ copies are the live ones.
+
+| File | What it is | If it is lost |
+|---|---|---|
+| `.state/translation-cache.json` | hashed `(lang, text)` → translation, 8 000-entry cap | every event title gets re-translated; translation was ~80% of a fast run's wall clock |
+| `.state/seen.json` | articles with a definitive outcome in the last 30 days (link minus tracking params + title + source) | the whole 6 h window is re-classified — slower, and LLM verdicts can flip between runs |
+
+Articles whose classification was an AI refusal or a keyword fallback are deliberately **not**
+marked seen, so they get retried next run. `FAST_AGE_HOURS = 6` overlaps consecutive fast runs
+so a delayed or skipped run cannot lose news; do not shrink it back to 2 h now that the seen
+store makes the overlap free.
 
 ### Lock mechanism
 
