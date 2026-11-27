@@ -54,7 +54,6 @@ import re
 import html
 import time
 import hashlib
-import fcntl
 import signal
 import concurrent.futures
 from datetime import datetime, timezone
@@ -398,23 +397,30 @@ _DEFAULT_PROMPTS = {
         ),
     },
     "narrative": {
-        "system": "Middle East peace analyst. Generate layered trilingual narrative. Output ONLY valid JSON.",
+        "system": "Middle East peace analyst. You maintain a long-term memory of each peace initiative. Generate layered trilingual narrative. Output ONLY valid JSON.",
         "user": (
             "Generate layered narrative for: {SOLUTION_NAME}\n"
             "Phase: {CURRENT_PHASE} (index {PHASE_INDEX}/{PHASE_COUNT})\n"
             "Direction: {DIRECTION}\n\n"
-            "Clustered events (by effective_signal):\n{EVENTS_TEXT}\n\n"
-            "Previous longTerm: {PREV_LONG_TERM}\n"
+            "=== LONG-TERM MEMORY (accumulated over months) ===\n"
+            "Previous longTerm:\n{PREV_LONG_TERM}\n\n"
+            "Milestones so far:\n{MILESTONES_TEXT}\n\n"
+            "Weekly history (oldest to newest):\n{WEEKLY_HISTORY_TEXT}\n\n"
+            "=== EVENTS FROM THE LAST 7 DAYS (numbered, by effective_signal) ===\n"
+            "{EVENTS_TEXT}\n\n"
             "Previous shifts: {PREV_SHIFTS}\n\n"
             "Generate JSON with en/he/ar translations:\n"
             '{"longTerm": {"en":"...","he":"...","ar":"..."}, "weeklyHighlight": {...},\n'
-            ' "keyEvents": [...], "keyOpinions": [...], "shifts": [...]}\n\n'
-            "longTerm: 2-4 sentences, macro arc. Only change if fundamentally shifted.\n"
-            "weeklyHighlight: 1-2 sentences, what happened this period.\n"
-            "keyEvents: Top 3-5 reporting/analysis by effective_signal.\n"
-            "keyOpinions: Top 2-3 opinion pieces.\n"
-            "shifts: Narrative-changing events this period.\n"
-            "Translate ALL text to en, he, ar. Use effective_signal to prioritize."
+            ' "keyEventIndices": [...], "keyOpinionIndices": [...], "shifts": [...],\n'
+            ' "milestoneUpdates": [{"date":"YYYY-MM-DD","en":"..."}]}\n\n'
+            "Field rules:\n"
+            "longTerm (3-6 sentences): The initiative's trajectory over its FULL history — origin, key turning points (draw on the milestones and weekly history), and where it stands now. Rewrite it by incorporating the last 7 days' developments; do NOT merely repeat the previous longTerm. Only revise the overall trajectory if it fundamentally shifted.\n"
+            "weeklyHighlight (4-8 sentences): A detailed report of the LAST 7 DAYS from the events above: main developments with dates and named actors, new proposals or statements, setbacks or violence, and what to watch next week.\n"
+            "keyEventIndices: indices [i] of the top 3-5 reporting/analysis by effective_signal.\n"
+            "keyOpinionIndices: indices [i] of the top 2-3 opinion pieces.\n"
+            "shifts: Narrative-changing events in the last 7 days.\n"
+            "milestoneUpdates: ONLY events from the last 7 days that are genuine turning points for the long-term arc (0-2 items). Empty array if none.\n"
+            "Translate longTerm and weeklyHighlight to en, he, ar. Use effective_signal to prioritize."
         ),
     },
     "research": {
@@ -1270,10 +1276,12 @@ def generate_narratives(clustered_by_solution, cat_map, existing_data, force_nar
         # Sort by effective_signal desc
         events_sorted = sorted(events, key=lambda e: e.get("effective_signal", 0), reverse=True)
         
-        # Get previous narrative
+        # Get previous narrative + long-term memory
         prev_narrative = None
         prev_long_term = ""
         prev_shifts = []
+        prev_milestones = []
+        prev_weekly_history = []
         if existing_data:
             for sol in existing_data.get("solutions", []):
                 if sol["id"] == sol_id:
@@ -1282,6 +1290,8 @@ def generate_narratives(clustered_by_solution, cat_map, existing_data, force_nar
                         lt = prev_narrative.get("longTerm", "")
                         prev_long_term = lt if isinstance(lt, str) else lt.get("en", "")
                         prev_shifts = prev_narrative.get("shifts", [])
+                        prev_milestones = prev_narrative.get("milestones", [])
+                        prev_weekly_history = prev_narrative.get("weeklyHistory", [])
                     break
         
         # Determine current phase
@@ -1296,16 +1306,9 @@ def generate_narratives(clustered_by_solution, cat_map, existing_data, force_nar
         current_phase_raw = phases[phase_index] if phase_index < len(phases) else "Unknown"
         current_phase = current_phase_raw.get("en", str(current_phase_raw)) if isinstance(current_phase_raw, dict) else current_phase_raw
         
-        # Focus on NEW events since last run (fall back to top events if none are new)
-        prev_links = set()
-        if existing_data:
-            for sol in existing_data.get("solutions", []):
-                if sol["id"] == sol_id:
-                    for e in sol.get("events", []):
-                        if e.get("link"):
-                            prev_links.add(e["link"].strip().lower())
-        new_events = [e for e in events_sorted if e.get("link", "").strip().lower() not in prev_links]
-        featured = (new_events or events_sorted)[:10]
+        # The narrative describes the FULL window (7 days on daily runs) —
+        # use the top events from it, not just events new since the last run.
+        featured = events_sorted[:15]
 
         # Build numbered events text (code attaches metadata from these indices later)
         events_text = ""
@@ -1315,8 +1318,14 @@ def generate_narratives(clustered_by_solution, cat_map, existing_data, force_nar
             snip_str = f" — {snip}" if snip else ""
             events_text += f"  [{i}] [{ev['type']}] signal={ev['effective_signal']} {ev['title']} ({ev['source']}, {ev.get('date', '')[:10]}){att_str}{snip_str}\n"
         
-        # Build shifts text
+        # Build long-term memory texts
         shifts_text = json.dumps(prev_shifts, ensure_ascii=False)[:500]
+        milestones_text = "\n".join(
+            f"  - {m.get('date', '?')}: {m.get('en', '')}" for m in prev_milestones[-15:]
+        ) or "None yet."
+        weekly_history_text = "\n".join(
+            f"  - {h.get('week', '')}: {h.get('en', '')}" for h in prev_weekly_history[-12:]
+        ) or "None yet."
         
         prompt = PROMPTS["narrative"]["user"].format(
             SOLUTION_NAME=cat["name"],
@@ -1325,7 +1334,9 @@ def generate_narratives(clustered_by_solution, cat_map, existing_data, force_nar
             PHASE_COUNT=len(phases),
             DIRECTION=existing_data and next((s.get("direction", "stable") for s in existing_data.get("solutions", []) if s["id"] == sol_id), "stable") or "stable",
             EVENTS_TEXT=events_text,
-            PREV_LONG_TERM=prev_long_term,
+            PREV_LONG_TERM=prev_long_term or "None yet (first run).",
+            MILESTONES_TEXT=milestones_text,
+            WEEKLY_HISTORY_TEXT=weekly_history_text,
             PREV_SHIFTS=shifts_text,
         )
         
@@ -1369,11 +1380,31 @@ def generate_narratives(clustered_by_solution, cat_map, existing_data, force_nar
             ]
             result.pop("keyEventIndices", None)
             result.pop("keyOpinionIndices", None)
+            
+            # Update long-term memory: milestones + rolling weekly history
+            milestones = list(prev_milestones)
+            for mu in result.pop("milestoneUpdates", []) or []:
+                if isinstance(mu, dict) and mu.get("en"):
+                    milestones.append({"date": str(mu.get("date", ""))[:10], "en": str(mu["en"])[:300]})
+            result["milestones"] = milestones[-15:]
+            
+            wh_obj = result.get("weeklyHighlight", {})
+            wh_en = wh_obj.get("en", "") if isinstance(wh_obj, dict) else str(wh_obj)
+            today = datetime.now(timezone.utc)
+            week_key = f"{today.isocalendar()[0]}-W{today.isocalendar()[1]:02d}"
+            history = [h for h in prev_weekly_history if h.get("week") != week_key]
+            if wh_en.strip():
+                history.append({"week": week_key, "date": today.strftime("%Y-%m-%d"), "en": wh_en.strip()[:600]})
+            result["weeklyHistory"] = history[-12:]
+            
             narratives[sol_id] = result
             print(f"  ✓ {cat['name']}: narrative generated")
         else:
-            # Fallback: create minimal narrative
-            narratives[sol_id] = _fallback_narrative(cat, events_sorted, prev_long_term)
+            # Fallback: create minimal narrative (keep long-term memory intact)
+            fallback = _fallback_narrative(cat, events_sorted, prev_long_term)
+            fallback["milestones"] = prev_milestones
+            fallback["weeklyHistory"] = prev_weekly_history
+            narratives[sol_id] = fallback
             print(f"  ⚠ {cat['name']}: fallback narrative")
     
     return narratives
@@ -2351,9 +2382,13 @@ def _merge_with_existing(data, existing, ai_phases=None, narratives=None, stakeh
     for s in all_solutions:
         counts[s["direction"]] += 1
     
-    all_solutions.sort(key=lambda s: len(s.get("events", [])), reverse=True)
-    existing["solutions"] = all_solutions[:8]
-    existing["activeSolutions"] = [s["id"] for s in existing["solutions"]]
+    # Keep top 8 active solutions; keep inactive ones (carried-over long-term
+    # memory, no events this week) so they aren't dropped between daily runs.
+    active_sols = [s for s in all_solutions if s.get("events")]
+    inactive_sols = [s for s in all_solutions if not s.get("events")]
+    active_sols.sort(key=lambda s: len(s.get("events", [])), reverse=True)
+    existing["solutions"] = active_sols[:8] + inactive_sols
+    existing["activeSolutions"] = [s["id"] for s in active_sols[:8]]
     
     if counts["advancing"] > counts["stalling"]:
         m_dir, m_label = "advancing", "Net Positive"
@@ -2573,6 +2608,7 @@ def main():
     if args.fetch_only:
         classified_pairs = keyword_classify(articles, all_kws)
         ai_refusals = 0
+        kw_fallback = len(classified_pairs)
     else:
         classified_pairs, ai_refusals, kw_fallback = classify_articles(articles, system_prompt, valid_ids, source_profiles)
         if not classified_pairs:
@@ -2617,6 +2653,17 @@ def main():
     
     # 7. Build output
     data = build_output(clustered_by_solution, cat_map, narratives, ai_phases, stakeholders)
+    
+    # 7.5 Carry over solutions with no events this week (daily only) so their
+    # long-term memory (milestones, weekly history, longTerm) survives the
+    # weekly overwrite. They stay out of activeSolutions (hidden from the UI).
+    if mode == "daily" and existing_data:
+        new_ids = {s["id"] for s in data["solutions"]}
+        for old_sol in existing_data.get("solutions", []):
+            if old_sol["id"] not in new_ids:
+                carried = dict(old_sol)
+                carried["events"] = []
+                data["solutions"].append(carried)
     
     # 8. Shift Detection (daily only)
     if mode == "daily" and existing_data:
