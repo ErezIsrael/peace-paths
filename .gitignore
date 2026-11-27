@@ -78,3 +78,5 @@ research/
 
 # Lock files (runtime only, prevents concurrent updates)
 .locks/
+screenshots/
+temp/

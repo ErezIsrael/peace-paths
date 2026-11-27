@@ -71,8 +71,9 @@ AI-powered tracker of concrete peace initiatives across the Middle East.
 ```
 peace-paths/
 ├── ai-analyze-prod.py      # Production pipeline (two-pass, trilingual, narratives)
-├── categories.json         # AI solution categories (gitignored)
-├── rss-feeds.json          # 75 feed URLs (gitignored)
+├── categories.json         # AI solution categories (7) — committed
+├── rss-feeds.json          # Active feed URLs (72) — committed
+├── rss-feeds.retired.json  # Feeds removed for silence/errors, with reasons
 ├── prompts.json            # AI prompts (committed)
 ├── source-profiles.json    # Source bias mappings (committed)
 ├── .env                    # Secrets (gitignored)
@@ -81,6 +82,10 @@ peace-paths/
 │   ├── app.js              # Frontend logic (default: Hebrew)
 │   ├── styles.css          # Alternating card colors, narrative layout
 │   ├── translations.json   # Trilingual UI strings
+│   ├── fonts/              # Subset WOFF2 built by tools/build-fonts.py (committed)
+│   ├── og.png              # Social preview card (tools/build-og.py)
+│   ├── 404.html            # Real 404 (Pages SPA fallback otherwise serves index.html)
+│   ├── _headers            # Asset caching rules
 │   └── data.json           # Generated (gitignored, uploaded to KV)
 ├── test/                   # TEST — mirrors app/
 │   ├── app/                # Copy of app/ for local verification
@@ -104,15 +109,18 @@ peace-paths/
 
 | Item | Value |
 |------|-------|
-| RSS feeds | 75 sources in `rss-feeds.json` (gitignored) |
-| Classification | Two-pass hybrid: keyword filter + batch LLM (size 10) |
+| RSS feeds | 72 active in `rss-feeds.json`; 17 retired in `rss-feeds.retired.json` |
+| Classification | Two-pass hybrid: keyword filter + batch LLM (size 25) |
 | LLM | llama.cpp at local network — set via `LLAMA_CPP_URL` env var |
 | AI model | Configurable via `AI_MODEL` env var (default: `Qwen3.6-27B`) |
 | Translation | LLM-based with domain glossary (`_batch_translate_dual`) |
-| Categories | Defined in `categories.json` (gitignored) |
+| Categories | Defined in `categories.json` (committed) |
 | KV namespace | `peace-data` (`badf4fb7acfe4d1c905db77ed8d5e70f`) |
 | Default language | Hebrew (RTL) |
 | Env vars | `LLAMA_CPP_URL`, `AI_MODEL`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` |
+| Published payload | KV holds the **publish view** of `app/data.json` — compact JSON, fields the UI never reads dropped (`events[].snippet`, `narrative.milestones`/`weeklyHistory`). ~180 KB raw / ~56 KB brotli. The local file stays the long-term memory (~400 KB) and is deliberately larger. |
+| `/data.json` caching | Served by `functions/data.json.js` with `s-maxage=120, stale-while-revalidate=600` + KV `cacheTtl: 60`. Without it every page view was a `no-store` Pages Function call and a KV read. |
+| Fonts | `tools/build-fonts.py` subsets Heebo (HE/LT) and Noto Naskh Arabic into `app/fonts/*.woff2`; `styles.css` selects them by `unicode-range` so Arabic glyph data is only fetched in Arabic mode. The old `inter-variable.ttf` had **no Hebrew or Arabic glyphs** — Hebrew was falling back to a system font. Regenerate after changing the site's text; `--dry-run` prints codepoint coverage. |
 
 ---
 
@@ -200,12 +208,41 @@ ssh erez@<AI_SERVER_IP> "~/peace-paths/stop-updates.sh"
 ssh erez@<AI_SERVER_IP> "~/peace-paths/start-updates.sh"
 ```
 
-### Syncing code to server
+### Deploying pipeline changes to the server — git, not scp
 
-After editing `ai-analyze-prod.py` or config files locally:
+Both update services run `git pull --ff-only origin main` as `ExecStartPre` before the
+pipeline starts, so **committing and pushing deploys** `ai-analyze-prod.py`, `prompts.json`,
+`rss-feeds.json`, `categories.json`, etc. No `scp` step.
+
 ```bash
-scp ai-analyze-prod.py prompts.json rss-feeds.json source-profiles.json stakeholders.json taxonomy.json erez@<AI_SERVER_IP>:~/peace-paths/
+git add -A && git commit -m "..." && git push origin main      # live on next run
+ssh erez@<AI_SERVER_IP> "cd ~/peace-paths && git pull --ff-only origin main"   # or take effect now
 ```
+
+Rules that keep this working:
+- **Never edit files on the server by hand** — the pull is `--ff-only` and a local edit will
+  block it. The last known-good copy of the runtime state is in `~/peace-paths-presync/`
+  (`app/data.json`, `categories.json`, `rss-feeds.json`).
+- `app/data.json` on the server is the pipeline's **long-term memory** (milestones, weekly
+  history, narratives). It is gitignored and must never be deleted or overwritten by a sync.
+- To change the schedule/units: edit `~/.config/systemd/user/peace-paths-{fast,daily}.{service,timer}`
+  then `systemctl --user daemon-reload`. Back up the unit first; they are not in git.
+
+### Site invariants (measured, do not regress silently)
+
+- **Payload:** the pipeline logs `publishing N KB (local data.json is M KB)`. KV holds the
+  slim publish view (~180 KB raw / ~56 KB brotli); the on-disk file stays the full memory.
+  If you add a field to the publish view, the frontend must actually read it — otherwise
+  drop it in `_publish_view()`.
+- **Caching:** `/data.json` must keep a cacheable `Cache-Control` (`functions/data.json.js`).
+  `no-store` there means one KV read + one Function invocation per page view.
+- **Fonts:** Hebrew/Arabic text requires `app/fonts/heebo-hebrew.woff2` (+ Arabic subset).
+  Regenerate with `python tools/build-fonts.py`; check `--dry-run` coverage before changing
+  the typeface. Never hand-add a TTF: an uncovered script silently falls back to system fonts.
+- **Contrast & keyboard:** the dark and light themes measure 0 WCAG AA failures, and every
+  collapsible is a real `<button aria-expanded aria-controls>`. Keep the contrast floor
+  `--text-dim ≥ 5.9:1` on `--card` and don't reintroduce `href="#"` action links or
+  `div onclick` toggles.
 
 ### Lock mechanism
 
