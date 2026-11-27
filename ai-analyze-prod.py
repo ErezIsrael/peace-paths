@@ -2609,7 +2609,10 @@ def build_output(clustered_events, cat_map, narratives, ai_phases=None, stakehol
             "direction": direction,
             "keyMetric": {"label": _make_trilingual("Events"), "value": str(len(events))},
             "summary": summary,
-            "events": events_list[1:],  # exclude summary event
+            # The summary event stays in the list. Dropping it here looked like a display
+            # detail, but `summary` is not read by the frontend at all: every run quietly
+            # deleted one event per solution from the archive (97 -> 96 -> 95 ...).
+            "events": events_list,
             "narrative": narrative,
             "confidence": "high" if len(events) > 5 else "medium" if len(events) > 2 else "low",
             "core": cat.get("core", False),
@@ -2828,7 +2831,8 @@ def _merge_with_existing(data, existing, ai_phases=None, narratives=None, stakeh
             _sev = sol["events"][0]
             _st = _sev.get("text", "")
             sol["summary"] = _st["en"] if isinstance(_st, dict) else _st
-            sol["events"] = sol["events"][1:]  # exclude summary
+            # (was: sol["events"] = sol["events"][1:]) — same archive-eating bug as in the
+            # build path: the summary is not rendered, so the popped event was simply lost.
         
         # Use the freshly generated narrative when available; only keep the
         # existing one (fast mode without --narrative) when nothing was generated.
