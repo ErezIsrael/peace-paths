@@ -93,7 +93,10 @@
     "lightMode": "Light mode",
     "quietTracks": "Tracks with no new developments",
     "noNewDevelopments": "no new developments",
-    "lastActivity": "last activity:"
+    "lastActivity": "last activity:",
+    "allEvents": "All events",
+    "loadingArchive": "Loading archive…",
+    "archiveError": "The archive is unavailable right now."
   },
   "he": {
     "siteTitle": "נתיבי השלום",
@@ -189,7 +192,10 @@
     "lightMode": "מצב בהיר",
     "quietTracks": "מהלכים ללא התפתחויות חדשות",
     "noNewDevelopments": "ללא התפתחויות חדשות",
-    "lastActivity": "פעילות אחרונה:"
+    "lastActivity": "פעילות אחרונה:",
+    "allEvents": "כל האירועים",
+    "loadingArchive": "טוען ארכיון…",
+    "archiveError": "הארכיון אינו זמין כרגע."
   },
   "ar": {
     "siteTitle": "مسارات السلام",
@@ -285,6 +291,9 @@
     "lightMode": "الوضع الفاتح",
     "quietTracks": "مسارات بلا تطورات جديدة",
     "noNewDevelopments": "بلا تطورات جديدة",
-    "lastActivity": "آخر نشاط:"
+    "lastActivity": "آخر نشاط:",
+    "allEvents": "جميع الأحداث",
+    "loadingArchive": "جارٍ تحميل الأرشيف…",
+    "archiveError": "الأرشيف غير متاح الآن."
   }
 }

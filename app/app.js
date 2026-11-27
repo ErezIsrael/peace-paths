@@ -8,7 +8,7 @@ const MOMENTUM_CONFIG_KEYS = {
   stalling: 'momentumStalling',
 };
 
-const APP_VERSION = 'v0.7.1';
+const APP_VERSION = 'v0.7.2';
 
 // Escape untrusted (feed-derived) text before interpolating into innerHTML
 function esc(s) {
@@ -340,24 +340,35 @@ function renderMomentum(momentum) {
 /* ── Activity Feed ───────────────────────────────────── */
 function buildActivityFeed() {
   const all = [];
-  (data.solutions || []).forEach(sol => {
-    (sol.events || []).forEach(ev => {
-      // Skip events that have no usable text in the current language
-      const txt = ev.text;
-      let hasLangText = false;
-      if (typeof txt === 'string') {
-        // Plain string — check script for RTL languages
-        hasLangText = (currentLang === 'en') || hasScriptText(currentLang, sanitizeText(txt));
-      } else if (txt && txt[currentLang] && txt[currentLang].trim()) {
-        // Has field for current lang — check script for RTL (after sanitizing JSON arrays)
-        const sanitized = sanitizeText(txt[currentLang]);
-        hasLangText = (currentLang === 'en') || hasScriptText(currentLang, sanitized);
-      }
-      // In RTL mode, do NOT fall back to English — skip untranslated events
-      if (!hasLangText) return;
-      all.push({ ...ev, solutionId: sol.id, solutionName: getLangText(sol.name, '') });
+  const nameById = {};
+  (data.solutions || []).forEach(s => { nameById[s.id] = getLangText(s.name, ''); });
+
+  // Usable in the current language? RTL builds must not fall back to English.
+  const usableInLang = (txt) => {
+    if (typeof txt === 'string') {
+      return (currentLang === 'en') || hasScriptText(currentLang, sanitizeText(txt));
+    }
+    if (txt && txt[currentLang] && txt[currentLang].trim()) {
+      const sanitized = sanitizeText(txt[currentLang]);
+      return (currentLang === 'en') || hasScriptText(currentLang, sanitized);
+    }
+    return false;
+  };
+
+  if (data.recentEvents && data.recentEvents.length) {
+    // New shape: the pipeline ships the recent events once, globally.
+    data.recentEvents.forEach(ev => {
+      if (!usableInLang(ev.text)) return;
+      all.push({ ...ev, solutionId: ev.solutionId, solutionName: nameById[ev.solutionId] || '' });
     });
-  });
+  } else {
+    (data.solutions || []).forEach(sol => {
+      (sol.events || []).forEach(ev => {
+        if (!usableInLang(ev.text)) return;
+        all.push({ ...ev, solutionId: sol.id, solutionName: getLangText(sol.name, '') });
+      });
+    });
+  }
   all.sort((a, b) => {
     const da = parseDate(a.date) || new Date(0);
     const db = parseDate(b.date) || new Date(0);
@@ -473,6 +484,77 @@ function typeBadge(type) {
   const labels = { reporting: t('reporting'), analysis: t('analysis'), opinion: t('opinion') };
   const label = labels[type] || type;
   return `<span class="type-badge type-${type}">${label}</span>`;
+}
+
+/* ── Event archives (lazy) ─────────────────────────────
+   data.json used to carry every event of every solution — 110 KB, 59% of the
+   payload — while the UI showed four of them in the activity feed and never
+   listed the rest. The recent ones the feed needs stay inline; the full history
+   of a solution now lives in KV at events/<id>.json and is fetched on demand
+   (only when data.eventsFiles says the pipeline published them). */
+const eventArchive = new Map();   // solutionId -> events[]
+
+async function fetchEventArchive(solutionId) {
+  if (eventArchive.has(solutionId)) return eventArchive.get(solutionId);
+  try {
+    const res = await fetch(`events/${encodeURIComponent(solutionId)}.json`, { headers: { accept: 'application/json' } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const list = Array.isArray(json) ? json : (json.events || []);
+    eventArchive.set(solutionId, list);
+    return list;
+  } catch (err) {
+    console.warn('event archive unavailable:', solutionId, err.message);
+    return null;   // not cached, so the next click retries
+  }
+}
+
+function archiveEventRow(ev) {
+  const title = getLangText(ev.text, '') || (ev.text && ev.text.en ? sanitizeText(ev.text.en) : '');
+  if (!title) return '';
+  const when = ev.date ? formatTime(ev.date) : '';
+  const inner = `
+    <span class="lc-event-date">${esc(when)}</span>
+    ${typeBadge(ev.type || 'reporting')}
+    <span class="lc-signal">${esc(ev.effective_signal || ev.signal_score || '?')}</span>
+    ${ev.link ? `<a href="${esc(ev.link)}" target="_blank" rel="noopener" class="lc-event-title">${esc(title)}</a>` : `<span class="lc-event-title">${esc(title)}</span>`}
+    <span class="lc-source">${esc(ev.source || '')}</span>
+  `;
+  return `<div class="lc-event-item">${inner}</div>`;
+}
+
+function buildArchiveLayer(solution) {
+  const total = solution.eventCount != null ? solution.eventCount : (solution.events || []).length;
+  if (!(data && data.eventsFiles) || total <= 0) return null;
+
+  const layer = document.createElement('div');
+  layer.className = 'lc-layer lc-layer-archive';
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'lc-layer-title collapsible-toggle';
+  btn.textContent = `\ud83d\udcc2 ${t('allEvents')} (${total})`;
+
+  const body = document.createElement('div');
+  body.className = 'collapsible-body';
+  body.innerHTML = `<div class="lc-archive-note" role="status">${esc(t('loadingArchive'))}</div>`;
+
+  let loaded = eventArchive.get(solution.id);
+  if (loaded) body.innerHTML = loaded.map(archiveEventRow).join('');
+
+  btn.addEventListener('click', async () => {
+    if (body.dataset.loaded) return;
+    const list = await fetchEventArchive(solution.id);
+    if (!list) {
+      body.innerHTML = `<div class="lc-archive-note">${esc(t('archiveError'))}</div>`;
+      return;
+    }
+    body.dataset.loaded = '1';
+    body.innerHTML = list.map(ev => archiveEventRow({ ...ev, solutionId: solution.id })).join('');
+  });
+
+  layer.append(btn, body);
+  return layer;
 }
 
 /* ── Solution Cards (Concept J — Layered Narrative) ──── */
@@ -660,6 +742,10 @@ function buildLayeredCard(solution) {
       wrapper.appendChild(layer);
     }
   }
+
+  // Full event history, fetched from KV on first open.
+  const archive = buildArchiveLayer(solution);
+  if (archive) wrapper.appendChild(archive);
 
   return wrapper;
 }
