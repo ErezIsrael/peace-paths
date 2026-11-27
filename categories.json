@@ -1,0 +1,339 @@
+[
+  {
+    "id": "india-middle-east-europe-economic-corridor",
+    "icon": "🌍",
+    "name": {
+      "en": "IMEC Trade Corridor",
+      "he": "מסדרון המסחר IMEC",
+      "ar": "ممر التجارة IMEC"
+    },
+    "description": "The India-Middle East-Europe Economic Corridor (IMEC) is a multimodal rail-and-shipping route linking India to Europe via the Gulf. Paused by the Gaza war, it is now reviving as India, the UAE, and the US push bilateral progress toward construction.",
+    "phases": [
+      {
+        "en": "G20 Declaration and MoU Signing",
+        "he": "הצהרת G20 וחתימת הסכם כוונות",
+        "ar": "إعلان مجموعة العشرين وتوقيع مذكرة تفاهم"
+      },
+      {
+        "en": "Bilateral Framework Agreements",
+        "he": "הסכמי מסגרת דו-צדדיים",
+        "ar": "اتفاقيات إطار ثنائية"
+      },
+      {
+        "en": "Feasibility Studies and Route Mapping",
+        "he": "מחקרי כדאיות ומיפוי מסלולים",
+        "ar": "دراسات جدوى ورسم خرائط المسارات"
+      },
+      {
+        "en": "Infrastructure Financing and Construction",
+        "he": "מימון תשתיות ובנייה",
+        "ar": "تمويل البنية التحتية والإنشاءات"
+      },
+      {
+        "en": "Operational Launch and Trade Integration",
+        "he": "השקת פעילות ואינטגרציה מסחרית",
+        "ar": "الإطلاق التشغيلي ودمج التجارة"
+      }
+    ],
+    "keywords": [
+      "IMEC",
+      "India",
+      "rail link",
+      "shipping route",
+      "trade corridor",
+      "Silk Route"
+    ],
+    "core": true
+  },
+  {
+    "id": "geneva-initiative",
+    "icon": "🕊️",
+    "name": {
+      "en": "Two-State Solution",
+      "he": "פתרון שתי מדינות",
+      "ar": "حل الدولتين"
+    },
+    "description": "The pursuit of a Palestinian state alongside Israel, tracked through the Geneva Initiative's Two-State Index and diplomatic efforts by Saudi Arabia, France, and the UN. Conditions are perilously fragile as settlements accelerate and Gaza war aftermath deepens.",
+    "phases": [
+      {
+        "en": "Civil Society Drafting and Launch",
+        "he": "ניסוח והשקת החברה האזרחית",
+        "ar": "صياغة المجتمع المدني والإطلاق"
+      },
+      {
+        "en": "International Support and Government Rejection",
+        "he": "תמיכה בינלאומית ודחייה ממשלתית",
+        "ar": "الدعم الدولي ورفض الحكومة"
+      },
+      {
+        "en": "Two-State Index Monitoring",
+        "he": "ניטור מדד שתי המדינות",
+        "ar": "مراقبة مؤشر حل الدولتين"
+      },
+      {
+        "en": "Diplomatic Revival and State Recognition",
+        "he": "חידוש דיפלומטי והכרה במדינה",
+        "ar": "إحياء الدبلوماسية واعتراف بالدولة"
+      },
+      {
+        "en": "Negotiated Two-State Implementation",
+        "he": "יישום פתרון שתי מדינות במשא ומתן",
+        "ar": "تنفيذ حل الدولتين المتفاوض عليه"
+      }
+    ],
+    "keywords": [
+      "two-state solution",
+      "Palestinian state",
+      "Geneva Initiative",
+      "Two-State Index",
+      "TSI",
+      "mutual recognition",
+      "Saudi-France conference"
+    ],
+    "core": true
+  },
+  {
+    "id": "abraham-accords",
+    "icon": "🤝",
+    "name": {
+      "en": "Abraham Accords Expansion",
+      "he": "הרחבת הסכמי אברהם",
+      "ar": "توسيع اتفاقيات أبراهام"
+    },
+    "description": "Trump's push to expand the Abraham Accords beyond the original signatories (UAE, Bahrain, Sudan, Morocco) to include Saudi Arabia, Qatar, Turkey, Pakistan, and others — tied to a broader Iran deal and regional realignment.",
+    "phases": [
+      {
+        "en": "Diplomatic Outreach and Proposals",
+        "he": "יוזמות דיפלומטיות והצעות",
+        "ar": "المبادرات والدبلوماسية والمقترحات"
+      },
+      {
+        "en": "Bilateral Framework Agreements",
+        "he": "הסכמי מסגרת דו-צדדיים",
+        "ar": "اتفاقيات إطار ثنائية"
+      },
+      {
+        "en": "Public Normalization Announcements",
+        "he": "הכרזות נרמול ציבוריות",
+        "ar": "إعلانات التطبيع العلنية"
+      },
+      {
+        "en": "Embassies and Trade Relations Established",
+        "he": "הקמת שגרירויות וקשרי מסחר",
+        "ar": "تأسيس السفارات وعلاقات التجارة"
+      },
+      {
+        "en": "Regional Integration Network",
+        "he": "רשת אינטגרציה אזורית",
+        "ar": "شبكة التكامل الإقليمي"
+      }
+    ],
+    "keywords": [
+      "Abraham Accords",
+      "Bahrain",
+      "MBS",
+      "Pakistan",
+      "Sudan"
+    ],
+    "core": true
+  },
+  {
+    "id": "20-point-gaza-peace-plan",
+    "icon": "🏗️",
+    "name": {
+      "en": "Gaza Peace Plan",
+      "he": "תוכנית השלום בעזה",
+      "ar": "خطة السلام في غزة"
+    },
+    "description": "The US-brokered 20-point plan for Gaza. Phase 1 (ceasefire and hostage release) completed in Oct 2025. Phase 2 (demilitarization, technocratic governance via NCAG, and Board of Peace) launched Jan 2026 but stalled over Hamas disarmament deadlock and Israeli attacks.",
+    "phases": [
+      {
+        "en": "Ceasefire and Hostage Release (Complete Oct 2025)",
+        "he": "הפסקת אש ושחרור חטופים (הושלמה באוקטובר 2025)",
+        "ar": "هدنة وإطلاق سراح الرهائن (اكتمل أكتوبر 2025)"
+      },
+      {
+        "en": "NCAG and Board of Peace Formed (Jan 2026)",
+        "he": "הקמת ועדת הקואליציה הלאומית ומערכת השלום (ינואר 2026)",
+        "ar": "تأسيس لجنة التنسيق الوطنية ومجلس السلام (يناير 2026)"
+      },
+      {
+        "en": "Hamas Disarmament Negotiations (Stalled)",
+        "he": "משא ומתן על נשק חמאס (נתקע)",
+        "ar": "مفاوضات نزع سلاح حماس (متعثرة)"
+      },
+      {
+        "en": "Reconstruction and International Stabilization Force",
+        "he": "שיקום וכוח ייצוב בינלאומי",
+        "ar": "إعادة الإعمار وقوة الاستقرار الدولية"
+      },
+      {
+        "en": "Permanent Political Resolution",
+        "he": "פתרון פוליטי קבוע",
+        "ar": "حل سياسي دائم"
+      }
+    ],
+    "keywords": [
+      "Gaza",
+      "20-point plan",
+      "Hamas",
+      "Steve Witkoff",
+      "Board of Peace",
+      "NCAG",
+      "demilitarization",
+      "disarmament",
+      "technocratic governance",
+      "International Stabilization Force",
+      "Palestine"
+    ],
+    "core": true
+  },
+  {
+    "id": "israeli-annexation-of-the-west-bank",
+    "icon": "🗺️",
+    "name": {
+      "en": "West Bank De Facto Annexation",
+      "he": "סיפוח דה פקטו של השומרון",
+      "ar": "الضم الفعلي للضفة الغربية"
+    },
+    "description": "Israel's accelerating de facto annexation of the West Bank through settlement expansion, Area C land registration, and administrative dispossession. Formal annexation was dropped in Sept 2025, but Smotrich's alternative measures are making it irreversible.",
+    "phases": [
+      {
+        "en": "Political Rhetoric and Coalition Mandate",
+        "he": "רטוריקה פוליטית ומנדט קואליציוני",
+        "ar": "الخطاب السياسي والولاية الائتلافية"
+      },
+      {
+        "en": "Settlement Expansion and Housing Approvals",
+        "he": "הרחבת יישובים ואישורי דיור",
+        "ar": "توسع المستوطنات والموافقات السكنية"
+      },
+      {
+        "en": "Land Registration and Administrative Control",
+        "he": "רישום קרקעות ושליטה מנהלית",
+        "ar": "تسجيل الأراضي والسيطرة الإدارية"
+      },
+      {
+        "en": "De Facto Annexation Entrenched",
+        "he": "סיפוח דה פקטו מושרש",
+        "ar": "الاحتلال الفعلي الراسخ"
+      },
+      {
+        "en": "Formal Annexation or International Intervention",
+        "he": "סיפוח רשמי או התערבות בינלאומית",
+        "ar": "الاحتلال الرسمي أو التدخل الدولي"
+      }
+    ],
+    "keywords": [
+      "West Bank",
+      "annexation",
+      "Area C",
+      "settlements",
+      "Smotrich",
+      "land registration",
+      "Seam Zone",
+      "Al-Haq"
+    ],
+    "core": true
+  },
+  {
+    "id": "iran-us-peace-process",
+    "icon": "☢️",
+    "name": {
+      "en": "Iran-US Peace Process",
+      "he": "תהליך השלום בין איראן לארה\"ב",
+      "ar": "عملية السلام الإيرانية الأمريكية"
+    },
+    "description": "The diplomatic process following the 2026 Iran war (Operation Roaring Lion). A tentative 60-day ceasefire extension was agreed May 2026, mediated by Pakistan and Qatar, launching nuclear program negotiations. Trump's maximalist goals have shrunk to a fragile extension.",
+    "phases": [
+      {
+        "en": "Military Conflict and Ceasefire",
+        "he": "סכסוך צבאי והפסקת אש",
+        "ar": "النزاع العسكري ووقف إطلاق النار"
+      },
+      {
+        "en": "Ceasefire Extensions and Mediation",
+        "he": "הארכת הפסקת אש וגישור",
+        "ar": "تمديدات وقف إطلاق النار والوساطة"
+      },
+      {
+        "en": "Nuclear Program Negotiations",
+        "he": "משא ומתן על תוכנית גרעינית",
+        "ar": "مفاوضات البرنامج النووي"
+      },
+      {
+        "en": "Comprehensive Peace Agreement",
+        "he": "הסכם שלום מקיף",
+        "ar": "اتفاق السلام الشامل"
+      },
+      {
+        "en": "Regional Normalization and Sanctions Relief",
+        "he": "נרמול אזורי והקלה על סנקציות",
+        "ar": "التطبيع الإقليمي وتخفيف العقوبات"
+      }
+    ],
+    "keywords": [
+      "Iran",
+      "US",
+      "ceasefire",
+      "nuclear program",
+      "Operation Roaring Lion",
+      "Pakistan mediation",
+      "Qatar mediation",
+      "Strait of Hormuz",
+      "sanctions"
+    ],
+    "core": true
+  },
+  {
+    "id": "lebanon-hezbollah-conflict",
+    "icon": "🇱🇧",
+    "name": {
+      "en": "Lebanon-Hezbollah Conflict",
+      "he": "הסכסוך לבנון-חזבאללה",
+      "ar": "الصراع بين لبنان وحزب الله"
+    },
+    "description": "The ongoing Israel-Hezbollah conflict along the Lebanon border, including cross-border strikes, UN Resolution 1701 enforcement, displacement in southern Lebanon, and diplomatic efforts for a lasting ceasefire.",
+    "phases": [
+      {
+        "en": "Cross-Border Skirmishes and Escalation",
+        "he": "מאבקים גבוליים והסלמה",
+        "ar": "اشتباكات عبر الحدود وتصعيد"
+      },
+      {
+        "en": "Intensive Fighting and Displacement",
+        "he": "לחימה אינטנסיבית והעתקת אוכלוסייה",
+        "ar": "معارك شديدة وإزاحة"
+      },
+      {
+        "en": "Ceasefire Negotiations and Mediation",
+        "he": "משא ומתן על הפסקת אש וגישור",
+        "ar": "مفاوضات وقف إطلاق النار والوساطة"
+      },
+      {
+        "en": "Ceasefire Agreement and Withdrawal",
+        "he": "הסכם הפסקת אש ונסיגה",
+        "ar": "اتفاق وقف إطلاق النار والسحب"
+      },
+      {
+        "en": "UN 1701 Enforcement and Reconciliation",
+        "he": "אכיפת החלטה 1701 של האו\"ם ופיוס",
+        "ar": "تطبيق قرار الأمم المتحدة 1701 والمصالحة"
+      }
+    ],
+    "keywords": [
+      "Hezbollah",
+      "Lebanon",
+      "southern Lebanon",
+      "UN 1701",
+      "Resolution 1701",
+      "Shebaa Farms",
+      "blue line",
+      "Lebanon ceasefire",
+      "Israel-Lebanon border",
+      "Beirut",
+      "displaced Lebanon"
+    ],
+    "core": true
+  }
+]

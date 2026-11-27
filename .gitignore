@@ -3,8 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Runtime data files — uploaded to Cloudflare, never committed
-categories.json
+# Generated runtime data — uploaded to KV, never committed
 categories-researched.json
 solutions.json
 ai_cache.json
@@ -24,9 +23,8 @@ server.log
 .wrangler/
 app/.wrangler/
 
-# Environment & private config
+# Secrets only — everything the site needs to reproduce itself is committed
 .env
-rss-feeds.json
 
 # OS
 Thumbs.db
@@ -77,9 +75,6 @@ check-phases.py
 
 # Research docs (local reference)
 research/
-
-# Stakeholders data (local reference)
-stakeholders.json
 
 # Lock files (runtime only, prevents concurrent updates)
 .locks/
