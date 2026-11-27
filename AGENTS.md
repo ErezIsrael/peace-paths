@@ -269,6 +269,17 @@ Rules that keep this working:
   `python tools/check-clustering.py --fixture tests/fixtures/articles-2026-11-27.json` — it prints
   the old rule's merge groups next to the new rule's. 0.45 already merges different events that
   merely share a topic.
+- **Keyword pass is advisory only:** a keyword match may attach a `<hint-category>` to an article,
+  it may not assign sentiment/type/signal or skip the LLM. Every published judgement carries
+  `classified_by` (`llm` | `keyword`) and `aiHealth.classifiedBy` shows the split — keep it honest.
+- **`events[]` is the archive; `summary` is derived.** Never pop the newest event out of
+  `events[]` to build `summary` — the frontend does not render `solution.summary`, and doing that
+  deleted one event per solution per run (see AUDIT §12.1). Compare per-solution `eventCount`
+  between two consecutive runs: only genuine new events may move.
+- **A quiet window is not an AI failure.** The keyword fallback in `main()` requires
+  `not classified_pairs and llm_answered == 0`. Triggering it on "nothing was relevant" re-inserts
+  keyword verdicts and publishes `classificationMethod: "keyword-fallback"`, which turns on the
+  warning banner in the live UI.
 
 ### Pipeline runtime state (`.state/`, gitignored, server-owned)
 
