@@ -96,7 +96,7 @@ except ImportError:
     pass
 
 # ─── Version ─────────────────────────────────────────────────────────
-SCRIPT_VERSION = "2.2.0-payload-split"
+SCRIPT_VERSION = "2.3.0-event-resolution"
 
 # ─── Paths ───────────────────────────────────────────────────────────
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
