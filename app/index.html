@@ -3,23 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peace Paths — Peace Tracker</title>
-    <meta name="description" content="Tracking progress on concrete peace initiatives in the Middle East with layered narratives.">
+    <title>Peace Paths — נתיבי השלום</title>
+    <meta name="description" content="מעקב אחרי יוזמות שלום קונקרטיות במזרח התיכון: מה קרה השבוע, לאן הגיעו, ומה הצעד הבא. Tracking concrete peace initiatives in the Middle East with layered narratives.">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛤</text></svg>">
+
+    <!-- Social preview (WhatsApp / Telegram / X / Facebook) -->
+    <meta name="theme-color" content="#0a1628">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Peace Paths">
+    <meta property="og:title" content="Peace Paths — נתיבי השלום">
+    <meta property="og:description" content="מעקב אחרי יוזמות שלום קונקרטיות במזרח התיכון — מה התקדם השבוע, באיזה שלב נמצא כל מהלך, ומה הצעד הבא.">
+    <meta property="og:image" content="https://peace-paths.pages.dev/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="he_IL">
+    <meta property="og:locale:alternate" content="en_US">
+    <meta property="og:locale:alternate" content="ar">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Peace Paths — נתיבי השלום">
+    <meta name="twitter:description" content="מעקב אחרי יוזמות שלום קונקרטיות במזרח התיכון — מה התקדם השבוע, באיזה שלב נמצא כל מהלך, ומה הצעד הבא.">
+    <meta name="twitter:image" content="https://peace-paths.pages.dev/og.png">
+
+    <!-- The default UI is Hebrew: fetch its font subset immediately. -->
+    <link rel="preload" href="./fonts/heebo-hebrew.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <a href="#solutionsGrid" class="skip-link">דלגו לפתרונות</a>
     <div class="app" role="main" aria-label="Peace Paths">
 
         <!-- ── Header ──────────────────────────────── -->
         <header class="header" aria-label="Header">
             <div>
                 <h1 class="logo"><a href="#">🕊 <span id="logoText">Peace Paths</span></a></h1>
-                <div class="tagline">Where the peace efforts are headed</div>
+                <div class="tagline">לאן מכוונות מאמצי השלום</div>
             </div>
             <div class="header-right">
                 <span class="last-updated" id="lastUpdated"></span>
-                <span class="refresh-badge" id="refreshBadge" title="Auto-refreshes every 15 min">↻</span>
+                <span class="refresh-badge" id="refreshBadge" title="התעדכן אוטומטי כל 15 דקות">↻</span>
             </div>
         </header>
 
@@ -27,8 +48,8 @@
         <div class="controls-bar">
             <div class="lang-switcher" id="langSwitcher"></div>
             <div class="controls-right">
-                <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">🌙</button>
-                <div class="info-link"><a href="#" id="infoBtn">ℹ How it works</a></div>
+                <button class="theme-toggle" id="themeToggle" title="מצב כהה/בהיר">🌙</button>
+                <div class="info-link"><a href="#" id="infoBtn">ℹ איך זה עובד</a></div>
             </div>
         </div>
 
@@ -45,30 +66,33 @@
 
         <!-- ── Live Activity Feed ──────────────────── -->
         <div class="activity-section">
-            <div class="section-header collapsible-toggle open"><span class="live-dot"></span>Recent Activity</div>
+            <div class="section-header collapsible-toggle open" role="button" tabindex="0" aria-expanded="true" aria-controls="activityFeed"><span class="live-dot"></span>פעילות אחרונה</div>
             <div class="activity-feed collapsible-body open" id="activityFeed"></div>
             <div class="activity-more" id="showMoreActivity"></div>
         </div>
 
         <!-- ── Solutions Grid (dynamic) ────────────── -->
         <div class="category-group">
-            <div class="section-header">Solutions</div>
-            <div id="solutionsGrid"></div>
+            <div class="section-header">פתרונות</div>
+            <div id="solutionsGrid" aria-live="polite" aria-busy="true">
+              <div class="skeleton-card" aria-hidden="true"><div class="skeleton-line w40"></div><div class="skeleton-line w90"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div>
+              <div class="skeleton-card" aria-hidden="true"><div class="skeleton-line w40"></div><div class="skeleton-line w90"></div><div class="skeleton-line w70"></div><div class="skeleton-line w50"></div></div>
+            </div>
         </div>
 
         <!-- ── Footer ──────────────────────────────── -->
         <footer class="footer">
-            <p>Peace Paths is an experimental project for informational purposes only.</p>
-            <p>Data from <span id="feedCount">75</span> RSS feeds · AI-assisted classification</p>
-            <p>Assessments are algorithmic, not predictions.</p>
+            <p>Peace Paths הוא פרויקט ניסיוני למטרות מידע בלבד.</p>
+            <p>נתונים מ-<span id="feedCount">72</span> מקורות RSS · סיווג בעזרת AI</p>
+            <p>ההערכות הן אלגוריתמיות, לא תחזיות.</p>
             <nav class="footer-links" aria-label="Footer links">
               <span id="versionTag" class="footer-link"></span>
-              <a href="#" id="privacyLink" class="footer-link">Privacy Policy</a>
-              <a href="#" id="termsLink" class="footer-link">Terms of Service</a>
-              <a href="#" id="accessibilityLink" class="footer-link">Accessibility</a>
-              <a href="https://github.com/ErezIsrael/peace-paths/issues" target="_blank" rel="noopener" class="footer-link">🐛 Report a Bug</a>
-              <a href="https://ko-fi.com/erezse" target="_blank" rel="noopener" class="footer-link">☕ Buy Me Coffee</a>
-              <a href="mailto:erez@peace-paths.com" class="footer-link">📧 Contact</a>
+              <a href="#" id="privacyLink" class="footer-link">מדיניות פרטיות</a>
+              <a href="#" id="termsLink" class="footer-link">תנאי שימוש</a>
+              <a href="#" id="accessibilityLink" class="footer-link">נגישות</a>
+              <a href="https://github.com/ErezIsrael/peace-paths/issues" target="_blank" rel="noopener" class="footer-link">🐛 דווח על באג</a>
+              <a href="https://ko-fi.com/erezse" target="_blank" rel="noopener" class="footer-link">☕ קנה לי קפה</a>
+              <a href="mailto:erez@peace-paths.com" class="footer-link">📧 צור קשר</a>
             </nav>
         </footer>
     </div>
@@ -77,10 +101,10 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalContent">
             <div id="modalContent"></div>
-            <button class="modal-close" id="modalClose"></button>
+            <button class="modal-close" id="modalClose">סגור</button>
         </div>
     </div>
 
-    <script src="app.js?v=0.5.19"></script>
+    <script src="app.js?v=0.6.0"></script>
 </body>
 </html>

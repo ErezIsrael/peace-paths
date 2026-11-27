@@ -8,7 +8,7 @@ const MOMENTUM_CONFIG_KEYS = {
   stalling: 'momentumStalling',
 };
 
-const APP_VERSION = 'v0.5.20';
+const APP_VERSION = 'v0.6.0';
 
 // Escape untrusted (feed-derived) text before interpolating into innerHTML
 function esc(s) {
@@ -32,12 +32,18 @@ let currentLang = 'he';
 let translations = {};
 
 /* ── Translation System ───────────────────────────────── */
+// Start both requests the moment the script parses. boot() used to await
+// translations.json *before* asking for data.json, which serialized two
+// round-trips in front of the first contentful paint.
+const _translationsReq = fetch('./translations.json')
+  .then(r => (r.ok ? r.json() : null)).catch(() => null);
+const _dataReq = fetch('./data.json')
+  .then(r => (r.ok ? r.json() : null)).catch(() => null);
+
 async function loadTranslations() {
   try {
-    const res = await fetch('./translations.json');
-    if (res.ok) {
-      translations = await res.json();
-    }
+    const loaded = await _translationsReq;
+    translations = loaded || { en: {}, he: {}, ar: {} };
   } catch (e) {
     console.warn('translations.json unavailable:', e);
     translations = { en: {}, he: {}, ar: {} };
@@ -251,24 +257,28 @@ const FEED_MAX = 4;
 let feedShowing = FEED_MAX;
 
 async function loadData() {
+  let fresh = null;
   try {
-    const res = await fetch('./data.json');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    data = await res.json();
-    renderAll(data);
+    fresh = await _dataReq;
   } catch (err) {
-    console.warn('data.json unavailable, falling back to solutions.json:', err);
-    try {
-      const res = await fetch('./solutions.json');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      data = await res.json();
-      renderAll(data);
-    } catch (fallbackErr) {
-      console.error('Failed to load data:', fallbackErr);
-      const ms = document.getElementById('momentumSummary');
-      if (ms) ms.textContent = t('error') || 'Failed to load data';
-    }
+    console.warn('data.json request failed:', err);
   }
+  if (fresh) {
+    data = fresh;
+    renderAll(data);
+    return;
+  }
+  // The KV read failed (the Pages Function answers 503). There is no deployed
+  // fallback file, so say so plainly instead of fetching a path that answers
+  // 200 with index.html and then throws inside res.json().
+  console.error('data.json unavailable');
+  const grid = document.getElementById('solutionsGrid');
+  if (grid) {
+    grid.innerHTML = '';
+    grid.setAttribute('aria-busy', 'false');
+  }
+  const ms = document.getElementById('momentumSummary');
+  if (ms) ms.textContent = t('error') || 'Failed to load data';
 }
 
 /* ── Classification Warning ──────────────────────────── */
@@ -763,6 +773,7 @@ function renderAll(data) {
 
   const grid = document.getElementById('solutionsGrid');
   if (grid) grid.innerHTML = '';
+  if (grid) grid.setAttribute('aria-busy', 'false');
   const activeIds = data.activeSolutions || data.solutions.map(s => s.id);
 
   // Helper: check if a solution has any displayable content

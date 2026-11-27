@@ -29,8 +29,8 @@
   --type-analysis:  #81d4fa;
   --type-opinion:   #f59e0b;
 
-  --font-ui:    'Inter', system-ui, -apple-system, sans-serif;
-  --font-head:  'Space Grotesk', sans-serif;
+  --font-ui:    'Heebo', 'Noto Sans Arabic', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --font-head:  'Heebo', 'Noto Sans Arabic', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
 }
 
 /* ── Light Theme ───────────────────────────────────── */
@@ -62,15 +62,30 @@
   --type-opinion:   #e65100;
 }
 
+/* ── Webfonts ─────────────────────────────────────────
+   Subsets are built by tools/build-fonts.py. unicode-range means a Hebrew
+   visitor downloads 11 KB, Latin characters add 40 KB, and Arabic only loads
+   in Arabic mode.
+   (Before this, the site shipped inter-variable.ttf + space-grotesk-variable.ttf
+   = 1.0 MB / 445 KB transferred, and *neither contained a single Hebrew or
+   Arabic glyph* — the whole RTL UI was rendering in the OS fallback font.) */
 @font-face {
-  font-family: 'Inter';
-  font-style: normal; font-weight: 100 900; font-display: swap;
-  src: url('./fonts/inter-variable.ttf') format('truetype');
+  font-family: 'Heebo';
+  font-style: normal; font-weight: 300 800; font-display: swap;
+  src: url('./fonts/heebo-hebrew.woff2') format('woff2');
+  unicode-range: U+0590-05FF, U+FB1D-FB4F;
 }
 @font-face {
-  font-family: 'Space Grotesk';
-  font-style: normal; font-weight: 300 700; font-display: swap;
-  src: url('./fonts/space-grotesk-variable.ttf') format('truetype');
+  font-family: 'Heebo';
+  font-style: normal; font-weight: 300 800; font-display: swap;
+  src: url('./fonts/heebo-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0100-017F, U+00A0, U+2000-206F, U+20AA, U+20AC, U+2190-21BB, U+2212;
+}
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-style: normal; font-weight: 300 800; font-display: swap;
+  src: url('./fonts/arabic.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F;
 }
 
 html { font-size: 16px; }
@@ -165,7 +180,11 @@ a:hover { text-decoration: underline; }
   padding: 2px 6px;
   border-radius: 4px;
   cursor: pointer;
-  font-family: var(--font-ui);
+  /* Deliberately *not* var(--font-ui): the "العربية" label is the only Arabic
+     glyph on a Hebrew/English page, and with the webfont in the stack it made
+     every visitor download arabic.woff2 (69 KB). Arabic readers still get Noto
+     for all real content; this one label uses the system Arabic font. */
+  font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
   transition: all 0.15s;
 }
 .lang-btn:hover { color: var(--text); border-color: var(--text-dim); }
@@ -987,4 +1006,38 @@ a:hover { text-decoration: underline; }
 }
 [dir="rtl"] .lc-header {
   /* In RTL, row already goes right-to-left */
+}
+
+/* ── Skip link (keyboard users jump straight to the cards) ── */
+.skip-link {
+  position: absolute; top: 8px; left: -9999px;
+  background: var(--accent); color: #04121f;
+  padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  z-index: 200;
+}
+.skip-link:focus { left: 8px; }
+
+/* ── Loading skeleton — painted before data.json lands ── */
+.skeleton-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px; margin-bottom: 14px;
+}
+.skeleton-line {
+  height: 12px; border-radius: 6px; margin-bottom: 10px;
+  background: linear-gradient(90deg, var(--border) 0%, var(--card-hover) 50%, var(--border) 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s linear infinite;
+}
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w50 { width: 50%; }
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w70 { width: 70%; }
+.skeleton-line.w80 { width: 80%; }
+.skeleton-line.w90 { width: 90%; }
+@keyframes skeleton-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line { animation: none; }
 }
