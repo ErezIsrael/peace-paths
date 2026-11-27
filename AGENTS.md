@@ -238,6 +238,12 @@ Rules that keep this working:
   page view is not an origin KV read) and must never return `no-store`. Measured caveat: the
   CDN does **not** cache Pages Function responses on this plan (probe-verified — the Function
   runs per request), so there is still 1 Function invocation per page view (free tier 100k/day).
+- **Quiet tracks:** the grid renders `data.activeSolutions`; every solution in `data.solutions`
+  with zero events and a narrative archive renders in the "quiet tracks" section (`renderQuietTracks`
+  in `app/app.js`) as a collapsed disclosure whose panel reuses `buildLayeredCard`. So dormant
+  entries in the publish view **are** read by the UI now — do not drop them from `_publish_view()`,
+  and do not hide them from the UI again. `t('quietTracks')` / `noNewDevelopments` / `lastActivity`
+  carry the labels in all three languages.
 - **Fonts:** Hebrew/Arabic text requires `app/fonts/heebo-hebrew.woff2` (+ Arabic subset).
   Regenerate with `python tools/build-fonts.py`; check `--dry-run` coverage before changing
   the typeface. Never hand-add a TTF: an uncovered script silently falls back to system fonts.
