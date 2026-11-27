@@ -53,8 +53,10 @@ import os
 import re
 import html
 import time
+import math
 import hashlib
 import signal
+import collections
 import concurrent.futures
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -1301,7 +1303,52 @@ def _title_similarity(t1, t2):
     return len(intersection) / len(union)
 
 
-def cluster_events(pairs, source_profiles=None, threshold=0.65, time_window_hours=6):
+# ── Event resolution (what the clustering below actually uses) ──────────
+# The old rule — Jaccard over normalized *titles* at 0.65 (0.55 inside 6 h) — was a
+# no-op in practice: on a 266-article / 48-hour fixture it merged nothing at all
+# (261 clusters from 266 articles), because different outlets word the same event
+# differently. Titles alone also throw away the part that actually overlaps: the
+# snippet. These helpers back an IDF-weighted Jaccard over title+snippet.
+_STOPWORDS = frozenset("""a an the on at to for of and or is was are were be been being
+with without from into over under about as by that this these those it its their his her
+they them we our you your not no than then have has had do does did will would can could
+should may might must said says say new report reports reported reporting says after
+before amid up down out off more most other others between over amid amid today monday
+tuesday wednesday thursday friday saturday sunday""".split())
+
+
+def _event_tokens(text):
+    """Lowercase word tokens with light stemming, stopwords and short words gone."""
+    t = re.sub(r"[^\w\s]", " ", (text or "").lower())
+    out = []
+    for w in t.split():
+        if len(w) < 3 or w in _STOPWORDS:
+            continue
+        if len(w) > 4 and w.endswith("s") and not w.endswith("ss"):
+            w = w[:-1]
+        if len(w) > 5 and w.endswith("ing"):
+            w = w[:-3]
+        elif len(w) > 4 and w.endswith("ed"):
+            w = w[:-2]
+        if len(w) > 2:
+            out.append(w)
+    return out
+
+
+def _event_entities(raw):
+    """Proper-noun-ish tokens (capitalized words, acronyms, numbers) — the strongest
+    evidence that two reports describe the same event."""
+    out = set()
+    for w in re.findall(r"[A-Za-z][A-Za-z'’\-]+|\d[\d,.%]{1,}", raw or ""):
+        w = w.strip("'’-")
+        if len(w) < 3:
+            continue
+        if w[0].isupper() or w.isupper() or w[0].isdigit():
+            out.add(w.lower())
+    return out
+
+
+def cluster_events(pairs, source_profiles=None, threshold=0.52, time_window_hours=6):
     """Cluster articles describing the same event.
     
     Returns list of clustered events, each with:
@@ -1332,36 +1379,80 @@ def cluster_events(pairs, source_profiles=None, threshold=0.65, time_window_hour
             # Single article = single cluster
             clustered[sol_id] = [_make_cluster(normalized, source_profiles)]
             continue
-        
+
+        # ── vectors for the IDF-weighted similarity ──
+        docs = []
+        for article, classification, norm, eff_signal in normalized:
+            raw = f"{article['title']} . {article.get('snippet', '')}"
+            docs.append({
+                "idx": len(docs),
+                "toks": set(_event_tokens(raw)),
+                "ents": _event_entities(f"{article['title']} {article.get('snippet', '')}"),
+                "norm": norm,
+                "date": _parse_event_date(article.get("date")),
+                "used": False,
+            })
+        df = collections.Counter()
+        for d in docs:
+            for w in d["toks"]:
+                df[w] += 1
+        n_docs = len(docs)
+        idf = {w: math.log((n_docs + 1.0) / (v + 1.0)) + 1.0 for w, v in df.items()}
+        ent_df = collections.Counter()
+        for d in docs:
+            for e in d["ents"]:
+                ent_df[e] += 1
+        # "Israel" in an Israel-focused bucket proves nothing; entities that show up
+        # in most of the bucket are excluded from the entity gate.
+        common_ents = {e for e, v in ent_df.items() if v > max(2, 0.25 * n_docs)}
+
+        def weight(d):
+            return sum(idf.get(w, 1.0) for w in d["toks"])
+
+        def similar(a, b):
+            # Syndicated / re-run copy: near-identical titles always merge.
+            ta, tb = set(a["norm"].split()), set(b["norm"].split())
+            if _title_similarity(a["norm"], b["norm"]) >= 0.8:
+                return True
+            # Same headline with a kicker/prefix on one side ("Evictions and erasure:
+            # How Palestinian life…" vs "How Palestinian life…") — one title's tokens
+            # are simply a subset of the other's, which Jaccard punishes.
+            small, big = (ta, tb) if len(ta) <= len(tb) else (tb, ta)
+            if len(small) >= 4 and small <= big:
+                return True
+            inter = a["toks"] & b["toks"]
+            if not inter:
+                return False
+            wi = sum(idf.get(w, 1.0) for w in inter)
+            sim = wi / (weight(a) + weight(b) - wi)
+            if not ((a["ents"] & b["ents"]) - common_ents) and sim < 0.7:
+                sim *= 0.4          # no shared rare entity → topical overlap only
+            eff = threshold - (0.05 if a["date"] and b["date"]
+                                and abs((a["date"] - b["date"]).total_seconds()) < time_window_hours * 3600 else 0)
+            return sim >= eff
+
         # Heuristic clustering
         clusters = []
         used = set()
-        
+
         for i in range(len(normalized)):
             if i in used:
                 continue
             cluster = [normalized[i]]
             used.add(i)
-            
+
             for j in range(i + 1, len(normalized)):
                 if j in used:
                     continue
-                
+
                 # Check time proximity
-                try:
-                    dt_i = datetime.fromisoformat(normalized[i][0]["date"])
-                    dt_j = datetime.fromisoformat(normalized[j][0]["date"])
-                    time_diff = abs((dt_i - dt_j).total_seconds()) / 3600
-                except Exception:
-                    time_diff = 0
-                
-                # Check title similarity
-                sim = _title_similarity(normalized[i][2], normalized[j][2])
-                
-                # Adjust threshold based on time proximity
-                effective_threshold = threshold - (0.1 if time_diff < time_window_hours else 0)
-                
-                if sim >= effective_threshold and time_diff < 24:
+                dt_i, dt_j = docs[i]["date"], docs[j]["date"]
+                time_diff = abs((dt_i - dt_j).total_seconds()) / 3600 if dt_i and dt_j else 0
+
+                # Same event, different outlet: IDF-weighted title+snippet overlap
+                sim_ok = similar(docs[i], docs[j])
+
+                if sim_ok and time_diff < 48:
                     cluster.append(normalized[j])
                     used.add(j)
             
@@ -1383,8 +1474,16 @@ def cluster_events(pairs, source_profiles=None, threshold=0.65, time_window_hour
             event["_solution"] = sol_id
         all_clustered.extend(events)
     
-    print(f"  → {total_clusters} clusters from {len(pairs)} articles")
+    print(f"  → {total_clusters} clusters from {len(pairs)} articles"
+          f" ({len(pairs) - total_clusters} merged as the same event)")
     return all_clustered, clustered
+
+
+def _parse_event_date(value):
+    try:
+        return datetime.fromisoformat(value)
+    except Exception:
+        return None
 
 
 def _make_cluster(cluster_items, source_profiles):
