@@ -96,7 +96,7 @@ except ImportError:
     pass
 
 # ─── Version ─────────────────────────────────────────────────────────
-SCRIPT_VERSION = "2.3.0-event-resolution"
+SCRIPT_VERSION = "2.4.0-keyword-prior"
 
 # ─── Paths ───────────────────────────────────────────────────────────
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -898,10 +898,12 @@ def _keyword_classify_one(title, snippet, kw_map):
     return None, 0
 
 
-def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, batch_size=10):
+def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, batch_size=10, hints=None):
     """Classify a batch of articles in a single LLM call.
+    `hints` maps id(article) -> category the keyword pass suggests; the model may overrule it.
     Returns list of classification dicts, one per article."""
     n = len(articles)
+    hints = hints or {}
     txt = ""
     for j, a in enumerate(articles):
         source = a.get("source", "")
@@ -909,7 +911,11 @@ def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, ba
         if source_profiles and source in source_profiles:
             sp = source_profiles[source]
             profile = f" (bias: {sp.get('lean','unknown')}, {sp.get('region','unknown')})"
-        txt += f"<article_{j+1}>\n<title>{a['title']}</title>\n<snippet>{a.get('snippet','')[:300]}</snippet>\n<source>{source}{profile}</source>\n</article_{j+1}>\n"
+        hint = hints.get(id(a))
+        hint_line = f"\n<hint-category>{hint}</hint-category>" if hint else ""
+        txt += (f"<article_{j+1}>\n<title>{a['title']}</title>\n"
+                f"<snippet>{a.get('snippet','')[:300]}</snippet>\n"
+                f"<source>{source}{profile}</source>{hint_line}\n</article_{j+1}>\n")
 
     user = PROMPTS["batch_user"]["user"].format(
         BATCH_SIZE=n, ARTICLES_TEXT=txt, CATEGORY_IDS=", ".join(valid_ids)
@@ -923,6 +929,8 @@ def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, ba
         "exactly " + str(n) + " classification objects, one per article, in the same order as "
         "the articles above. Never answer for only the first article, never add prose, "
         "never add other keys."
+        "\nA <hint-category> tag, where present, is only what the surface keywords suggested — "
+        "read the article and overrule it if the article says otherwise."
     )
 
     body = {
@@ -989,7 +997,7 @@ def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, ba
     return None
 
 
-def _classify_article(article, system_prompt, valid_ids, source_profiles=None):
+def _classify_article(article, system_prompt, valid_ids, source_profiles=None, hint=None):
     """Classify single article. Returns dict with type, signal_score, source_weight."""
     snippet = article.get("snippet", "")
     context = snippet if snippet else article["title"]
@@ -1008,6 +1016,10 @@ def _classify_article(article, system_prompt, valid_ids, source_profiles=None):
         SOURCE=article.get('source', ''),
         SOURCE_PROFILE=source_profile
     )
+    if hint:
+        user_prompt += (f"\n<hint-category>{hint}</hint-category>\n"
+                        "The keywords on this article suggest that category. It is a suggestion "
+                        "only — judge the article, and pick another category if it fits better.")
 
     body = {
         "model": AI_MODEL,
@@ -1017,6 +1029,7 @@ def _classify_article(article, system_prompt, valid_ids, source_profiles=None):
         ],
         "max_tokens": 1500,
         "temperature": 0.0,
+        "response_format": {"type": "json_object"},
         "chat_template_kwargs": {"enable_thinking": False},
     }
 
@@ -1083,7 +1096,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
     relevant = 0
     dropped = 0
     pre_filtered = 0
-    kw_classified = 0
+    kw_hinted = 0
     ai_failures = 0
     ai_refusals = 0
     kw_fallback = 0
@@ -1101,8 +1114,13 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
             for kw in kws:
                 kw_map[kw.lower().strip()] = cat_id
 
-    # ── PASS 1: Pre-filter + keyword classify ──
-    remaining = []  # articles needing LLM
+    # ── PASS 1: exclusion filter, then keyword *prior* ──
+    # A keyword match used to be a verdict: it pinned sentiment to "neutral", type to
+    # "reporting" and signal to 5, and skipped the LLM outright - about a third of the
+    # corpus. So a third of the judgement behind momentum and ranking was a constant.
+    # The match is now only a hint handed to the classifier, which can overrule it.
+    remaining = []
+    hints = {}
     for article in articles:
         text = f"{article['title']} {article.get('snippet', '')}".lower()
         excluded = any(kw in text for kw in EXCLUDE_KW)
@@ -1113,22 +1131,17 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
 
         cat_id, conf = _keyword_classify_one(article['title'], article.get('snippet', ''), kw_map)
         if conf >= KW_THRESHOLD and cat_id:
-            # Keyword classified — add to pairs
-            pairs.append((article, {
-                "solution": cat_id,
-                "sentiment": "neutral",
-                "risk": 5,
-                "type": "reporting",
-                "signal_score": 5,
-                "source_weight": 2,
-            }))
-            relevant += 1
-            kw_classified += 1
-            article["_outcome"] = "relevant"
-        else:
-            remaining.append(article)
+            hints[id(article)] = cat_id
+            kw_hinted += 1
+        remaining.append(article)
 
-    print(f"  Pass 1: {kw_classified} keyword-classified, {pre_filtered} pre-filtered, {len(remaining)} need LLM")
+    print(f"  Pass 1: {pre_filtered} pre-filtered, {len(remaining)} for the LLM"
+          f" ({kw_hinted} keyword hints)")
+
+    def _classify_hinted(article):
+        """Single-article classification carrying this article's keyword hint."""
+        return _classify_article(article, system_prompt, valid_ids, source_profiles,
+                                 hint=hints.get(id(article)))
 
     # ── PASS 2: Batch LLM for remaining ──
     if remaining:
@@ -1139,20 +1152,21 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
             batch_idx += 1
 
             # Try batch classification
-            batch_results = _batch_classify(batch, system_prompt, valid_ids, source_profiles, BATCH_SIZE)
+            batch_results = _batch_classify(batch, system_prompt, valid_ids, source_profiles,
+                                            BATCH_SIZE, hints=hints)
 
             if batch_results is None:
                 # Batch parse failed — fall back to single-article
                 print(f"  ⚠ Batch {batch_idx} parse failed, falling back to single-article")
                 for article in batch:
-                    result = _classify_article(article, system_prompt, valid_ids, source_profiles)
+                    result = _classify_hinted(article)
                     if isinstance(result, dict) and result.get("_refused"):
                         ai_refusals += 1
                         continue
                     if result is None:
                         ai_failures += 1
                         if ai_failures <= 3:
-                            result = _classify_article(article, system_prompt, valid_ids, source_profiles)
+                            result = _classify_hinted(article)
                             if result: ai_failures = 0
                         if result is None:
                             # Soft keyword fallback (conf>=1) — never drop data when LLM is busy
@@ -1161,6 +1175,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
                                 result = {"me_relevant": True, "category": cat_id,
                                           "sentiment": "neutral", "type": "reporting",
                                           "signal_score": 5, "source_weight": 2,
+                                          "classified_by": "keyword",
                                           "_kw_fallback": True}
                                 kw_fallback += 1
                             else:
@@ -1190,7 +1205,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
                 "dropped": dropped,
                 "refusals": ai_refusals,
                 "pre_filtered": pre_filtered,
-                "kw_classified": kw_classified,
+                "keyword_hints": kw_hinted,
                 "wall_seconds": round(wall, 1),
                 "avg_per_article": round(avg, 2),
                 "eta_seconds": round(eta, 1),
@@ -1214,6 +1229,8 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
             a["_outcome"] = "dropped"
 
     # Save final
+    by_llm = sum(1 for _, c in pairs if c.get("classified_by", "llm") == "llm")
+    by_kw = sum(1 for _, c in pairs if c.get("classified_by") == "keyword")
     final_stage = {
         "complete": True,
         "total": len(articles),
@@ -1221,8 +1238,8 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
         "dropped": dropped,
         "refusals": ai_refusals,
         "pre_filtered": pre_filtered,
-        "kw_classified": kw_classified,
-        "llm_classified": relevant - kw_classified - kw_fallback,
+        "keyword_hints": kw_hinted,
+        "llm_classified": by_llm,
         "kw_fallback": kw_fallback,
         "wall_seconds": round(time.time() - start_time, 1),
         "pairs_count": len(pairs),
@@ -1231,8 +1248,9 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
         json.dump(final_stage, f, indent=2, ensure_ascii=False)
     print(f"  💾 Staged → staging/classification.json")
 
-    print(f"  Total: {relevant} relevant ({kw_classified} kw + {relevant-kw_classified-kw_fallback} LLM + {kw_fallback} kw-fallback), "
-          f"{dropped} dropped, {ai_refusals} refusals, {pre_filtered} pre-filtered")
+    print(f"  Total: {relevant} relevant ({by_llm} LLM + {by_kw} keyword-fallback), "
+          f"{dropped} dropped, {ai_refusals} refusals, {pre_filtered} pre-filtered, "
+          f"{kw_hinted} keyword hints")
     if ai_refusals > 0:
         pct = ai_refusals / max(len(articles), 1) * 100
         print(f"  🚨 AI content filter: {ai_refusals} articles ({pct:.1f}%)")
@@ -1255,6 +1273,9 @@ def _add_classified(pairs, result, article, valid_ids):
             "type": result.get("type", "reporting"),
             "signal_score": result.get("signal_score", 5),
             "source_weight": result.get("source_weight", 2),
+            # Item 13: record who decided, so a keyword-only judgement can never be
+            # mistaken for a model judgement (see the keyword fallback above).
+            "classified_by": result.get("classified_by", "llm"),
         }))
         return (1, 0)
     else:
@@ -3182,9 +3203,14 @@ def main():
         classification_method = "ai-partial-fallback"
     else:
         classification_method = "keyword-fallback"
+    _classified_by = {}
+    for _a, _c in classified_pairs:
+        _k = _c.get("classified_by", "llm")
+        _classified_by[_k] = _classified_by.get(_k, 0) + 1
     data["aiHealth"] = {
         "refusals": ai_refusals,
         "totalClassified": len(classified_pairs),
+        "classifiedBy": _classified_by,
         "refusalRate": round(ai_refusals / max(len(articles), 1) * 100, 1),
         "keywordFallback": kw_fallback,
         "lastRun": datetime.now(timezone.utc).isoformat(),
