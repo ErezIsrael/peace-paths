@@ -94,7 +94,7 @@ except ImportError:
     pass
 
 # ─── Version ─────────────────────────────────────────────────────────
-SCRIPT_VERSION = "2.1.0-feed-integrity"
+SCRIPT_VERSION = "2.2.0-payload-split"
 
 # ─── Paths ───────────────────────────────────────────────────────────
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -2377,6 +2377,14 @@ _DROP_NARRATIVE = ("milestones", "weeklyHistory")
 _DROP_ITEM = ("source_weight",)          # inside narrative.keyEvents/keyOpinions
 _DROP_ATTESTATION = ("signal_score", "source_weight")
 
+# How much of the event history rides inside data.json.
+RECENT_EVENTS_INLINE = 40         # activity-feed items shipped inline
+EVENTS_INLINE_PER_SOLUTION = 2    # floor for app.js cached before the split
+
+
+def _event_sort_key(ev):
+    return (ev.get("date") or "", ev.get("effective_signal", 0) or 0)
+
 
 def _slim_for_publish(data):
     """Deep copy of `data` keeping only the fields the frontend consumes."""
@@ -2398,52 +2406,88 @@ def _slim_for_publish(data):
     return slim
 
 
-def _publish_bytes(data):
-    """Compact UTF-8 JSON of the slim payload (pretty-printing cost ~17% more
-    bytes on every page view)."""
-    return json.dumps(_slim_for_publish(data), ensure_ascii=False,
-                      separators=(",", ":")).encode("utf-8")
+def _publish_view(data):
+    """Split what gets published: data.json keeps only what the first screen needs,
+    each solution's full event history becomes a separate KV key.
 
-
-def upload_to_cloudflare(data, max_retries=3):
-    """Push the slim payload to Cloudflare KV via REST API (no Node.js needed).
-    Uses PUT /accounts/:id/storage/kv/namespaces/:id/values/:key
-    Retries on transient failures.
-    The payload is built from `data` in memory — never read back off disk, so a
-    stale local file can never be published.
+    data.json used to ship every event of every solution — 110 KB, 58.8% of the
+    payload — while the activity feed listed four of them and nothing else ever
+    did. Returns (payload, archives) where `archives` maps solution id -> that
+    solution's full slim event list, uploaded as events/<id>.json and served by
+    functions/events/[id].json.js on demand.
     """
-    if not CLOUDFLARE_TOKEN or not CLOUDFLARE_ACCOUNT:
-        print("\n⚠ CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set")
-        return False
-    import urllib.request, json
-    kv_id = "badf4fb7acfe4d1c905db77ed8d5e70f"
-    url = f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT}/storage/kv/namespaces/{kv_id}/values/data.json"
-    content = _publish_bytes(data)
-    if os.path.exists(DATA_JSON_FILE):
-        print(f"  📦 publishing {len(content) // 1024} KB (local data.json is {os.path.getsize(DATA_JSON_FILE) // 1024} KB)")
+    payload = _slim_for_publish(data)
+    archives = {}
+    recent = []
+    for sol in payload.get("solutions", []):
+        evs = sorted(sol.get("events") or [], key=_event_sort_key, reverse=True)
+        for ev in evs:
+            ev["solutionId"] = sol["id"]     # the feed labels each item by solution
+        if evs:
+            archives[sol["id"]] = evs
+        sol["eventCount"] = len(evs)
+        # Compat floor: an app.js copy cached before this change still builds its
+        # feed from solutions[].events.
+        sol["events"] = evs[:EVENTS_INLINE_PER_SOLUTION]
+        recent.extend(evs)
+    recent.sort(key=_event_sort_key, reverse=True)
+    payload["recentEvents"] = recent[:RECENT_EVENTS_INLINE]
+    payload["recentEventsTotal"] = len(recent)
+    return payload, archives
 
+
+def _kv_put(key, body, max_retries=3):
+    """PUT one value into the peace-data KV namespace. Returns True on success."""
+    import urllib.request, urllib.parse
+    kv_id = "badf4fb7acfe4d1c905db77ed8d5e70f"
+    url = (f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT}"
+           f"/storage/kv/namespaces/{kv_id}/values/{urllib.parse.quote(key, safe='')}")
     for attempt in range(1, max_retries + 1):
-        req = urllib.request.Request(url, data=content, method="PUT")
+        req = urllib.request.Request(url, data=body, method="PUT")
         req.add_header("Authorization", f"Bearer {CLOUDFLARE_TOKEN}")
         req.add_header("Content-Type", "application/json")
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
-                resp_body = json.loads(resp.read())
-                if resp_body.get("success"):
-                    print("  ✓ data.json uploaded to KV")
+                out = json.loads(resp.read())
+                if out.get("success"):
                     return True
-                else:
-                    errs = resp_body.get("errors", [])
-                    print(f"  ⚠ KV upload failed (attempt {attempt}/{max_retries}): {errs}")
+                print(f"  ⚠ KV put '{key}' failed (attempt {attempt}/{max_retries}): {out.get('errors', [])}")
         except Exception as e:
-            print(f"  ⚠ KV upload failed (attempt {attempt}/{max_retries}): {e}")
+            print(f"  ⚠ KV put '{key}' failed (attempt {attempt}/{max_retries}): {e}")
         if attempt < max_retries:
-            wait_time = 5 * attempt  # 5s, 10s, 15s
+            wait_time = 5 * attempt  # 5s, 10s
             print(f"  ⏳ Retrying in {wait_time}s...")
             time.sleep(wait_time)
-    
-    print(f"  ✗ KV upload failed after {max_retries} attempts — data saved locally")
     return False
+
+
+def upload_to_cloudflare(data):
+    """Publish the split payload — event archives first, then data.json, whose
+    `eventsFiles` flag only says True when every archive really landed. The
+    payload is built from `data` in memory, never read back off disk, so a stale
+    local file can never be published.
+    """
+    if not CLOUDFLARE_TOKEN or not CLOUDFLARE_ACCOUNT:
+        print("\n⚠ CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set")
+        return False
+
+    payload, archives = _publish_view(data)
+    ok, arch_bytes = 0, 0
+    for sid, evs in archives.items():
+        body = json.dumps({"solutionId": sid, "total": len(evs), "events": evs},
+                          ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        arch_bytes += len(body)
+        if _kv_put(f"events/{sid}.json", body):
+            ok += 1
+    payload["eventsFiles"] = ok == len(archives)
+    if not payload["eventsFiles"]:
+        print(f"  ⚠ {len(archives) - ok} event file(s) failed — the UI hides archive layers for this publish")
+
+    content = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    if os.path.exists(DATA_JSON_FILE):
+        print(f"  📦 publishing {len(content) // 1024} KB + {ok}/{len(archives)} event files "
+              f"({arch_bytes // 1024} KB)  (local data.json is {os.path.getsize(DATA_JSON_FILE) // 1024} KB)")
+    return _kv_put("data.json", content)
 
 
 # ═══════════════════════════════════════════════════════════════════════
