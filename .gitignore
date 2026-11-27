@@ -80,3 +80,6 @@ research/
 .locks/
 screenshots/
 temp/
+
+# Pipeline runtime state between runs (translation cache, seen articles)
+.state/

@@ -126,6 +126,11 @@ FAST_AGE_HOURS = 2
 _LOCK_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".locks")
 os.makedirs(_LOCK_DIR, exist_ok=True)
 LOCK_FILE = os.path.join(_LOCK_DIR, "ai-update.lock")
+
+# Things that must survive between runs but are neither source config nor output
+# (translation cache, seen-article store).
+_STATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".state")
+os.makedirs(_STATE_DIR, exist_ok=True)
 LOCK_HEARTBEAT_INTERVAL = 60   # seconds between heartbeat writes
 LOCK_STALE_THRESHOLD = 600     # seconds before a lock is considered stale (10 min — LLM calls can be slow)
 LOCK_FAST_MAX_WAIT = 14400     # max seconds fast will wait for daily (4 hours)
@@ -1759,11 +1764,52 @@ def _llm_chat(messages, max_tokens=4000, temperature=0.0, timeout=180, raw_text=
 
 
 # ─── Translation helpers ─────────────────────────────────────────────
+# Translation is the slow stage of a run: 27 texts took 102 s of a 129 s fast run
+# (~3.8 s each) because fast mode re-sees events it has already translated. The
+# cache therefore lives on disk between runs.
+TRANSLATION_CACHE_FILE = os.path.join(_STATE_DIR, "translation-cache.json")
+TRANSLATION_CACHE_MAX = 8000          # entries; oldest dropped first
 _translation_cache = {}
+
+
+def _tcache_key(lang, text):
+    return f"{lang}:{hashlib.sha1((text or '').encode('utf-8')).hexdigest()[:16]}"
+
+
+def _load_translation_cache():
+    global _translation_cache
+    try:
+        with open(TRANSLATION_CACHE_FILE, encoding="utf-8") as f:
+            loaded = json.load(f)
+        if isinstance(loaded, dict):
+            _translation_cache = {k: v for k, v in loaded.items()
+                                  if isinstance(k, str) and isinstance(v, str) and v}
+            print(f"♻\ufe0f Translation cache: {len(_translation_cache)} entries loaded")
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        print(f"  ⚠ Translation cache unreadable ({e}) — starting empty")
+        _translation_cache = {}
+
+
+def _save_translation_cache():
+    try:
+        if len(_translation_cache) > TRANSLATION_CACHE_MAX:
+            keep = list(_translation_cache.items())[-TRANSLATION_CACHE_MAX:]
+            _translation_cache.clear()
+            _translation_cache.update(keep)
+        tmp = TRANSLATION_CACHE_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(_translation_cache, f, ensure_ascii=False)
+        os.replace(tmp, TRANSLATION_CACHE_FILE)
+    except Exception as e:
+        print(f"  ⚠ Could not save translation cache: {e}")
+
 
 def _translate(text, target_lang):
     """Translate text to target language (he or ar) via LLM. Uses cache."""
-    cache_key = f"{target_lang}:{text[:200]}"
+    lang = "he" if "hebr" in target_lang else "ar"
+    cache_key = _tcache_key(lang, text)
     if cache_key in _translation_cache:
         return _translation_cache[cache_key]
     prompt = f"Translate this to {target_lang}. Output ONLY the translation, no other text:\n\n{text}"
@@ -1774,7 +1820,6 @@ def _translate(text, target_lang):
     translated = result if isinstance(result, str) and result else text
     _translation_cache[cache_key] = translated
     return translated
-
 def _make_trilingual(text):
     """Create {en, he, ar} dict from English text. Translates via LLM."""
     return {"en": text, "he": _translate(text, "hebrew"), "ar": _translate(text, "arabic")}
@@ -1824,7 +1869,7 @@ def _batch_translate(texts, target_lang):
                 # Fallback: single translate
                 trans = _translate(orig, target_lang)
             all_translations[orig] = trans
-            _translation_cache[f"{target_lang}:{orig[:200]}"] = trans
+            _translation_cache[_tcache_key("he" if "hebr" in target_lang else "ar", orig)] = trans
 
     # Map back to original order
     return [all_translations.get(t, t) for t in texts]
@@ -1838,7 +1883,19 @@ def _batch_translate_dual(texts):
     if not texts:
         return {}
     unique = list(dict.fromkeys(texts))
+    # Cache first: the same English line recurs run after run (fast mode merges
+    # events it translated days ago) and every miss costs ~3.8 s of LLM time.
     trilingual_map = {}
+    todo = []
+    for t in unique:
+        he_c = _translation_cache.get(_tcache_key("he", t))
+        ar_c = _translation_cache.get(_tcache_key("ar", t))
+        if he_c and ar_c:
+            trilingual_map[t] = {"en": t, "he": he_c, "ar": ar_c}
+        else:
+            todo.append(t)
+    if trilingual_map:
+        print(f"  \u267b\ufe0f Translation cache: {len(trilingual_map)}/{len(unique)} reused, {len(todo)} to translate")
     chunk_size = 10
 
     he_glossary = """Hebrew terms:
@@ -1869,8 +1926,8 @@ Framework Agreement → اتفاقية إطار
 Trade Integration → تكامل تجاري
 Civil Society → المجتمع المدني"""
 
-    for chunk_start in range(0, len(unique), chunk_size):
-        chunk = unique[chunk_start:chunk_start + chunk_size]
+    for chunk_start in range(0, len(todo), chunk_size):
+        chunk = todo[chunk_start:chunk_start + chunk_size]
         input_json = json.dumps(chunk, ensure_ascii=False)
 
         prompt = f"""Translate each English news line to BOTH Hebrew and Arabic.
@@ -1931,8 +1988,8 @@ Rules:
             ar = _clean(ar, '\u0600', '\u06FF') or _translate(orig, "arabic")
 
             trilingual_map[orig] = {"en": orig, "he": he, "ar": ar}
-            _translation_cache[f"he:{orig[:200]}"] = he
-            _translation_cache[f"ar:{orig[:200]}"] = ar
+            _translation_cache[_tcache_key("he", orig)] = he
+            _translation_cache[_tcache_key("ar", orig)] = ar
 
     return trilingual_map
 
@@ -2672,6 +2729,8 @@ def main():
     
     global PROMPTS
     PROMPTS = load_prompts()
+
+    _load_translation_cache()
     
     # ── Research mode ──
     if args.research_categories:
@@ -2891,6 +2950,7 @@ def main():
     # Fast mode: fixes stale narrative fields from previous daily runs
     # Daily mode: translates newly generated narratives
     _translate_narrative_fields(data["solutions"])
+    _save_translation_cache()
 
     # AI health metadata — honestly report partial keyword fallback when LLM is busy/down
     if args.fetch_only:
@@ -2940,6 +3000,7 @@ def main():
         print(f"\nℹ Upload skipped.")
     
     elapsed = time.time() - start
+    _save_translation_cache()
     _print_summary(data, len(classified_pairs), elapsed)
     
     # ── Release lock ──
