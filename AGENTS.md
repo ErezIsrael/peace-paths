@@ -119,7 +119,7 @@ peace-paths/
 | Default language | Hebrew (RTL) |
 | Env vars | `LLAMA_CPP_URL`, `AI_MODEL`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` |
 | Published payload | KV holds the **publish view** of `app/data.json` — compact JSON, fields the UI never reads dropped (`events[].snippet`, `narrative.milestones`/`weeklyHistory`). ~180 KB raw / ~56 KB brotli. The local file stays the long-term memory (~400 KB) and is deliberately larger. |
-| `/data.json` caching | Served by `functions/data.json.js` with `s-maxage=120, stale-while-revalidate=600` + KV `cacheTtl: 60`. Without it every page view was a `no-store` Pages Function call and a KV read. |
+| `/data.json` caching | Served by `functions/data.json.js` with KV `cacheTtl: 60` + cacheable response headers. `no-store` there would mean an origin KV read per view. (The CDN itself does not cache Pages Function responses on this plan.) |
 | Fonts | `tools/build-fonts.py` subsets Heebo (HE/LT) and Noto Naskh Arabic into `app/fonts/*.woff2`; `styles.css` selects them by `unicode-range` so Arabic glyph data is only fetched in Arabic mode. The old `inter-variable.ttf` had **no Hebrew or Arabic glyphs** — Hebrew was falling back to a system font. Regenerate after changing the site's text; `--dry-run` prints codepoint coverage. |
 
 ---
@@ -234,8 +234,10 @@ Rules that keep this working:
   slim publish view (~180 KB raw / ~56 KB brotli); the on-disk file stays the full memory.
   If you add a field to the publish view, the frontend must actually read it — otherwise
   drop it in `_publish_view()`.
-- **Caching:** `/data.json` must keep a cacheable `Cache-Control` (`functions/data.json.js`).
-  `no-store` there means one KV read + one Function invocation per page view.
+- **Caching:** `functions/data.json.js` reads KV with `cacheTtl: 60` (edge-cached value, so a
+  page view is not an origin KV read) and must never return `no-store`. Measured caveat: the
+  CDN does **not** cache Pages Function responses on this plan (probe-verified — the Function
+  runs per request), so there is still 1 Function invocation per page view (free tier 100k/day).
 - **Fonts:** Hebrew/Arabic text requires `app/fonts/heebo-hebrew.woff2` (+ Arabic subset).
   Regenerate with `python tools/build-fonts.py`; check `--dry-run` coverage before changing
   the typeface. Never hand-add a TTF: an uncovered script silently falls back to system fonts.

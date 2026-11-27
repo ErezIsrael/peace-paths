@@ -1,20 +1,10 @@
 export async function onRequest(context) {
-  // TEMP PROBE (removal pending): proves whether the CDN serves this response
-  // instead of invoking the function. Same URL repeated within the s-maxage
-  // window returns an identical fnRanAt iff the edge answered.
-  const probeUrl = new URL(context.request.url);
-  if (probeUrl.searchParams.get("fnprobe") !== null) {
-    return new Response(JSON.stringify({ fnRanAt: Date.now(), isolate: Math.random().toString(36).slice(2, 8) }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=0, s-maxage=120, stale-while-revalidate=600",
-        "CF-CDN-Cache-Control": "public, max-age=120, stale-while-revalidate=600",
-      },
-    });
-  }
-  // cacheTtl lets Cloudflare edge-cache the KV value; the response headers below
-  // let the CDN serve /data.json itself, so a page view is not automatically a
-  // function invocation + a KV read (free plan caps both at 100k/day).
+  // KV cacheTtl edge-caches the KV *value*, so a page view is not necessarily an
+  // origin KV read. Note (measured with a probe, 2026-11-27): the CDN does NOT
+  // serve this response from cache on this plan — Cache-Control / CF-CDN-Cache-Control
+  // are echoed but a function invocation still happens per request. Do not add a
+  // `no-store` here anyway; the headers are harmless and become effective if the
+  // plan gains Cache Rules.
   const data = await context.env.peace_data.get("data.json", { cacheTtl: 60 });
   if (!data) {
     return new Response("Data not available", {
@@ -25,8 +15,9 @@ export async function onRequest(context) {
   return new Response(data, {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      // The pipeline publishes ~10 times a day — browsers revalidate quickly,
-      // the CDN serves the bulk of the traffic.
+      // The pipeline publishes ~10 times a day. Browsers revalidate quickly and
+      // forward the same headers to any intermediary in front of them (mobile
+      // carriers, corporate proxies) that does honour Cache-Control.
       "Cache-Control": "public, max-age=0, s-maxage=120, stale-while-revalidate=600",
       "CF-CDN-Cache-Control": "public, max-age=120, stale-while-revalidate=600",
       "Vary": "Accept-Encoding",
