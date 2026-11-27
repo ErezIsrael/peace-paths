@@ -1,0 +1,121 @@
+[
+  {
+    "name": "Reuters ME",
+    "url": "https://reutersbest.com/region/middle-east/feed/",
+    "type": "media",
+    "reason": "newest item 50 days old",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Radio Free Europe - Farda",
+    "url": "https://www.rferl.org/api/zrqtmoeuutmo",
+    "type": "media",
+    "reason": "URL is a JSON API, not a feed (0 items ever)",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Freedom Flotilla",
+    "url": "https://freedomflotilla.org/feed/",
+    "type": "media",
+    "reason": "newest item 35 days old",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "BBC - Iraq",
+    "url": "https://feeds.bbci.co.uk/news/topics/cvenzmgyljrt/rss.xml",
+    "type": "media",
+    "reason": "newest item 45 days old",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "BBC - Lebanon",
+    "url": "https://feeds.bbci.co.uk/news/topics/c8nq32jwjydt/rss.xml",
+    "type": "media",
+    "reason": "newest item 41 days old",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Zochrot",
+    "url": "https://zochrot.org/en/feed/",
+    "type": "ngo",
+    "reason": "feed URL serves an HTML page (0 items)",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Dignity (Kav LaOved)",
+    "url": "https://www.dignity.org.il/feed/",
+    "type": "ngo",
+    "reason": "newest item 464 days old",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "IPD (Institute for Peaceful Change)",
+    "url": "https://www.ipd.org.il/feed/",
+    "type": "ngo",
+    "reason": "newest item 494 days old",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Pardes",
+    "url": "https://pardes.org.il/feed/",
+    "type": "ngo",
+    "reason": "feed returns an empty channel (0 items)",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Shatil",
+    "url": "https://www.shatil.org.il/en/feed/",
+    "type": "ngo",
+    "reason": "newest item 1516 days old",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Near East Foundation",
+    "url": "https://neareast.org/feed/",
+    "type": "ngo",
+    "reason": "newest item 38 days old",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Alliance for Middle East Peace",
+    "url": "https://www.allmep.org/feed/",
+    "type": "ngo",
+    "reason": "newest item 525 days old",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Arab Organization for Human Rights",
+    "url": "https://arab.org/rss-feeds",
+    "type": "ngo",
+    "reason": "HTTP 403 on every run",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "UNESCO Middle East",
+    "url": "https://www.unesco.org/en/rss/middle-east",
+    "type": "ngo",
+    "reason": "HTTP 404 on every run",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "UNIFEM MENA",
+    "url": "https://unifem.org/mena/feed/",
+    "type": "ngo",
+    "reason": "feed URL serves an HTML page (0 items)",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Jewish Chronicle",
+    "url": "https://www.thejc.com/rss",
+    "type": "media",
+    "reason": "HTTP 429 on every run",
+    "retired": "2026-11-27"
+  },
+  {
+    "name": "Middle East Institute",
+    "url": "https://www.mei.edu/rss",
+    "type": "thinktank",
+    "reason": "newest item 570 days old",
+    "retired": "2026-11-27"
+  }
+]

@@ -144,7 +144,6 @@
     "https://israel-alma.org/feed/",
     "thinktank"
   ],
-
   [
     "MERIP",
     "https://www.merip.org/rss/",
@@ -158,11 +157,6 @@
   [
     "Le Monde - Israel/Palestine",
     "https://www.lemonde.fr/en/israel-palestine/rss_full.xml",
-    "media"
-  ],
-  [
-    "Reuters ME",
-    "https://reutersbest.com/region/middle-east/feed/",
     "media"
   ],
   [
@@ -183,11 +177,6 @@
   [
     "Radio Free Europe - Iran",
     "https://www.rferl.org/api/z-oiievgii",
-    "media"
-  ],
-  [
-    "Radio Free Europe - Farda",
-    "https://www.rferl.org/api/zrqtmoeuutmo",
     "media"
   ],
   [
@@ -236,11 +225,6 @@
     "thinktank"
   ],
   [
-    "Freedom Flotilla",
-    "https://freedomflotilla.org/feed/",
-    "media"
-  ],
-  [
     "BBC - Syria",
     "https://feeds.bbci.co.uk/news/topics/cx1m7zg0w5zt/rss.xml",
     "media"
@@ -253,16 +237,6 @@
   [
     "BBC - Yemen",
     "https://feeds.bbci.co.uk/news/topics/c77jz3mdq72t/rss.xml",
-    "media"
-  ],
-  [
-    "BBC - Iraq",
-    "https://feeds.bbci.co.uk/news/topics/cvenzmgyljrt/rss.xml",
-    "media"
-  ],
-  [
-    "BBC - Lebanon",
-    "https://feeds.bbci.co.uk/news/topics/c8nq32jwjydt/rss.xml",
     "media"
   ],
   [
@@ -295,32 +269,6 @@
     "https://www.twz.com/category/iran/feed",
     "media"
   ],
-
-  [
-    "Zochrot",
-    "https://zochrot.org/en/feed/",
-    "ngo"
-  ],
-  [
-    "Dignity (Kav LaOved)",
-    "https://www.dignity.org.il/feed/",
-    "ngo"
-  ],
-  [
-    "IPD (Institute for Peaceful Change)",
-    "https://www.ipd.org.il/feed/",
-    "ngo"
-  ],
-  [
-    "Pardes",
-    "https://pardes.org.il/feed/",
-    "ngo"
-  ],
-  [
-    "Shatil",
-    "https://www.shatil.org.il/en/feed/",
-    "ngo"
-  ],
   [
     "Search for Common Ground",
     "https://www.sfcg.org/feed/",
@@ -337,21 +285,6 @@
     "ngo"
   ],
   [
-    "Near East Foundation",
-    "https://neareast.org/feed/",
-    "ngo"
-  ],
-  [
-    "Alliance for Middle East Peace",
-    "https://www.allmep.org/feed/",
-    "ngo"
-  ],
-  [
-    "Arab Organization for Human Rights",
-    "https://arab.org/rss-feeds",
-    "ngo"
-  ],
-  [
     "ICRC Middle East",
     "https://www.icrc.org/en/rss/region/middle-east",
     "ngo"
@@ -361,17 +294,6 @@
     "https://www.hrw.org/rss",
     "ngo"
   ],
-  [
-    "UNESCO Middle East",
-    "https://www.unesco.org/en/rss/middle-east",
-    "ngo"
-  ],
-  [
-    "UNIFEM MENA",
-    "https://unifem.org/mena/feed/",
-    "ngo"
-  ],
-
   [
     "Israel Hayom",
     "https://www.israelhayom.com/feed/",
@@ -393,11 +315,6 @@
     "media"
   ],
   [
-    "Jewish Chronicle",
-    "https://www.thejc.com/rss",
-    "media"
-  ],
-  [
     "Elder of Ziyon",
     "https://elderofziyon.blogspot.com/feeds/posts/default",
     "media"
@@ -406,11 +323,6 @@
     "The War Zone - ME",
     "https://www.twz.com/category/middle-east/feed",
     "media"
-  ],
-  [
-    "Middle East Institute",
-    "https://www.mei.edu/rss",
-    "thinktank"
   ],
   [
     "Google News - Gaza",
