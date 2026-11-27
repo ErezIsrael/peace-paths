@@ -1,5 +1,8 @@
 {
   "version": 1,
-  "include": ["/data.json"],
+  "include": [
+    "/data.json",
+    "/events/*"
+  ],
   "exclude": []
 }
