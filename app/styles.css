@@ -9,7 +9,9 @@
   --border:     #1e3a5f;
   --text:       #e0e8f0;
   --text-muted: #8ea8c8;
-  --text-dim:   #5a7a9a;
+  /* #5a7a9a measured 3.2:1 on --card — every 10-12px label using it failed WCAG
+     AA on the dark theme. Light theme passes with its own --text-dim. */
+  --text-dim:   #8fa9c4;
   --accent:     #4fc3f7;
   --accent-alt: #81d4fa;
   --accent-bg:  rgba(79,195,247,0.1);
@@ -20,6 +22,12 @@
   --stalling:   #ef5350;
   --reversing:  #e53935;
   --unknown:    #5a7a9a;
+  /* Text-on-tint variants: the semantic colours above measure ~3.7:1 when used
+     as text on their own 10% tint badges, which fails AA at badge size. */
+  --advancing-text: #66c96d;
+  --stable-text:    #ffc107;
+  --stalling-text:  #ff8a80;
+  --reversing-text: #ff8a80;
 
   --sentiment-pos: #4caf50;
   --sentiment-neu: #8ea8c8;
@@ -42,24 +50,30 @@
   --text:       #0a1628;
   --text-muted: #4a6a8a;
   --text-dim:   #4a6a8a; /* darker for adequate contrast on light bg */
-  --accent:     #0288d1;
-  --accent-alt: #0277bd;
-  --accent-bg:  rgba(2,136,209,0.08);
-  --accent-glow: rgba(2,136,209,0.25);
+  /* Light-theme accents were the same blues as the dark theme (#0288d1 measured
+     3.2-3.5:1 on --card): every badge, link and signal chip failed AA. */
+  --accent:     #01579b;
+  --accent-alt: #0163a8;
+  --accent-bg:  rgba(1,87,155,0.08);
+  --accent-glow: rgba(1,87,155,0.25);
 
   --advancing:  #2e7d32;
   --stable:     #f57f17;
   --stalling:   #c62828;
   --reversing:  #b71c1c;
   --unknown:    #607d8b;
+  --advancing-text: #1e6b25;
+  --stable-text:    #8a6100;
+  --stalling-text:  #b3261e;
+  --reversing-text: #b3261e;
 
   --sentiment-pos: #2e7d32;
   --sentiment-neu: #607d8b;
   --sentiment-neg: #c62828;
 
-  --type-reporting: #0288d1;
-  --type-analysis:  #0277bd;
-  --type-opinion:   #e65100;
+  --type-reporting: #01579b;
+  --type-analysis:  #0163a8;
+  --type-opinion:   #a34700;
 }
 
 /* ── Webfonts ─────────────────────────────────────────
@@ -130,7 +144,7 @@ a:hover { text-decoration: underline; }
 .logo a:hover { color: var(--accent); text-decoration: none; }
 .tagline { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 .header-right { display: flex; align-items: center; gap: 8px; }
-.last-updated { font-size: 11px; color: var(--text-dim); }
+.last-updated { font-size: 12px; color: var(--text-dim); }
 
 /* ── Controls Bar (lang + info) ──────────────────────── */
 .controls-bar {
@@ -176,7 +190,7 @@ a:hover { text-decoration: underline; }
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: 12px;
   padding: 2px 6px;
   border-radius: 4px;
   cursor: pointer;
@@ -199,7 +213,7 @@ a:hover { text-decoration: underline; }
 .activity-section { margin-bottom: 16px; }
 .section-header {
   font-family: var(--font-head);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.2px;
@@ -256,13 +270,13 @@ a:hover { text-decoration: underline; }
 
 .activity-time {
   font-family: var(--font-head);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-dim);
   flex-shrink: 0;
   min-width: 52px;
 }
 .activity-solution {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -395,18 +409,18 @@ a:hover { text-decoration: underline; }
   font-weight: 700;
   color: var(--accent);
 }
-.card-direction.advancing { color: var(--advancing); background: rgba(74,222,128,0.1); }
-.card-direction.stable    { color: var(--stable);    background: rgba(255,193,7,0.1); }
-.card-direction.stalling  { color: var(--stalling);  background: rgba(248,113,113,0.1); }
-.card-direction.reversing { color: var(--reversing); background: rgba(239,68,68,0.1); }
+.card-direction.advancing { color: var(--advancing-text); background: rgba(74,222,128,0.1); }
+.card-direction.stable    { color: var(--stable-text);    background: rgba(255,193,7,0.1); }
+.card-direction.stalling  { color: var(--stalling-text);  background: rgba(248,113,113,0.1); }
+.card-direction.reversing { color: var(--reversing-text); background: rgba(239,68,68,0.1); }
 .card-metric-label {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
 .card-direction {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -414,10 +428,10 @@ a:hover { text-decoration: underline; }
   border-radius: 4px;
   flex-shrink: 0;
 }
-.card-direction.advancing { color: var(--advancing); background: rgba(74,222,128,0.1); }
-.card-direction.stable    { color: var(--stable);    background: rgba(56,189,248,0.1); }
-.card-direction.stalling  { color: var(--stalling);  background: rgba(248,113,113,0.1); }
-.card-direction.reversing { color: var(--reversing); background: rgba(239,68,68,0.1); }
+.card-direction.advancing { color: var(--advancing-text); background: rgba(74,222,128,0.1); }
+.card-direction.stable    { color: var(--stable-text);    background: rgba(56,189,248,0.1); }
+.card-direction.stalling  { color: var(--stalling-text);  background: rgba(248,113,113,0.1); }
+.card-direction.reversing { color: var(--reversing-text); background: rgba(239,68,68,0.1); }
 
 /* ── Peace Path Progress Track ─────────────────────── */
 .peace-path {
@@ -495,23 +509,23 @@ a:hover { text-decoration: underline; }
 }
 .peace-path__label {
   font-family: var(--font-head);
-  font-size: 9px;
+  font-size: 11px;
   color: var(--text-dim);
   text-align: center;
   line-height: 1.2;
   max-width: 100px;
   transition: color 0.3s;
 }
-.peace-path__label.done { color: var(--advancing); }
+.peace-path__label.done { color: var(--advancing-text); }
 .peace-path__label.active { color: var(--accent); font-weight: 600; }
-.peace-path__label.future { color: var(--text-dim); opacity: 0.5; }
+.peace-path__label.future { color: var(--text-dim); }
 .peace-path__node:hover .peace-path__label { color: var(--text); opacity: 1; }
 .peace-path__pct {
   position: absolute;
   top: 2px;
   right: 4px;
   font-family: var(--font-head);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--accent);
   background: var(--accent-bg);
@@ -545,7 +559,7 @@ a:hover { text-decoration: underline; }
 .card-event-dot.negative { background: var(--sentiment-neg); }
 .card-event-sentiment {
   font-family: var(--font-head);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -556,7 +570,7 @@ a:hover { text-decoration: underline; }
 .card-event-sentiment.sentiment-negative { color: var(--sentiment-neg); }
 .card-event-time {
   font-family: var(--font-head);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-dim);
   flex-shrink: 0;
   min-width: 52px;
@@ -571,9 +585,9 @@ a:hover { text-decoration: underline; }
   white-space: nowrap;
 }
 .card-event-text:hover { color: var(--accent); text-decoration: underline; }
-.card-event-source { font-size: 10px; color: var(--text-dim); flex-shrink: 0; }
+.card-event-source { font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
 .card-events-toggle {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--accent);
   cursor: pointer;
   padding: 4px 0;
@@ -592,7 +606,7 @@ a:hover { text-decoration: underline; }
   gap: 4px;
 }
 .card-players-title {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -615,7 +629,7 @@ a:hover { text-decoration: underline; }
 }
 .card-player-link:hover { text-decoration: underline; }
 .card-player-email {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--accent);
   text-decoration: none;
   margin-inline-start: 3px;
@@ -623,7 +637,7 @@ a:hover { text-decoration: underline; }
 }
 .card-player-email:hover { text-decoration: underline; opacity: 1; }
 .card-player-contact {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-dim);
   text-decoration: none;
   margin-inline-start: 2px;
@@ -687,13 +701,13 @@ a:hover { text-decoration: underline; }
   line-height: 1;
 }
 .lc-metric small {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 400;
   color: var(--text-muted);
   text-transform: uppercase;
 }
 .lc-direction {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -701,10 +715,10 @@ a:hover { text-decoration: underline; }
   border-radius: 4px;
   flex-shrink: 0;
 }
-.lc-direction.advancing { color: var(--advancing); background: rgba(74,222,128,0.1); }
-.lc-direction.stable    { color: var(--stable);    background: rgba(255,193,7,0.1); }
-.lc-direction.stalling  { color: var(--stalling);  background: rgba(248,113,113,0.1); }
-.lc-direction.reversing { color: var(--reversing); background: rgba(239,68,68,0.1); }
+.lc-direction.advancing { color: var(--advancing-text); background: rgba(74,222,128,0.1); }
+.lc-direction.stable    { color: var(--stable-text);    background: rgba(255,193,7,0.1); }
+.lc-direction.stalling  { color: var(--stalling-text);  background: rgba(248,113,113,0.1); }
+.lc-direction.reversing { color: var(--reversing-text); background: rgba(239,68,68,0.1); }
 
 /* Shift badges */
 .lc-shifts {
@@ -714,18 +728,18 @@ a:hover { text-decoration: underline; }
   flex-wrap: wrap;
 }
 .lc-shift-badge {
-  font-size: 10px;
+  font-size: 12px;
   padding: 2px 8px;
   border-radius: 4px;
   font-weight: 600;
 }
 .lc-shift-badge.up {
-  color: var(--advancing);
+  color: var(--advancing-text);
   background: rgba(74,222,128,0.1);
   border: 1px solid rgba(74,222,128,0.2);
 }
 .lc-shift-badge.down {
-  color: var(--stalling);
+  color: var(--stalling-text);
   background: rgba(248,113,113,0.1);
   border: 1px solid rgba(248,113,113,0.2);
 }
@@ -737,7 +751,7 @@ a:hover { text-decoration: underline; }
 }
 .lc-layer-title {
   font-family: var(--font-head);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -766,7 +780,7 @@ a:hover { text-decoration: underline; }
   display: inline-block;
   margin-inline-start: 6px;
   transition: transform 0.2s;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-dim);
 }
 .lc-layer-title.open::after, .section-header.open::after {
@@ -777,10 +791,15 @@ a:hover { text-decoration: underline; }
 .collapsible-body {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.35s ease;
+  /* Collapsed panels were still in the accessibility tree (max-height:0 only
+     clips them), so a screen reader read every closed layer. */
+  visibility: hidden;
+  transition: max-height 0.35s ease, visibility 0s linear 0.35s;
 }
 .collapsible-body.open {
   max-height: 2000px;
+  visibility: visible;
+  transition: max-height 0.35s ease, visibility 0s linear 0s;
 }
 
 /* Activity feed collapsible */
@@ -827,7 +846,7 @@ a:hover { text-decoration: underline; }
 .lc-event-title:hover { color: var(--accent); text-decoration: underline; }
 
 .lc-source {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-dim);
   flex-shrink: 0;
 }
@@ -835,7 +854,7 @@ a:hover { text-decoration: underline; }
 /* Signal score badge */
 .lc-signal {
   font-family: var(--font-head);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--accent);
   background: rgba(56,189,248,0.1);
@@ -846,7 +865,7 @@ a:hover { text-decoration: underline; }
 
 /* Type badge */
 .type-badge {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -860,7 +879,7 @@ a:hover { text-decoration: underline; }
 
 /* Attestation count */
 .lc-attestations {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-dim);
   flex-shrink: 0;
 }
@@ -886,7 +905,7 @@ a:hover { text-decoration: underline; }
   gap: 16px;
   margin-top: 12px;
 }
-.footer-link { font-size: 11px; color: var(--accent); opacity: 0.7; transition: opacity 0.15s; }
+.footer-link { font-size: 12px; color: var(--accent); transition: opacity 0.15s; }
 .footer-link:hover { opacity: 1; text-decoration: underline; }
 
 /* Legal footer links (Privacy, Terms, Accessibility) */
@@ -942,7 +961,7 @@ a:hover { text-decoration: underline; }
   .controls-bar { flex-wrap: wrap; gap: 6px 12px; }
   .controls-bar .lang-switcher { flex: 1; }
   .activity-solution { display: none; }
-  .peace-path__label { font-size: 7px; max-width: 60px; }
+  .peace-path__label { font-size: 10px; max-width: 60px; }
   .peace-path__dot { width: 11px; height: 11px; }
   .peace-path__rail { top: 18px; }
   .lc-event-title { white-space: normal; overflow: visible; text-overflow: unset; }
@@ -1010,12 +1029,13 @@ a:hover { text-decoration: underline; }
 
 /* ── Skip link (keyboard users jump straight to the cards) ── */
 .skip-link {
-  position: absolute; top: 8px; left: -9999px;
-  background: var(--accent); color: #04121f;
+  position: absolute; top: 8px; left: 8px;
+  transform: translateY(-200%);   /* off-screen without creating sideways scroll */
+  background: var(--text); color: var(--bg);
   padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
   z-index: 200;
 }
-.skip-link:focus { left: 8px; }
+.skip-link:focus { transform: none; }
 
 /* ── Loading skeleton — painted before data.json lands ── */
 .skeleton-card {
@@ -1040,4 +1060,25 @@ a:hover { text-decoration: underline; }
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton-line { animation: none; }
+}
+
+/* ── Disclosure buttons ───────────────────────────
+   Layer titles and "show more" used to be <div>s with an onclick handler:
+   nothing on the page was reachable or operable from the keyboard. */
+button.lc-layer-title,
+button.activity-more {
+  background: none; border: 0; margin: 0; padding: 0; width: 100%;
+  font: inherit; color: inherit; text-align: start; cursor: pointer;
+}
+button.activity-more { text-align: center; }
+
+.collapsible-toggle:focus-visible,
+.lang-btn:focus-visible,
+.theme-toggle:focus-visible,
+.skip-link:focus-visible,
+.footer-link:focus-visible,
+.info-link a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

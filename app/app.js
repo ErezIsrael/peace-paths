@@ -8,7 +8,7 @@ const MOMENTUM_CONFIG_KEYS = {
   stalling: 'momentumStalling',
 };
 
-const APP_VERSION = 'v0.6.0';
+const APP_VERSION = 'v0.6.1';
 
 // Escape untrusted (feed-derived) text before interpolating into innerHTML
 function esc(s) {
@@ -97,7 +97,10 @@ function applyLanguage(lang) {
   if (footer) {
     const ps = footer.querySelectorAll('p');
     if (ps[0]) ps[0].textContent = t('footerDisclaimer');
-    if (ps[1]) ps[1].innerHTML = t('footerData').replace('{n}', `<span id="feedCount">${data?.feedCount || 75}</span>`);
+    if (ps[1]) {
+      const fc = data?.feedCount || document.getElementById('feedCount')?.textContent || '';
+      ps[1].innerHTML = t('footerData').replace('{n}', `<span id="feedCount">${esc(fc)}</span>`);
+    }
     if (ps[2]) ps[2].textContent = t('footerAlgorithmic');
   }
   // Footer legal links
@@ -173,13 +176,16 @@ function formatTime(dateStr) {
   const now = new Date();
   const diffMs = now - d;
   const diffHrs = diffMs / 3600000;
+  // Relative times used to be hardcoded English ("7m ago") even on the Hebrew
+  // and Arabic UI.
+  const rel = (key, fallback, n) => (t(key) || fallback).replace('{n}', n);
   if (diffHrs < 1) {
     const mins = Math.floor(diffMs / 60000);
-    return mins < 1 ? (t('now') || 'now') : `${mins}m ago`;
+    return mins < 1 ? (t('now') || 'now') : rel('minutesAgo', '{n}m ago', mins);
   }
-  if (diffHrs < 24) return `${Math.floor(diffHrs)}h ago`;
+  if (diffHrs < 24) return rel('hoursAgo', '{n}h ago', Math.floor(diffHrs));
   const days = Math.floor(diffHrs / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return rel('daysAgo', '{n}d ago', days);
   return d.toLocaleDateString(currentLang === 'he' ? 'he-IL' : currentLang === 'ar' ? 'ar' : 'en-US', { month: 'short', day: 'numeric' });
 }
 
@@ -487,7 +493,8 @@ function createSolutionCard(solution) {
     if (path) card.appendChild(path);
     const events = buildLegacyEvents(solution);
     if (events) {
-      const toggle = document.createElement('div');
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
       toggle.className = 'lc-layer-title collapsible-toggle';
       toggle.textContent = `⚡ ${t('events')}`;
       card.appendChild(toggle);
@@ -521,7 +528,7 @@ function buildLayeredCard(solution) {
   const dirLabel = getDirectionLabel(solution.direction);
   header.innerHTML = `
     <span class="lc-icon">${esc(solution.icon)}</span>
-    <span class="lc-name">${esc(solutionName)}</span>
+    <h2 class="lc-name">${esc(solutionName)}</h2>
     <span class="lc-metric">${esc(countDisplay)} <small>${esc(getLangText(kv.label, kv.label || ''))}</small></span>
     <span class="lc-direction ${solution.direction}">${esc(dirLabel)}</span>
   `;
@@ -583,7 +590,8 @@ function buildLayeredCard(solution) {
   if (n.keyEvents && n.keyEvents.length) {
     const layer = document.createElement('div');
     layer.className = 'lc-layer lc-layer-signals';
-    const title = document.createElement('div');
+    const title = document.createElement('button');
+    title.type = 'button';
     title.className = 'lc-layer-title collapsible-toggle';
     // If no fresh events, label as "recent items" (archived from last daily)
     if (!hasFreshEvents) {
@@ -626,7 +634,8 @@ function buildLayeredCard(solution) {
   if (n.keyOpinions && n.keyOpinions.length) {
     const layer = document.createElement('div');
     layer.className = 'lc-layer lc-layer-opinions';
-    const title = document.createElement('div');
+    const title = document.createElement('button');
+    title.type = 'button';
     title.className = 'lc-layer-title collapsible-toggle';
     title.textContent = `💭 ${t('opinions')}`;
     layer.appendChild(title);
@@ -668,7 +677,7 @@ function createLegacyCardTop(solution) {
   const dirLabel = getDirectionLabel(solution.direction);
   top.innerHTML = `
     <span class="card-icon">${esc(solution.icon)}</span>
-    <span class="card-name">${esc(solutionName)}</span>
+    <h2 class="card-name">${esc(solutionName)}</h2>
     <span class="card-metric"><span class="card-metric-value">${esc(valHtml)}</span><span class="card-metric-label">${esc(getLangText(kv.label, kv.label || ''))}</span></span>
     <span class="card-direction ${solution.direction}">${esc(dirLabel)}</span>
   `;
@@ -768,6 +777,11 @@ function renderAll(data) {
     const aiVersion = data.aiVersion ? ` AI ${data.aiVersion}` : '';
     vt.textContent = `${APP_VERSION}${aiVersion}`;
   }
+
+  // The footer claims a source count — keep it honest with what the pipeline
+  // actually read (it used to be a hardcoded 75 in the HTML).
+  const fc = document.getElementById('feedCount');
+  if (fc && data.feedCount) fc.textContent = data.feedCount;
 
   buildActivityFeed();
 
@@ -946,12 +960,9 @@ function applyTheme(theme) {
 /* ── Collapsible Sections ──────────────────────────── */
 function initCollapsibles() {
   document.querySelectorAll('.collapsible-toggle').forEach(toggle => {
-    // onclick (not addEventListener) so re-renders replace instead of stack handlers
-    toggle.onclick = () => {
-      // Find the next sibling that is the collapsible body
+    const findBody = () => {
       let next = toggle.nextElementSibling;
       if (!next || !next.classList.contains('collapsible-body')) {
-        // Try finding within the same parent
         const parent = toggle.parentElement;
         if (parent) {
           for (const child of parent.children) {
@@ -962,14 +973,44 @@ function initCollapsibles() {
           }
         }
       }
-      if (next && next.classList.contains('collapsible-body')) {
-        const isOpen = next.classList.contains('open');
-        next.classList.toggle('open', !isOpen);
-        toggle.classList.toggle('open', !isOpen);
-      }
+      return next && next.classList.contains('collapsible-body') ? next : null;
     };
+    const body = findBody();
+    // Every disclosure needs a name, an owned panel and a state — previously
+    // these were plain <div>s with an onclick, so keyboard and screen-reader
+    // users could not open a single layer on the page.
+    if (body) {
+      if (!body.id) body.id = `panel-${(++initCollapsibles._n || (initCollapsibles._n = 1))}`;
+      toggle.setAttribute('aria-controls', body.id);
+      toggle.setAttribute('aria-expanded', String(body.classList.contains('open')));
+    }
+    if (toggle.tagName !== 'BUTTON') {
+      if (!toggle.hasAttribute('tabindex')) toggle.tabIndex = 0;
+      if (!toggle.hasAttribute('role')) toggle.setAttribute('role', 'button');
+    }
+    const flip = () => {
+      const target = findBody();
+      if (!target) return;
+      const isOpen = target.classList.contains('open');
+      target.classList.toggle('open', !isOpen);
+      toggle.classList.toggle('open', !isOpen);
+      toggle.setAttribute('aria-expanded', String(!isOpen));
+    };
+    // onclick (not addEventListener) so re-renders replace instead of stack handlers
+    toggle.onclick = flip;
+    // A <div role="button"> gets no Enter/Space behaviour for free — the
+    // section headers are still divs, so wire the keys explicitly.
+    if (toggle.tagName !== 'BUTTON') {
+      toggle.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          flip();
+        }
+      };
+    }
   });
 }
+initCollapsibles._n = 0;
 
 /* ── Boot ────────────────────────────────────────────── */
 (async function boot() {
