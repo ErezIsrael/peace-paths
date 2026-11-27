@@ -119,7 +119,10 @@ os.makedirs(STAGING_DIR, exist_ok=True)
 
 MAX_ARTICLES_PER_FEED = 8
 MAX_AGE_DAYS = 7
-FAST_AGE_HOURS = 2
+# The fast timer fires every 2 h, with jitter, lock waits and a 15 min timeout —
+# a 2 h window therefore drops whatever a delayed run missed. 6 h overlaps three
+# runs; the seen-article store below keeps the overlap from costing LLM time.
+FAST_AGE_HOURS = 6
 
 # ─── Lock file (prevents fast from running while daily is active) ───
 # Location: project root, accessible from both systemd and manual runs
@@ -131,6 +134,75 @@ LOCK_FILE = os.path.join(_LOCK_DIR, "ai-update.lock")
 # (translation cache, seen-article store).
 _STATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".state")
 os.makedirs(_STATE_DIR, exist_ok=True)
+
+SEEN_STORE_FILE = os.path.join(_STATE_DIR, "seen.json")
+SEEN_MAX_AGE_DAYS = 30          # an article key is forgotten after a month
+_seen = {}                      # article key -> {"ts": iso, "outcome": ...}
+
+
+def _article_key(a):
+    """Stable identity for an article across runs: link (query/fragment stripped,
+    feeds add tracking params) plus title."""
+    from urllib.parse import urlsplit, urlunsplit
+    link = (a.get("link") or "").strip().lower()
+    if link:
+        parts = urlsplit(link)
+        link = urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
+    title = (a.get("title") or "").strip().lower()
+    src = (a.get("source") or "").strip().lower()
+    return hashlib.sha1(f"{link}|{title}|{src}".encode("utf-8")).hexdigest()[:16]
+
+
+def _load_seen_store():
+    global _seen
+    try:
+        with open(SEEN_STORE_FILE, encoding="utf-8") as f:
+            loaded = json.load(f)
+        if isinstance(loaded, dict):
+            cutoff = datetime.now(timezone.utc).timestamp() - SEEN_MAX_AGE_DAYS * 86400
+            fresh = {}
+            for k, v in loaded.items():
+                if not isinstance(v, dict) or not isinstance(k, str):
+                    continue
+                try:
+                    ts = datetime.fromisoformat(v.get("ts", "")).timestamp()
+                except Exception:
+                    continue
+                if ts >= cutoff and v.get("outcome"):
+                    fresh[k] = v
+            _seen = fresh
+            print(f"\u267b\ufe0f Seen store: {len(_seen)} articles from the last {SEEN_MAX_AGE_DAYS} days loaded")
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        print(f"  ⚠ Seen store unreadable ({e}) — starting empty")
+        _seen = {}
+
+
+def _save_seen_store():
+    try:
+        tmp = SEEN_STORE_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(_seen, f, ensure_ascii=False)
+        os.replace(tmp, SEEN_STORE_FILE)
+    except Exception as e:
+        print(f"  ⚠ Could not save seen store: {e}")
+
+
+def _mark_seen(articles):
+    """Record only articles that reached a definitive outcome. Refusals and
+    keyword fallbacks are deliberately left unmarked so a later run retries them."""
+    marked = 0
+    now_iso = datetime.now(timezone.utc).isoformat()
+    for a in articles:
+        outcome = a.get("_outcome")
+        if not outcome:
+            continue
+        _seen[_article_key(a)] = {"ts": now_iso, "outcome": outcome}
+        marked += 1
+    return marked
+
+
 LOCK_HEARTBEAT_INTERVAL = 60   # seconds between heartbeat writes
 LOCK_STALE_THRESHOLD = 600     # seconds before a lock is considered stale (10 min — LLM calls can be slow)
 LOCK_FAST_MAX_WAIT = 14400     # max seconds fast will wait for daily (4 hours)
@@ -657,7 +729,7 @@ def fetch_rss(url, source, max_items):
     return articles
 
 
-def fetch_all_feeds(age_hours=None):
+def fetch_all_feeds(age_hours=None, skip_seen=False):
     feeds = load_rss_feeds()
     print(f"\U0001f4e1 Fetching {len(feeds)} RSS feeds...")
     now = datetime.now(timezone.utc)
@@ -717,6 +789,11 @@ def fetch_all_feeds(age_hours=None):
 
     print(f"  → {len(unique)} unique articles ({len(fetched) - len(unique)} filtered: "
           f"{too_old} too old, {no_date} no date, {len(all_articles) - len(unique)} dupes)")
+    if skip_seen and _seen:
+        fresh = [a for a in unique if _article_key(a) not in _seen]
+        print(f"  ♻️ {len(unique) - len(fresh)} already classified in an earlier run (skipped), "
+              f"{len(fresh)} new")
+        unique = fresh
     return unique
 
 
@@ -1004,6 +1081,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
         text = f"{article['title']} {article.get('snippet', '')}".lower()
         excluded = any(kw in text for kw in EXCLUDE_KW)
         if excluded and not any(kw in text for kw in ME_OVERRIDE):
+            article["_outcome"] = "prefilter"
             pre_filtered += 1
             continue
 
@@ -1020,6 +1098,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
             }))
             relevant += 1
             kw_classified += 1
+            article["_outcome"] = "relevant"
         else:
             remaining.append(article)
 
@@ -1094,6 +1173,19 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
                 json.dump(stage, f, indent=2, ensure_ascii=False)
             pct = processed * 100 // len(articles)
             print(f"  [{processed}/{len(articles)} ({pct}%)] {relevant} relevant, {dropped} dropped | {wall:.0f}s elapsed, ETA {eta:.0f}s")
+
+    # Item 11 support: stamp each article with a definitive outcome so the next fast
+    # run can skip it instead of paying the LLM again. When the LLM refused or fell
+    # back, the LLM-routed articles stay unmarked and get retried next run.
+    _relevant_ids = {id(a) for a, _ in pairs}
+    _uncertain_run = ai_refusals > 0 or kw_fallback > 0
+    for a in articles:
+        if "_outcome" in a:
+            continue
+        if id(a) in _relevant_ids:
+            a["_outcome"] = "relevant"
+        elif not _uncertain_run:
+            a["_outcome"] = "dropped"
 
     # Save final
     final_stage = {
@@ -2731,6 +2823,7 @@ def main():
     PROMPTS = load_prompts()
 
     _load_translation_cache()
+    _load_seen_store()
     
     # ── Research mode ──
     if args.research_categories:
@@ -2818,7 +2911,7 @@ def main():
         print(f"  [fast] fetching last {age_hours}h")
     else:
         print(f"  [daily] fetching last {MAX_AGE_DAYS}d")
-    articles = fetch_all_feeds(age_hours=age_hours)
+    articles = fetch_all_feeds(age_hours=age_hours, skip_seen=(age_hours is not None))
     if not articles:
         print("No articles found.")
         release_lock(mode)
@@ -2857,6 +2950,10 @@ def main():
             kw_fallback = len(classified_pairs)
     # Save classified pairs (serializable form)
     _save_stage("classified", [{"article": a, "classification": c} for a, c in classified_pairs])
+    if age_hours is not None:
+        marked = _mark_seen(articles)
+        _save_seen_store()
+        print(f"  ♻️ Seen store: {marked} articles recorded ({len(_seen)} total)")
     
     # 4. Event Clustering
     _write_heartbeat(os.getpid(), mode, "clustering")
