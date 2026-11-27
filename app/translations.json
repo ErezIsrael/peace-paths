@@ -90,7 +90,10 @@
     "infoLimit3": "This tool is experimental and for informational purposes only",
     "crossAttestation": "Cross-attestation",
     "darkMode": "Dark mode",
-    "lightMode": "Light mode"
+    "lightMode": "Light mode",
+    "quietTracks": "Tracks with no new developments",
+    "noNewDevelopments": "no new developments",
+    "lastActivity": "last activity:"
   },
   "he": {
     "siteTitle": "נתיבי השלום",
@@ -183,7 +186,10 @@
     "infoLimit3": "כלי זה הוא ניסיוני ולמטרות מידע בלבד",
     "crossAttestation": "אישור צולב",
     "darkMode": "מצב כהה",
-    "lightMode": "מצב בהיר"
+    "lightMode": "מצב בהיר",
+    "quietTracks": "מהלכים ללא התפתחויות חדשות",
+    "noNewDevelopments": "ללא התפתחויות חדשות",
+    "lastActivity": "פעילות אחרונה:"
   },
   "ar": {
     "siteTitle": "مسارات السلام",
@@ -276,6 +282,9 @@
     "infoLimit3": "هذه الأداة تجريبية ولأغراض معلوماتية فقط",
     "crossAttestation": "التأكيد المتقاطع",
     "darkMode": "الوضع الداكن",
-    "lightMode": "الوضع الفاتح"
+    "lightMode": "الوضع الفاتح",
+    "quietTracks": "مسارات بلا تطورات جديدة",
+    "noNewDevelopments": "بلا تطورات جديدة",
+    "lastActivity": "آخر نشاط:"
   }
 }

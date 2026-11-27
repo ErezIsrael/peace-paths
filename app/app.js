@@ -8,7 +8,7 @@ const MOMENTUM_CONFIG_KEYS = {
   stalling: 'momentumStalling',
 };
 
-const APP_VERSION = 'v0.6.1';
+const APP_VERSION = 'v0.7.0';
 
 // Escape untrusted (feed-derived) text before interpolating into innerHTML
 function esc(s) {
@@ -762,6 +762,97 @@ function buildStakeholders(stakeholders) {
   return div;
 }
 
+/* ── Quiet tracks (dormant solutions) ──────────────────
+   The pipeline keeps solutions that had no events in the current window inside
+   `data.solutions` — their narrative is the long-term archive — but drops them
+   from `activeSolutions`. The grid filters on `activeSolutions`, so until now
+   those solutions were paid for in the payload (2 of them cost 14.9 KB, 9.7% of
+   it) and never shown anywhere. They now get one collapsed row each. */
+function lastActivityDate(solution) {
+  const n = solution.narrative || {};
+  const dates = [];
+  (solution.events || []).forEach(e => dates.push(e.date));
+  (n.keyEvents || []).forEach(e => dates.push(e.date));
+  (n.keyOpinions || []).forEach(e => dates.push(e.date));
+  (n.shifts || []).forEach(s => dates.push(s.date));
+  return dates.map(parseDate).filter(Boolean).sort((a, b) => b - a)[0] || null;
+}
+
+// Quiet tracks are by definition older than the relative-time window, so show a
+// plain localized date rather than "47d ago".
+function formatDate(date) {
+  const loc = currentLang === 'he' ? 'he-IL' : currentLang === 'ar' ? 'ar' : 'en-US';
+  try { return date.toLocaleDateString(loc, { month: 'short', day: 'numeric' }); }
+  catch (e) { return date.toISOString().slice(0, 10); }
+}
+
+function dormantHasArchive(solution) {
+  const n = solution.narrative || {};
+  if ((n.keyEvents || []).length || (n.keyOpinions || []).length) return true;
+  if (getLangText(n.longTerm, '')) return true;
+  return !!(n.longTerm && typeof n.longTerm === 'object' && n.longTerm.en);
+}
+
+function createDormantRow(solution) {
+  const wrap = document.createElement('div');
+  wrap.className = `dormant-row ${solution.direction || 'unknown'}`;
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'dormant-toggle collapsible-toggle';
+
+  const icon = document.createElement('span');
+  icon.className = 'dormant-icon';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = solution.icon || '\ud83d\udd4a';
+
+  const name = document.createElement('span');
+  name.className = 'dormant-name';
+  name.textContent = getLangText(solution.name, '') ||
+    (solution.name && solution.name.en ? sanitizeText(solution.name.en) : '');
+
+  const status = document.createElement('span');
+  status.className = 'dormant-status';
+  status.textContent = t('noNewDevelopments');
+
+  const last = document.createElement('span');
+  last.className = 'dormant-last';
+  const when = lastActivityDate(solution);
+  if (when) last.textContent = `${t('lastActivity')} ${formatDate(when)}`;
+
+  toggle.append(icon, name, status, last);
+
+  // Reusing the full card keeps the archive readable once opened (long-term arc,
+  // weekly highlight, key events) instead of duplicating that markup here.
+  const panel = document.createElement('div');
+  panel.className = 'collapsible-body dormant-panel';
+  panel.appendChild(buildLayeredCard(solution));
+
+  wrap.append(toggle, panel);
+  return wrap;
+}
+
+function renderQuietTracks(data, activeIds) {
+  const section = document.getElementById('quietTracks');
+  const header = document.getElementById('quietTracksHeader');
+  const list = document.getElementById('quietTracksList');
+  if (!section || !header || !list) return;
+  list.innerHTML = '';
+
+  const quiet = (data.solutions || [])
+    .filter(s => !activeIds.includes(s.id) && !(s.events || []).length)
+    .filter(dormantHasArchive)
+    .sort((a, b) => (lastActivityDate(b) || 0) - (lastActivityDate(a) || 0));
+
+  if (!quiet.length) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  header.textContent = `${t('quietTracks')} (${quiet.length})`;
+  quiet.forEach(s => list.appendChild(createDormantRow(s)));
+}
+
 /* ── Render All ──────────────────────────────────────── */
 function renderAll(data) {
   renderMomentum(data.overallMomentum);
@@ -816,6 +907,8 @@ function renderAll(data) {
       const card = createSolutionCard(solution);
       if (grid) grid.appendChild(card);
     });
+
+  renderQuietTracks(data, activeIds);
 
   // Re-init collapsible toggles after DOM rebuild
   initCollapsibles();
