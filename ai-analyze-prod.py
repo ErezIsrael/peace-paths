@@ -914,14 +914,25 @@ def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, ba
     user = PROMPTS["batch_user"]["user"].format(
         BATCH_SIZE=n, ARTICLES_TEXT=txt, CATEGORY_IDS=", ".join(valid_ids)
     )
+    # The shared classifier prompt is written for one article; under response_format
+    # json_object the model then answers for the *first* article only and the whole
+    # batch has to be retried one by one. State the batch contract explicitly.
+    batch_system = system_prompt + (
+        "\n\nBATCH MODE: several articles are being classified in this one turn. "
+        'Answer with a single JSON object of the form {"results": [ ... ]} containing '
+        "exactly " + str(n) + " classification objects, one per article, in the same order as "
+        "the articles above. Never answer for only the first article, never add prose, "
+        "never add other keys."
+    )
 
     body = {
         "model": AI_MODEL,
         "messages": [
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": batch_system},
             {"role": "user", "content": user},
         ],
-        "max_tokens": 2000,
+        # A 10-article batch of 10 classification objects does not fit in a fixed 2000.
+        "max_tokens": min(8000, max(2000, 260 * n)),
         "temperature": 0.0,
         "response_format": {"type": "json_object"},
         "chat_template_kwargs": {"enable_thinking": False},
@@ -941,8 +952,19 @@ def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, ba
         if parsed is not None:
             break
         print(f"  ⚠ Batch response truncated/unparseable (attempt {attempt + 1}/2) — retrying")
-    if isinstance(parsed, dict) and isinstance(parsed.get("results"), list):
-        parsed = parsed["results"]
+    if isinstance(parsed, dict):
+        # Accept the wrapper under whatever key the model picked, and a bare
+        # classification object when only one article was asked for.
+        for key in ("results", "articles", "classifications", "items", "data"):
+            if isinstance(parsed.get(key), list):
+                parsed = parsed[key]
+                break
+        else:
+            lists = [v for v in parsed.values() if isinstance(v, list)]
+            if len(lists) == 1:
+                parsed = lists[0]
+            elif n == 1 and ("category" in parsed or "me_relevant" in parsed):
+                parsed = [parsed]
     if isinstance(parsed, list) and len(parsed) == n:
         # Fill in defaults
         results = []
@@ -960,6 +982,8 @@ def _batch_classify(articles, system_prompt, valid_ids, source_profiles=None, ba
         with open(dbg, "w", encoding="utf-8") as f:
             f.write(raw)
         print(f"  ⚠ Batch JSON parse failed (expected {n} results, got {len(parsed) if isinstance(parsed, list) else 'non-list'}) — raw saved to {dbg}")
+        if raw:
+            print("     " + " ".join(raw[:200].split()))
     except Exception:
         pass
     return None
@@ -1378,6 +1402,7 @@ def cluster_events(pairs, source_profiles=None, threshold=0.52, time_window_hour
         if len(normalized) <= 1:
             # Single article = single cluster
             clustered[sol_id] = [_make_cluster(normalized, source_profiles)]
+            total_clusters += 1
             continue
 
         # ── vectors for the IDF-weighted similarity ──
@@ -1475,7 +1500,7 @@ def cluster_events(pairs, source_profiles=None, threshold=0.52, time_window_hour
         all_clustered.extend(events)
     
     print(f"  → {total_clusters} clusters from {len(pairs)} articles"
-          f" ({len(pairs) - total_clusters} merged as the same event)")
+          f" ({max(0, len(pairs) - total_clusters)} merged as the same event)")
     return all_clustered, clustered
 
 
