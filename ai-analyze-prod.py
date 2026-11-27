@@ -64,6 +64,9 @@ from urllib.error import URLError
 try:
     from bs4 import BeautifulSoup
     HAS_BS4 = True
+    # Feeds sometimes put plain text (not markup) in <description>; bs4 warns noisily.
+    import warnings
+    warnings.filterwarnings("ignore", message=r"The input looks more like a filename than markup")
 except ImportError:
     HAS_BS4 = False
 
@@ -91,7 +94,7 @@ except ImportError:
     pass
 
 # ─── Version ─────────────────────────────────────────────────────────
-SCRIPT_VERSION = "2.0.0-narrative"
+SCRIPT_VERSION = "2.1.0-feed-integrity"
 
 # ─── Paths ───────────────────────────────────────────────────────────
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -487,8 +490,8 @@ def _parse_rss_date(date_str):
             return dt.isoformat()
         except ValueError:
             pass
-    # Give up — return None so caller knows date is unknown
-    return None
+    # Give up — last resort: localized month name + year, then unknown
+    return _parse_loose_date(date_str)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -505,48 +508,142 @@ def _extract_text(raw_html):
     return re.sub(r"\s+", " ", text).strip()
 
 
+def _read_response(f):
+    """Read an HTTP response body, decoding Content-Encoding.
+    Several feeds (Walla, The Independent) only serve gzip/deflate — reading
+    them as text produced 0 items."""
+    import gzip, zlib
+    raw = f.read(2000000)
+    enc = (f.headers.get("Content-Encoding") or "").lower()
+    if "gzip" in enc:
+        try:
+            raw = gzip.decompress(raw)
+        except OSError:
+            pass
+    elif "deflate" in enc:
+        try:
+            raw = zlib.decompress(raw)
+        except zlib.error:
+            try:
+                raw = zlib.decompress(raw, -zlib.MAX_WBITS)
+            except zlib.error:
+                pass
+    return raw.decode("utf-8", errors="replace")[:1000000]
+
+
+# Month names used by feeds that publish localized pubDate values
+# (e.g. Crisis Group serves 'الأربعاء, نوفمبر 18, 2026 - 17:44').
+_MONTH_WORDS = {}
+for _idx, _names in enumerate([
+    ("january", "janvier", "gennaio", "enero", "janeiro", "يناير", "كانون الثاني", "ינואר", "января", "ocak"),
+    ("february", "fevrier", "febbraio", "febrero", "fevereiro", "فبراير", "شباط", "פברואר", "февраля", "subat"),
+    ("march", "mars", "marzo", "março", "مارس", "آذار", "מרץ", "марта", "mart"),
+    ("april", "avril", "aprile", "abril", "أبريل", "نيسان", "אפריל", "апреля", "nisan"),
+    ("may", "mai", "maggio", "mayo", "maio", "مايو", "أيار", "מאי", "мая"),
+    ("june", "juin", "giugno", "junio", "junho", "يونيو", "حزيران", "יוני", "июня", "haziran"),
+    ("july", "juillet", "luglio", "julio", "julho", "يوليو", "تموز", "יולי", "июля", "temmuz"),
+    ("august", "aout", "agosto", "agosto ", "أغسطس", "آب", "אוגוסט", "августа", "ağustos"),
+    ("september", "septembre", "settembre", "septiembre", "setembro", "سبتمبر", "أيلول", "ספטמבר", "сентября", "eylul"),
+    ("october", "octobre", "ottobre", "octubre", "outubro", "أكتوبر", "تشرين الأول", "אוקטובר", "октября", "ekim"),
+    ("november", "novembre", "novembre", "noviembre", "novembro", "نوفمبر", "تشرين الثاني", "נובמבר", "ноября", "kasim"),
+    ("december", "décembre", "dicembre", "diciembre", "dezembro", "دجنبر", "كانون الأول", "דצמבר", "декабря", "aralik"),
+], 1):
+    for _n in _names:
+        _MONTH_WORDS[_n.strip().lower()] = _idx
+
+
+def _parse_loose_date(date_str):
+    """Last-resort parse: any 'month name + year' with an optional day.
+    Returns ISO string or None."""
+    try:
+        s = re.sub(r"\d{1,2}:\d{2}(:\d{2})?", " ", " " + date_str.strip() + " ")
+        low = s.lower()
+        year_m = re.search(r"\b(19|20)\d{2}\b", s)
+        if not year_m:
+            return None
+        year = int(year_m.group(0))
+        month, matched = None, None
+        for word, num in _MONTH_WORDS.items():
+            if word in low:
+                month, matched = num, word
+                break
+        if not month:
+            return None
+        after = low.split(matched, 1)[1]
+        day_m = re.search(r"\b(\d{1,2})\b", after)
+        if not day_m:
+            before = re.findall(r"\b(\d{1,2})\b", low.split(matched, 1)[0])
+            day_m = re.search(r"(\d{1,2})", before[-1]) if before else None
+        day = int(day_m.group(1)) if day_m else 1
+        if not 1 <= day <= 31:
+            day = 1
+        return datetime(year, month, day, tzinfo=timezone.utc).isoformat()
+    except Exception:
+        return None
+
+
+def _tag(block, names):
+    """Return the text of the first matching tag name (RSS or Atom)."""
+    for name in names:
+        m = re.search(rf"<{name}\b[^>]*>(.*?)</{name}>", block, re.DOTALL)
+        if m and m.group(1).strip():
+            return m.group(1).strip()
+    return None
+
+
+def _feed_link(block):
+    """Article link from RSS <link>x</link> or Atom <link href="x"/>."""
+    m = re.search(r'''<link[^>]*rel=["']alternate["'][^>]*href=["']([^"']+)["']''', block)
+    if not m:
+        m = re.search(r'''<link[^>]*href=["']([^"']+)["']''', block)
+    if m:
+        return m.group(1).strip()
+    m = re.search(r"<link[^>]*>(.*?)</link>", block, re.DOTALL)
+    return m.group(1).strip() if m else ""
+
+
 def fetch_rss(url, source, max_items):
     try:
-        req = Request(url, headers={"User-Agent": "PeaceMeter/1.0"})
+        req = Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (compatible; PeaceMeter/1.0)",
+            "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+            "Accept-Encoding": "gzip, deflate",
+        })
         with urlopen(req, timeout=8) as f:
-            xml = f.read(500000).decode("utf-8", errors="replace")  # Cap at 500KB
+            xml = _read_response(f)
     except Exception as e:
         print(f"  ⚠ {source}: {e}")
         return []
     if "<html" in xml[:200] or "<!DOCTYPE html" in xml[:200]:
         return []
 
-    item_blocks = re.findall(r"<item>(.*?)</item>", xml, re.DOTALL)
+    # RSS 2.0 (<item>) and Atom (<entry>) — Atom feeds were silently dropped before.
+    item_blocks = re.findall(r"<item\b[^>]*>(.*?)</item>", xml, re.DOTALL)
+    if not item_blocks:
+        item_blocks = re.findall(r"<entry\b[^>]*>(.*?)</entry>", xml, re.DOTALL)
     articles = []
     for block in item_blocks[:max_items]:
-        title_m = re.search(r"<title>(.*?)</title>", block, re.DOTALL)
-        link_m = re.search(r"<link>(.*?)</link>", block, re.DOTALL)
-        date_m = re.search(r"<pubDate>(.*?)</pubDate>", block, re.DOTALL)
-        if not title_m:
+        title_raw = _tag(block, ("title",))
+        if not title_raw:
             continue
+        link = _feed_link(block)
+        date_raw = _tag(block, ("pubDate", "published", "updated", "dc:date", "date"))
 
-        title = title_m.group(1).strip()
-        title = title.replace("<![CDATA[", "").replace("]]>", "")
+        title = title_raw.replace("<![CDATA[", "").replace("]]>", "")
         title = html.unescape(title)
         title = re.sub(r"&\w+;|&#\d+;|&#x[0-9a-fA-F]+;", "", title)
         title = re.sub(r"<[^>]+>", "", title)
 
-        snippet = ""
-        content_m = re.search(r"<content:encoded>(.*?)</content:encoded>", block, re.DOTALL)
-        if content_m:
-            raw = content_m.group(1).replace("<![CDATA[", "").replace("]]>", "")
+        raw = _tag(block, ("content:encoded", "description", "content", "summary", "media:description"))
+        if raw:
+            raw = raw.replace("<![CDATA[", "").replace("]]>", "")
             snippet = _extract_text(raw)
         else:
-            desc_m = re.search(r"<description>(.*?)</description>", block, re.DOTALL)
-            if desc_m:
-                raw = desc_m.group(1).replace("<![CDATA[", "").replace("]]>", "")
-                snippet = _extract_text(raw)
+            snippet = ""
         snippet = snippet[:1200]
 
-        link = link_m.group(1).strip() if link_m else ""
-        date_str = date_m.group(1).strip() if date_m else None
-        # Parse RSS date (RFC 822, ISO 8601, or other)
-        date_str = _parse_rss_date(date_str)
+        # Parse RSS date (RFC 822, ISO 8601, localized month name, or other)
+        date_str = _parse_rss_date(date_raw) if date_raw else None
 
         articles.append({
             "title": title, "link": link, "date": date_str,
@@ -2272,10 +2369,48 @@ def build_output(clustered_events, cat_map, narratives, ai_phases=None, stakehol
 # Upload to Cloudflare KV
 # ═══════════════════════════════════════════════════════════════════════
 
+# Fields the frontend never reads. They stay in app/data.json (that file is the
+# pipeline's long-term memory — milestones and weeklyHistory feed the narrative
+# prompt) but are not shipped to every visitor.
+_DROP_EVENT = ("snippet", "cluster_size", "ai_risk", "source_weight")
+_DROP_NARRATIVE = ("milestones", "weeklyHistory")
+_DROP_ITEM = ("source_weight",)          # inside narrative.keyEvents/keyOpinions
+_DROP_ATTESTATION = ("signal_score", "source_weight")
+
+
+def _slim_for_publish(data):
+    """Deep copy of `data` keeping only the fields the frontend consumes."""
+    slim = json.loads(json.dumps(data, ensure_ascii=False))
+    for sol in slim.get("solutions", []):
+        narr = sol.get("narrative") or {}
+        for key in _DROP_NARRATIVE:
+            narr.pop(key, None)
+        for name in ("keyEvents", "keyOpinions"):
+            for item in narr.get(name, []) or []:
+                for key in _DROP_ITEM:
+                    item.pop(key, None)
+        for ev in sol.get("events", []) or []:
+            for key in _DROP_EVENT:
+                ev.pop(key, None)
+            for att in ev.get("attestations", []) or []:
+                for key in _DROP_ATTESTATION:
+                    att.pop(key, None)
+    return slim
+
+
+def _publish_bytes(data):
+    """Compact UTF-8 JSON of the slim payload (pretty-printing cost ~17% more
+    bytes on every page view)."""
+    return json.dumps(_slim_for_publish(data), ensure_ascii=False,
+                      separators=(",", ":")).encode("utf-8")
+
+
 def upload_to_cloudflare(data, max_retries=3):
-    """Push data.json to Cloudflare KV via REST API (no Node.js needed).
+    """Push the slim payload to Cloudflare KV via REST API (no Node.js needed).
     Uses PUT /accounts/:id/storage/kv/namespaces/:id/values/:key
     Retries on transient failures.
+    The payload is built from `data` in memory — never read back off disk, so a
+    stale local file can never be published.
     """
     if not CLOUDFLARE_TOKEN or not CLOUDFLARE_ACCOUNT:
         print("\n⚠ CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not set")
@@ -2283,9 +2418,10 @@ def upload_to_cloudflare(data, max_retries=3):
     import urllib.request, json
     kv_id = "badf4fb7acfe4d1c905db77ed8d5e70f"
     url = f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT}/storage/kv/namespaces/{kv_id}/values/data.json"
-    with open(DATA_JSON_FILE, "rb") as f:
-        content = f.read()
-    
+    content = _publish_bytes(data)
+    if os.path.exists(DATA_JSON_FILE):
+        print(f"  📦 publishing {len(content) // 1024} KB (local data.json is {os.path.getsize(DATA_JSON_FILE) // 1024} KB)")
+
     for attempt in range(1, max_retries + 1):
         req = urllib.request.Request(url, data=content, method="PUT")
         req.add_header("Authorization", f"Bearer {CLOUDFLARE_TOKEN}")
