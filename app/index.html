@@ -66,14 +66,14 @@
 
         <!-- ── Live Activity Feed ──────────────────── -->
         <div class="activity-section">
-            <div class="section-header collapsible-toggle open" role="button" tabindex="0" aria-expanded="true" aria-controls="activityFeed"><span class="live-dot"></span>פעילות אחרונה</div>
+            <h2 class="section-heading"><div class="section-header collapsible-toggle open" role="button" tabindex="0" aria-expanded="true" aria-controls="activityFeed"><span class="live-dot"></span>פעילות אחרונה</div></h2>
             <div class="activity-feed collapsible-body open" id="activityFeed"></div>
             <button class="activity-more" id="showMoreActivity" type="button"></button>
         </div>
 
         <!-- ── Solutions Grid (dynamic) ────────────── -->
         <div class="category-group">
-            <div class="section-header">פתרונות</div>
+            <h2 class="section-heading"><div class="section-header">פתרונות</div></h2>
             <div id="solutionsGrid" aria-live="polite" aria-busy="true">
               <div class="skeleton-card" aria-hidden="true"><div class="skeleton-line w40"></div><div class="skeleton-line w90"></div><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></div>
               <div class="skeleton-card" aria-hidden="true"><div class="skeleton-line w40"></div><div class="skeleton-line w90"></div><div class="skeleton-line w70"></div><div class="skeleton-line w50"></div></div>
@@ -82,7 +82,7 @@
 
         <!-- ── Quiet tracks (no new developments; archive) ── -->
         <div class="category-group quiet-section" id="quietTracks" hidden>
-            <button class="section-header collapsible-toggle quiet-header" id="quietTracksHeader" type="button">מהלכים ללא התפתחויות חדשות</button>
+            <h2 class="section-heading"><button class="section-header collapsible-toggle quiet-header" id="quietTracksHeader" type="button">מהלכים ללא התפתחויות חדשות</button></h2>
             <div class="collapsible-body quiet-list" id="quietTracksList"></div>
         </div>
 
@@ -111,6 +111,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=0.7.0"></script>
+    <script src="app.js?v=0.7.1"></script>
 </body>
 </html>

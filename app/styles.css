@@ -211,6 +211,13 @@ a:hover { text-decoration: underline; }
 
 /* ── Activity Feed ───────────────────────────────────── */
 .activity-section { margin-bottom: 16px; }
+/* The section labels used to be bare <div>s, so the page had no heading
+   navigation to them (only the cards were headings). They are now wrapped in
+   <h2>; typography stays on .section-header, so this only cancels the UA
+   heading chrome. */
+h2.section-heading {
+  margin: 0; padding: 0; font-size: inherit; font-weight: inherit; line-height: inherit;
+}
 .section-header {
   font-family: var(--font-head);
   font-size: 12px;
@@ -394,6 +401,10 @@ a:hover { text-decoration: underline; }
   font-size: 14px;
   font-weight: 700;
   flex: 1;
+  /* Card names dropped to <h3> so the outline reads h1 > h2 section > h3 card.
+     The `* { margin: 0 }` reset at the top of this file is what keeps the header
+     height unchanged — do not give headings a margin here (that shifted the
+     header from 52px to 66px once already). */
 }
 .card-metric {
   flex-shrink: 0;

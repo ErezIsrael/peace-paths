@@ -8,7 +8,7 @@ const MOMENTUM_CONFIG_KEYS = {
   stalling: 'momentumStalling',
 };
 
-const APP_VERSION = 'v0.7.0';
+const APP_VERSION = 'v0.7.1';
 
 // Escape untrusted (feed-derived) text before interpolating into innerHTML
 function esc(s) {
@@ -528,7 +528,7 @@ function buildLayeredCard(solution) {
   const dirLabel = getDirectionLabel(solution.direction);
   header.innerHTML = `
     <span class="lc-icon">${esc(solution.icon)}</span>
-    <h2 class="lc-name">${esc(solutionName)}</h2>
+    <h3 class="lc-name">${esc(solutionName)}</h3>
     <span class="lc-metric">${esc(countDisplay)} <small>${esc(getLangText(kv.label, kv.label || ''))}</small></span>
     <span class="lc-direction ${solution.direction}">${esc(dirLabel)}</span>
   `;
@@ -677,7 +677,7 @@ function createLegacyCardTop(solution) {
   const dirLabel = getDirectionLabel(solution.direction);
   top.innerHTML = `
     <span class="card-icon">${esc(solution.icon)}</span>
-    <h2 class="card-name">${esc(solutionName)}</h2>
+    <h3 class="card-name">${esc(solutionName)}</h3>
     <span class="card-metric"><span class="card-metric-value">${esc(valHtml)}</span><span class="card-metric-label">${esc(getLangText(kv.label, kv.label || ''))}</span></span>
     <span class="card-direction ${solution.direction}">${esc(dirLabel)}</span>
   `;
@@ -1054,19 +1054,27 @@ function applyTheme(theme) {
 function initCollapsibles() {
   document.querySelectorAll('.collapsible-toggle').forEach(toggle => {
     const findBody = () => {
+      const isBody = (el) => !!el && el.classList.contains('collapsible-body');
       let next = toggle.nextElementSibling;
-      if (!next || !next.classList.contains('collapsible-body')) {
-        const parent = toggle.parentElement;
-        if (parent) {
-          for (const child of parent.children) {
-            if (child === toggle) {
-              next = child.nextElementSibling;
-              break;
-            }
+      if (isBody(next)) return next;
+      const parent = toggle.parentElement;
+      if (parent) {
+        for (const child of parent.children) {
+          if (child === toggle) {
+            next = child.nextElementSibling;
+            break;
           }
         }
       }
-      return next && next.classList.contains('collapsible-body') ? next : null;
+      if (isBody(next)) return next;
+      // A label can be wrapped (e.g. <h2 class="section-heading"><button></h2>) to
+      // give the page heading structure — then the panel is a sibling of the
+      // wrapper, not of the button.
+      let up = toggle.parentElement;
+      for (let depth = 0; up && depth < 3; depth++, up = up.parentElement) {
+        if (isBody(up.nextElementSibling)) return up.nextElementSibling;
+      }
+      return null;
     };
     const body = findBody();
     // Every disclosure needs a name, an owned panel and a state — previously
