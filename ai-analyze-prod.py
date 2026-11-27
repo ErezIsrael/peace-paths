@@ -1098,6 +1098,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
     pre_filtered = 0
     kw_hinted = 0
     ai_failures = 0
+    llm_answered = 0
     ai_refusals = 0
     kw_fallback = 0
     stage_file = os.path.join(STAGING_DIR, "classification.json")
@@ -1181,6 +1182,8 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
                             else:
                                 dropped += 1
                                 continue
+                    if isinstance(result, dict) and not result.get("_kw_fallback"):
+                        llm_answered += 1
                     r, d = _add_classified(pairs, result, article, valid_ids)
                     relevant += r
                     dropped += d
@@ -1189,6 +1192,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
                     if isinstance(result, dict) and result.get("_refused"):
                         ai_refusals += 1
                         continue
+                    llm_answered += 1
                     r, d = _add_classified(pairs, result, article, valid_ids)
                     relevant += r
                     dropped += d
@@ -1240,6 +1244,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
         "pre_filtered": pre_filtered,
         "keyword_hints": kw_hinted,
         "llm_classified": by_llm,
+        "llm_answered": llm_answered,
         "kw_fallback": kw_fallback,
         "wall_seconds": round(time.time() - start_time, 1),
         "pairs_count": len(pairs),
@@ -1256,7 +1261,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
         print(f"  🚨 AI content filter: {ai_refusals} articles ({pct:.1f}%)")
     if kw_fallback > 0:
         print(f"  ⚠ {kw_fallback} articles keyword-fallback (LLM unavailable)")
-    return pairs, ai_refusals, kw_fallback
+    return pairs, ai_refusals, kw_fallback, llm_answered
 
 
 def _add_classified(pairs, result, article, valid_ids):
@@ -3091,9 +3096,14 @@ def main():
         ai_refusals = 0
         kw_fallback = len(classified_pairs)
     else:
-        classified_pairs, ai_refusals, kw_fallback = classify_articles(articles, system_prompt, valid_ids, source_profiles)
-        if not classified_pairs:
-            print("  ⚠ AI failed, using keyword fallback")
+        classified_pairs, ai_refusals, kw_fallback, llm_answered = classify_articles(
+            articles, system_prompt, valid_ids, source_profiles)
+        # "no pairs" is not "no AI": on a quiet window the model legitimately drops every
+        # article. Falling back on that reading re-inserted keyword verdicts we had just
+        # removed, and published classificationMethod="keyword-fallback" - which also puts
+        # the "AI is falling back" warning banner on the live site for no reason.
+        if not classified_pairs and llm_answered == 0:
+            print("  ⚠ AI produced no verdicts at all, using keyword fallback")
             classified_pairs = keyword_classify(articles, all_kws)
             ai_refusals = 0
             kw_fallback = len(classified_pairs)
