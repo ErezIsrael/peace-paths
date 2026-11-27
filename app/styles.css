@@ -63,7 +63,7 @@
   --reversing:  #b71c1c;
   --unknown:    #607d8b;
   --advancing-text: #1e6b25;
-  --stable-text:    #8a6100;
+  --stable-text:    #745000;   /* #8a6100 measured 4.33:1 on a hovered card's amber tint */
   --stalling-text:  #b3261e;
   --reversing-text: #b3261e;
 
@@ -730,6 +730,13 @@ h2.section-heading {
 .lc-direction.stable    { color: var(--stable-text);    background: rgba(255,193,7,0.1); }
 .lc-direction.stalling  { color: var(--stalling-text);  background: rgba(248,113,113,0.1); }
 .lc-direction.reversing { color: var(--reversing-text); background: rgba(239,68,68,0.1); }
+/* Light theme: a 10% accent tint composites over whatever card it sits on, and the
+   alternating/hovered card pushed the amber chip to 4.33:1 (AA floor is 4.5 at 12px).
+   Opaque chip colours make the ratio independent of the card behind it. */
+[data-theme="light"] .lc-direction.advancing { background: #dcefdc; }
+[data-theme="light"] .lc-direction.stable    { background: #f6ead0; }
+[data-theme="light"] .lc-direction.stalling  { background: #f7e2e0; }
+[data-theme="light"] .lc-direction.reversing { background: #f6dcd9; }
 
 /* Shift badges */
 .lc-shifts {
