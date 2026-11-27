@@ -118,7 +118,8 @@ peace-paths/
 | KV namespace | `peace-data` (`badf4fb7acfe4d1c905db77ed8d5e70f`) |
 | Default language | Hebrew (RTL) |
 | Env vars | `LLAMA_CPP_URL`, `AI_MODEL`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` |
-| Published payload | KV holds the **publish view** of `app/data.json` — compact JSON, fields the UI never reads dropped (`events[].snippet`, `narrative.milestones`/`weeklyHistory`). ~180 KB raw / ~56 KB brotli. The local file stays the long-term memory (~400 KB) and is deliberately larger. |
+| Published payload | KV holds the **publish view** of `app/data.json` (AI 2.2.0 `_publish_view()`): compact JSON, fields the UI never reads dropped, `recentEvents` (40 newest, tagged with `solutionId`) for the activity feed, and only 2 recent events per solution inline. ~115 KB raw / ~36 KB brotli. The local file stays the long-term memory (~450 KB) and is deliberately larger. |
+| Event archives | Each solution's full event history is a separate KV key `events/<id>.json`, fetched on demand by the card's "📂 כל האירועים (N)" layer and served by `functions/events/[id].json.js` (id validated against `^[a-z0-9][a-z0-9-]{0,79}$`). The frontend only asks when `data.eventsFiles` is true, which the pipeline sets only after every file uploaded. |
 | `/data.json` caching | Served by `functions/data.json.js` with KV `cacheTtl: 60` + cacheable response headers. `no-store` there would mean an origin KV read per view. (The CDN itself does not cache Pages Function responses on this plan.) |
 | Fonts | `tools/build-fonts.py` subsets Heebo (HE/LT) and Noto Naskh Arabic into `app/fonts/*.woff2`; `styles.css` selects them by `unicode-range` so Arabic glyph data is only fetched in Arabic mode. The old `inter-variable.ttf` had **no Hebrew or Arabic glyphs** — Hebrew was falling back to a system font. Regenerate after changing the site's text; `--dry-run` prints codepoint coverage. |
 
@@ -230,10 +231,14 @@ Rules that keep this working:
 
 ### Site invariants (measured, do not regress silently)
 
-- **Payload:** the pipeline logs `publishing N KB (local data.json is M KB)`. KV holds the
-  slim publish view (~180 KB raw / ~56 KB brotli); the on-disk file stays the full memory.
+- **Payload:** the pipeline logs `publishing N KB + M/N event files (K KB) (local data.json is M KB)`. KV holds the
+  slim publish view (~115 KB raw / ~36 KB brotli); the on-disk file stays the full memory.
   If you add a field to the publish view, the frontend must actually read it — otherwise
-  drop it in `_publish_view()`.
+  drop it in `_slim_for_publish()`.
+- **Event archives:** `events/<id>.json` in KV, written *before* `data.json` so the
+  `eventsFiles` flag can be trusted. If you change the event shape, change both the archive
+  files and the inline `recentEvents`/2-per-solution floor in the same commit — the frontend
+  renders all three with the same row markup.
 - **Caching:** `functions/data.json.js` reads KV with `cacheTtl: 60` (edge-cached value, so a
   page view is not an origin KV read) and must never return `no-store`. Measured caveat: the
   CDN does **not** cache Pages Function responses on this plan (probe-verified — the Function
