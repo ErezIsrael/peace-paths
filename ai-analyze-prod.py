@@ -437,8 +437,14 @@ _DEFAULT_PROMPTS = {
             "Output format: single JSON object (or JSON array for batch). No text outside JSON.\n\n"
             "CATEGORIES:\n{CATEGORIES_BLOCK}\n\n"
             "DECISION LOGIC:\n"
-            "- me_relevant: true if article relates to any listed category\n"
+            "- me_relevant: true ONLY if the article is about one of the listed initiatives/processes, "
+            "or about the conflict that the initiative exists to manage or end and that materially "
+            "changes its odds\n"
             "- category: exact ID from list above. null if me_relevant=false\n"
+            "- tier: 'initiative' = about that initiative/process itself (diplomacy, terms, "
+            "implementation, backers, opponents, obstacles, documents, votes); 'context' = the "
+            "surrounding war or politics that changes its odds (strikes, escalation, sanctions, "
+            "court rulings, leadership changes)\n"
             "- sentiment: positive | negative | neutral\n"
             "- type: reporting | analysis | opinion\n"
             "- signal_score: integer 1-10\n\n"
@@ -446,7 +452,13 @@ _DEFAULT_PROMPTS = {
             "1. Hezbollah/Lebanon articles are NOT about Gaza.\n"
             "2. Gaza in passing while about Lebanon → use Lebanon or me_relevant=false.\n"
             "3. Choose the MOST SPECIFIC matching category.\n"
-            "4. Do NOT invent new category IDs.\n\n"
+            "4. Do NOT invent new category IDs.\n"
+            "5. A category names a specific INITIATIVE OR PROCESS, not a region. Shared region, "
+            "shared actor or shared keyword is NOT relevance; if the article's own subject is other "
+            "countries' politics, a personality fight, sports, arts, culture-war commentary or a link "
+            "roundup, set me_relevant=false.\n"
+            "6. An article about the same war as an initiative is 'context', never 'initiative'.\n"
+            "7. Match the category DESCRIPTION, not a keyword. If nothing matches, me_relevant=false.\n\n"
             "Valid IDs: {CATEGORY_IDS}"
         ),
     },
@@ -457,14 +469,15 @@ _DEFAULT_PROMPTS = {
             "[SNIPPET] {SNIPPET}\n"
             "[SOURCE] {SOURCE}\n"
             "[PROFILE] {SOURCE_PROFILE}\n\n"
-            '[OUTPUT]\n{"me_relevant": bool, "category": "id|null", "sentiment": "str", "type": "str", "signal_score": int}'
+            '[OUTPUT]\n{"me_relevant": bool, "category": "id|null", "tier": "initiative|context", '
+            '"sentiment": "str", "type": "str", "signal_score": int}'
         ),
     },
     "batch_user": {
         "user": (
             "Classify these {BATCH_SIZE} articles.\n\n"
             "{ARTICLES_TEXT}\n\n"
-            "For EACH: me_relevant, category, sentiment, type, signal_score.\n"
+            "For EACH: me_relevant, category, tier, sentiment, type, signal_score.\n"
             "Use ONLY these category IDs: {CATEGORY_IDS}\n"
             "Output JSON array in SAME ORDER. No article_num field."
         ),
@@ -1176,6 +1189,7 @@ def classify_articles(articles, system_prompt, valid_ids, source_profiles=None):
                                 result = {"me_relevant": True, "category": cat_id,
                                           "sentiment": "neutral", "type": "reporting",
                                           "signal_score": 5, "source_weight": 2,
+                                          "tier": "context",
                                           "classified_by": "keyword",
                                           "_kw_fallback": True}
                                 kw_fallback += 1
@@ -1281,6 +1295,10 @@ def _add_classified(pairs, result, article, valid_ids):
             # Item 13: record who decided, so a keyword-only judgement can never be
             # mistaken for a model judgement (see the keyword fallback above).
             "classified_by": result.get("classified_by", "llm"),
+            # What kind of content this is for the reader: a development of the
+            # initiative itself, or the war/politics around it. Anything the model did
+            # not label counts as context, never as initiative progress.
+            "tier": result.get("tier") if result.get("tier") in ("initiative", "context") else "context",
         }))
         return (1, 0)
     else:
@@ -1322,6 +1340,9 @@ def keyword_classify(articles, kw_map):
             results.append((article, {
                 "solution": cat, "sentiment": sentiment, "risk": 5,
                 "type": "reporting", "signal_score": 5, "source_weight": 2,
+                # A keyword match can place an article near a tracker; it cannot say the
+                # initiative moved. Never mark keyword output as initiative content.
+                "tier": "context", "classified_by": "keyword",
             }))
     return results
 
@@ -1594,6 +1615,7 @@ def _make_cluster(cluster_items, source_profiles):
         "source_weight": sw,
         "effective_signal": round(effective_signal, 1),
         "risk": rep_class.get("risk", 5),
+        "tier": rep_class.get("tier") if rep_class.get("tier") in ("initiative", "context") else "context",
         "attestations": attestations,
         "cross_attestation_bonus": has_cross_bonus,
         "cluster_size": len(cluster_items),
@@ -2592,6 +2614,7 @@ def build_output(clustered_events, cat_map, narratives, ai_phases=None, stakehol
                 "signal_score": ev.get("signal_score", 5),
                 "source_weight": ev.get("source_weight", 2),
                 "effective_signal": ev.get("effective_signal", 0),
+                "tier": ev.get("tier") if ev.get("tier") in ("initiative", "context") else "context",
                 "attestations": ev.get("attestations", []),
                 "cross_attestation_bonus": ev.get("cross_attestation_bonus", False),
                 "cluster_size": ev.get("cluster_size", 1),
@@ -3044,21 +3067,10 @@ def main():
     
     start = time.time()
     
-    # Load existing data for context
+    # Load existing data (long-term memory for the narrative; NOT handed to the
+    # classifier - see the note at _make_classifier_prompt).
     existing_data = _load_existing_data()
-    solution_contexts = {}
-    if existing_data:
-        for sol in existing_data.get("solutions", []):
-            events = sol.get("events", [])
-            if events:
-                phase_name_raw = sol["phases"][sol["phaseIndex"]] if sol.get("phaseIndex", 0) < len(sol.get("phases", [])) else "Unknown"
-                phase_name = phase_name_raw.get("en", str(phase_name_raw)) if isinstance(phase_name_raw, dict) else phase_name_raw
-                recent = []
-                for e in events[:3]:
-                    t = e.get("text", "")
-                    recent.append(t["en"] if isinstance(t, dict) else t)
-                solution_contexts[sol["id"]] = f"Phase: {phase_name}. Recent: {'; '.join(recent)}"
-    
+
     # 1. Fetch RSS
     _write_heartbeat(os.getpid(), mode, "fetching_rss")
     if age_hours is not None:
@@ -3074,7 +3086,12 @@ def main():
     print(f"  → {len(articles)} articles fetched")
     
     # 2. Build classifier prompt
-    system_prompt, valid_ids = _make_classifier_prompt(cat_map, solution_contexts=solution_contexts if not args.review_taxonomy else None)
+    # No solution_contexts here on purpose: feeding each tracker its own recent
+    # headlines makes a mislabelled bucket recruit more of the same (measured - the
+    # "Two-State Solution" bucket filled with 11 stories about a UN rapporteur stuck
+    # at a Costa Rica airport, and replaying those through the classifier with context
+    # reproduced the same wrong category 8 times out of 8).
+    system_prompt, valid_ids = _make_classifier_prompt(cat_map)
     
     # Taxonomy review mode
     if args.review_taxonomy:

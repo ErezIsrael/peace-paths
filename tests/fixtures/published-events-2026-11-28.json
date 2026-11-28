@@ -1,0 +1,3432 @@
+{
+ "generatedFrom": "https://peace-paths.pages.dev/events/<id>.json 2026-11-28",
+ "solutions": {
+  "20-point-gaza-peace-plan": [
+   {
+    "date": "2026-11-28T08:52:31+00:00",
+    "text": {
+     "en": "IDF says Gaza strike killed two terror operatives working for Doctors Without Borders",
+     "he": "צה'ל: שני פעילי טרור העובדים בארגון רופאים ללא גבולות נהרגו בתקיפה בעזה",
+     "ar": "الجيش الإسرائيلي: الغارة على غزة قتلت عنصرين من حماس يعملان لدى أطباء بلا حدود"
+    },
+    "sentiment": "negative",
+    "source": "Times of Israel",
+    "link": "https://www.timesofisrael.com/idf-says-gaza-strike-killed-two-terror-operatives-working-for-doctors-without-borders/",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T08:50:42+00:00",
+    "text": {
+     "en": "Gaza weather system threatens 1.3M Palestinians with humanitarian disaster",
+     "he": "מערכת מזג אוויר בעזה מאיימת על 1.3 מיליון פלסטינים באסון הומניטרי",
+     "ar": "منظومة طقس في غزة تهدد 1.3 مليون فلسطيني بكارثة إنسانية"
+    },
+    "sentiment": "negative",
+    "source": "ME Monitor",
+    "link": "https://www.middleeastmonitor.com/20261128-gaza-weather-system-threatens-1-3m-palestinians-with-humanitarian-disaster/",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T08:28:01+00:00",
+    "text": {
+     "en": "Board of Peace warns PM it will return Gaza mandate if he doesn’t uphold commitments",
+     "he": "מועצת השלום מאיימת על ראש הממשלה: תחזיר את הסמכות על עזה אם לא יעמוד בהתחייבויותיו",
+     "ar": "مجلس السلام يحذر رئيس الوزراء: سنعيد تفويض غزة إذا لم يلتزم بتعهداته"
+    },
+    "sentiment": "negative",
+    "source": "Times of Israel",
+    "link": "https://www.timesofisrael.com/board-of-peace-warns-pm-it-will-return-gaza-mandate-if-he-doesnt-uphold-commitments/",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 9.0,
+    "attestations": [
+     {
+      "source": "Google News Israel",
+      "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxPR1dnSlNWVUFfWXB1TzhSdDlJWkF4VFVwS1VjNmk0VzRVbk1DaXVKWDFoNU5jMlBQUVg4YWh6blUweExKVmd3MkppeEd2bXBGM3l4M0MxNmxreHpyelVyMjBSQThxVk5BZVVhT3RNVHRvanhWNHRHLW9qTC1KZGRvaXh5QjJFb1h0UXhhM0hMbGs2bHMyZ3JuaHNaUHA4VVZ2NFRfY1hRbEprWlZTcE4ydW9vcFrSAboBQVVfeXFMTjcwcEgzbEl1VlpielM2SFlBcURjX3BBZEtUSHkwSWhyTzZXSDFPdmtFMEtVamxkUzZNZWNraWluZzlZeEkyUnF6VVhGcVZLR2R5cGozNU9ocS1VSEF5TmZiVEt0Y2NzZkVXdU9CX3p4WjdQSEpNV3BQZ1J6YU5aekhGRks1bTMtU284WHN1UmZYa2piak9qM1V5MnZEb3hqd3dkVER0YkxJTWhGenJhMUFJT1JwQXlSZWVR?oc=5"
+     }
+    ],
+    "cross_attestation_bonus": true,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T08:25:52+00:00",
+    "text": {
+     "en": "Red Cross sounds alarm about Gaza winter as displaced face unsafe shelter choices",
+     "he": "הצלב האדום מזהיר מפני חורף בעזה: העקורים מתמודדים עם בחירות מחסה מסוכנות",
+     "ar": "الصليب الأحمر يحذر من الشتاء في غزة: النازحون يواجهون خيارات مأوى غير آمنة"
+    },
+    "sentiment": "negative",
+    "source": "ME Monitor",
+    "link": "https://www.middleeastmonitor.com/20261128-red-cross-sounds-alarm-about-gaza-winter-as-displaced-face-unsafe-shelter-choices/",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T07:44:11+00:00",
+    "text": {
+     "en": "Israel intensifies assassinations in Gaza as US urges Netanyahu to proceed with ceasefire plan",
+     "he": "ישראל מגבירה חיסולים בעזה; ארה'ב דוחפת את נתניהו לקדם את תוכנית הפסקת האש",
+     "ar": "إسرائيل تكثف عمليات الاغتيال في غزة، والولايات المتحدة تحث نتنياهو على المضي قدماً في خطة وقف إطلاق النار"
+    },
+    "sentiment": "negative",
+    "source": "Egypt Independent",
+    "link": "https://www.egyptindependent.com/israel-intensifies-assassinations-in-gaza-as-us-urges-netanyahu-to-proceed-with-ceasefire-plan/",
+    "type": "reporting",
+    "signal_score": 8,
+    "effective_signal": 8.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T07:38:28+00:00",
+    "text": {
+     "en": "Israeli gunfire kills Palestinian child in Gaza's Khan Younis",
+     "he": "ילד פלסטיני נהרג מירי ישראלי בח'אן יונס שבעזה",
+     "ar": "مقتل طفل فلسطيني بنيران إسرائيلية في خان يونس جنوب قطاع غزة"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/israeli-gunfire-kills-palestinian-child-gazas-khan-younis",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T06:52:05+00:00",
+    "text": {
+     "en": "Two staff killed in Israeli strike on Gaza medical clinic, MSF says - BBC",
+     "he": "שני עובדים נהרגו בתקיפה ישראלית על מרפאה של רופאים ללא גבולות בעזה, לפי ארגון MSF - BBC",
+     "ar": "مقتل موظفين اثنين في غارة إسرائيلية على عيادة طبية لغزة، حسب منظمة أطباء بلا حدود - بي بي سي"
+    },
+    "sentiment": "negative",
+    "source": "Google News Israel",
+    "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBERzVDQ2N4X01HRnV3NUd2Um9DWjU1TklvR0tHa1FSSjA3ZVJtMlk2VnBKbmpHTlBOd25COVhVaDdMVXpKbE1ncnNHTHRSSEVMMmNUWS1XVmd2Z0U?oc=5",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T03:56:01+00:00",
+    "text": {
+     "en": "Israeli strike on Doctors Without Borders clinic in Gaza kills two staff - Al Jazeera",
+     "he": "תקיפה ישראלית על מרפאת 'רופאים ללא גבולות' בעזה הורגת שני עובדים - אל-ג'זירה",
+     "ar": "غارة إسرائيلية على عيادة أطباء بلا حدود في غزة تقتل موظفين اثنين - الجزيرة"
+    },
+    "sentiment": "negative",
+    "source": "Google News Israel",
+    "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNdW1RQnZRUXJic0tMdzhnSUhnRE43YWk3SWhDRkQ4OXdWd1IwcHN6eGNELXNnUGtSaXdjclBCV3pEYThHTVNNcFMxTVFOMlpCb3dOVXp1ZVlGOE9nNGZoV3ZQcVgyeU1hZjgxVEJzSE1Hd3lJMGJzMElwejd5NzZuclptaU5SbE95cmY0Q3BsbngyWjFCNFEwcEF2MUR4dG51cFZDQ2VUZFE1YW0tVEhIN0RCbkTSAboBQVVfeXFMT1RFX1hHdGdmWThISG94RHcxSFJnaWJjcjdYcEtVbDVYVVJpV1VOOFZKd3Q0NUVTNTJ6anpuV0JIanMyV0puR2lrUlVfbVNQTFFRLXVBQ0VWQk1BR2x6aTFTTmFsZE9VTHowdm5INGNEMjhuZElIa29hcVZUMFBlZ09JOTdVNFdyMkhnaEVnbWhmV1JrQ2VSdi1XOGFSTGluSmFuNE9Ycm96SE5WT1pta2tfY1A1QmZPS3JB?oc=5",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T03:46:27-05:00",
+    "text": {
+     "en": "Israeli strike killed two staff outside Gaza clinic, MSF says",
+     "he": "ארגון רופאים ללא גבולות: שני עובדים נהרגו בתקיפה ישראלית מחוץ למרפאה בעזה",
+     "ar": "أطباء بلا حدود: مقتل موظفين اثنين في غارة إسرائيلية خارج عيادة بغزة"
+    },
+    "sentiment": "negative",
+    "source": "Al Monitor",
+    "link": "https://www.al-monitor.com/originals/2026/11/israeli-strike-killed-two-staff-outside-gaza-clinic-msf-says",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 8.0,
+    "attestations": [
+     {
+      "source": "Google News Israel",
+      "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxQamhSLTJvd1FlX3p6ZERVdmZMUlhtZkNVOXk0ak1qNUZSckxtaExDUFNQaXNxRUduS2FqMjgxU0xHOGtKRWxRQnE5VzNUU00zajZzd3RaN21GelV0WEhoZkctV2tIMHRHdjFjQ2ZpdzNZQXBVT0lTLVJIbHVnR0FfU19rQ0ZmdERHVmRNcDNCa29iM0tFcjZJSkdnRmxHMXQtaTljRl9BYXhVc0VfNm1welhMLWc?oc=5"
+     }
+    ],
+    "cross_attestation_bonus": true,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T03:45:58+00:00",
+    "text": {
+     "en": "Israeli strike on Doctors Without Borders clinic in Gaza kills two staff",
+     "he": "תקיפה ישראלית על מרפאת 'רופאים ללא גבולות' בעזה הרגה שני עובדים",
+     "ar": "غارة إسرائيلية على عيادة أطباء بلا حدود في غزة تقتل اثنين من الموظفين"
+    },
+    "sentiment": "negative",
+    "source": "Al Jazeera",
+    "link": "https://www.aljazeera.com/news/2026/11/28/israeli-strike-on-doctors-without-borders-clinic-in-gaza-kills-two-staff?traffic_source=rss",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 8.0,
+    "attestations": [
+     {
+      "source": "Al Monitor",
+      "link": "https://www.al-monitor.com/originals/2026/11/israeli-strike-kills-two-doctors-without-borders-staff-gaza"
+     }
+    ],
+    "cross_attestation_bonus": true,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T03:45:58+00:00",
+    "text": {
+     "en": "Israeli ‘direct hit ‘on Doctors Without Borders Gaza clinic kills 2 staff",
+     "he": "תקיפה ישראלית 'ישירה' על מרפאת רופאים ללא גבולות בעזה הורגת שני עובדים",
+     "ar": "إصابة مباشرة إسرائيلية لعيادة أطباء بلا حدود في غزة تقتل موظفين اثنين"
+    },
+    "sentiment": "negative",
+    "source": "Al Jazeera",
+    "link": "https://www.aljazeera.com/news/2026/11/28/israeli-strike-on-doctors-without-borders-clinic-in-gaza-kills-two-staff?traffic_source=rss",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T01:58:41+02:00",
+    "text": {
+     "en": "IDF says it killed two Hamas members working as guards at Gaza MSF clinic",
+     "he": "צה'ל: חיסלנו שני חברי חמאס ששימשו כשומרים בקליניקה של רופאים ללא גבולות בעזה",
+     "ar": "الجيش الإسرائيلي يعلن مقتل اثنين من أعضاء حماس كانا يعملان حراساً في عيادة أطباء بلا حدود بغزة"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz - Domestic",
+    "link": "https://www.haaretz.com/israel-news/israel-security/2026-11-28/ty-article/.premium/idf-says-it-killed-two-hamas-members-working-as-guards-at-gaza-msf-clinic/000001a2-1f55-d809-adef-7ffd06be0000",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T01:55:03+00:00",
+    "text": {
+     "en": "Israel kills two MSF staff in targeted strike on Gaza clinic",
+     "he": "ישראל הרגה שני עובדי ארגון רופאים ללא גבולות בתקיפה ממוקדת על קליניקה בעזה",
+     "ar": "إسرائيل تقتل موظفين اثنين من أطباء بلا حدود في غارة مستهدفة على عيادة في غزة"
+    },
+    "sentiment": "negative",
+    "source": "Al Jazeera",
+    "link": "https://www.aljazeera.com/video/newsfeed/2026/11/28/israel-kills-two-msf-staff-in-targeted-strike-on-gaza-clinic?traffic_source=rss",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T01:26:01+00:00",
+    "text": {
+     "en": "Israeli military claims MSF workers killed in Gaza strike were Hamas members",
+     "he": "צה'ל טוען כי העובדים שנהרגו בתקיפה בעזה היו חברי חמאס",
+     "ar": "الجيش الإسرائيلي يزعم أن عمال أطباء بلا حدود الذين قُتلوا في غارة غزة كانوا أعضاء في حماس"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/israeli-military-claims-msf-workers-killed-gaza-strike-were-hamas",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-28T01:22:32+00:00",
+    "text": {
+     "en": "IDF kills two Hamas terrorists who also worked for Doctors Without Borders, military says",
+     "he": "צה'ל הודיע כי חיסל שני מחבלים מחמאס שעבדו גם בארגון רופאים ללא גבולות",
+     "ar": "الجيش الإسرائيلي يعلن مقتل عنصرين من حماس كانا يعملان أيضاً لدى منظمة أطباء بلا حدود"
+    },
+    "sentiment": "negative",
+    "source": "JPost",
+    "link": "https://www.jpost.com/israel-news/defense-news/article-916350",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T23:41:10+02:00",
+    "text": {
+     "en": "NBC won't re-air ad urging U.S. end military aid to Israel after pro-Israel backlash",
+     "he": "NBC לא תשדר מחדש פרסומת הקוראת להפסקת הסיוע הצבאי האמריקאי לישראל, בעקבות מחאה פרו-ישראלית",
+     "ar": "قناة NBC لن تعيد بث إعلان يدعو لوقف المساعدات العسكرية الأمريكية لإسرائيل بعد ردود فعل مؤيدة لإسرائيل"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz",
+    "link": "https://www.haaretz.com/us-news/2026-11-27/ty-article/.premium/nbc-wont-re-air-ad-urging-u-s-end-israeli-military-aid-after-backlash/000001a2-1ead-d0a2-afb7-5ebf20200000",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T23:26:36+00:00",
+    "text": {
+     "en": "Son of Hamas chief survives Israeli strike, Hamas says - Reuters",
+     "he": "בן בכיר של מנהיג חמאס שרד תקיפה ישראלית, כך לפי חמאס - רויטרס",
+     "ar": "ابن رئيس حماس ينجو من غارة إسرائيلية، حسبما قالت حماس - رويترز"
+    },
+    "sentiment": "negative",
+    "source": "Google News Israel",
+    "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxQQXhxUTlzbVROVWJBME9JOGtIQnZUczNMMXdBTUV0QlByWWRCWThyeXlfcDA0T2MyaHlVbFlFSW0wbkpjbGd1WXVjQkZQaDNuZFM1VFkxaU9fN2lXUGtwa0xmQ0xHZHVaYko0M3FfVmdmd0l1LUpJOVhrNF9vTzk2OUJ0bVB4MU9JNnFCWFdESncyd0NBbHJodGpyUlRLNXRRRjhDYXJTRQ?oc=5",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T23:13:00+00:00",
+    "text": {
+     "en": "NBC Pulls Spot Advocating for End of U.S. Military Aid to Israel, Will Review Approval Procedures After Outcry - Variety",
+     "he": "NBC מסירה פרסומת הקוראת להפסקת הסיוע הצבאי האמריקאי לישראל ותבחן מחדש את נהלי האישור לאחר מחאה - Variety",
+     "ar": "شبكة NBC تسحب إعلاناً يدعو لإنهاء المساعدات العسكرية الأمريكية لإسرائيل وستراجع إجراءات الموافقة بعد موجة استياء - Variety"
+    },
+    "sentiment": "negative",
+    "source": "Google News Israel",
+    "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxQLWtIQmlheXNwcHctMVFmMmRFdGZUWE9oNVpITzJMa1ZoWG5XdVhobGhiU3dmT2t3N0VmaUpZcXNET2lSdXN5MWdYMTM2aVRlSXBWRlJ1VTVWQXZpalZUWHB5NVVmNjExZDJQY05UVHRSU1hYX245SDVWUjBza05JMUhrbUFqbldWQVpTREVhOGVUNkxB?oc=5",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T22:48:15+00:00",
+    "text": {
+     "en": "Doctors Without Borders says two staff killed in Israeli 'direct hit' on Gaza clinic",
+     "he": "רופאים ללא גבולות: שני עובדים נהרגו בפגיעה ישירה של ישראל במרפאה בעזה",
+     "ar": "أطباء بلا حدود: مقتل اثنين من موظفيها في قصف إسرائيلي مباشر على عيادة بغزة"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/doctors-without-borders-says-two-staff-killed-israeli-direct-hit-gaza",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T21:59:06+02:00",
+    "text": {
+     "en": "Countdown to Hamas disarmament: Timetable for Gaza demilitarization revealed",
+     "he": "ספירה לאחור לפירוק חמאס: פורסם לוח הזמנים להפרדת העזה מנשק",
+     "ar": "العد التنازلي لنزع سلاح حماس: الكشف عن جدول زمني لنزع السلاح في غزة"
+    },
+    "sentiment": "neutral",
+    "source": "Arutz Sheva",
+    "link": "https://www.israelnationalnews.com/news/437281",
+    "type": "reporting",
+    "signal_score": 8,
+    "effective_signal": 8.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T21:31:31+00:00",
+    "text": {
+     "en": "Hamas say chief’s son survived assassination attempt by Israeli military",
+     "he": "חמאס: בנו של הבכיר שרד ניסיון התנקשות של צה'ל",
+     "ar": "حماس تقول إن نجل رئيسها نجا من محاولة اغتيال إسرائيلية"
+    },
+    "sentiment": "negative",
+    "source": "The Independent - Gaza",
+    "link": "https://www.independent.co.uk/news/world/middle-east/hamas-israel-military-strike-khalil-al-hayya-b3093052.html",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T20:58:42+00:00",
+    "text": {
+     "en": "Security cabinet said set to discuss advancing stalled Trump Gaza plan amid US pressure",
+     "he": "הקבינט הביטחוני צפוי לדון בקידום תוכנית טראמפ לעזה, שנעצרה, תחת לחץ אמריקאי",
+     "ar": "المجلس الأمني الإسرائيلي يدرس تحريك خطة ترامب لغزة المتعثرة تحت الضغط الأمريكي"
+    },
+    "sentiment": "neutral",
+    "source": "Times of Israel",
+    "link": "https://www.timesofisrael.com/security-cabinet-said-set-to-discuss-advancing-stalled-trump-gaza-plan-amid-us-pressure/",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T20:46:46.953000-05:00",
+    "text": {
+     "en": "11/27 Links Pt1: Danon demands UN apology over Fletcher’s Gaza aid remarks; Ra’am’s Abbas set to declare Hamas a terror group; Australia sanctions 2 alleged Iran operatives over antisemitic arson attacks",
+     "he": "27/11 חלק 1: דנון דורש התנצלות מהאו\"ם על דברי פלטשר לסיוע לעזה; עבאס מרע'ם צפוי להכריז על חמאס כארגון טרור; אוסטרליה מטילה סנקציות על שני פעילים איראנים בחשד להצתות אנטישמיות",
+     "ar": "27/11 الجزء 1: دانون يطالب الأمم المتحدة بالاعتذار عن تصريحات فليتشر بشأن المساعدات لغزة؛ عباس من القائمة العربية الموحدة يستعد لإعلان حماس منظمة إرهابية؛ أستراليا تفرض عقوبات على اثنين يشتبه بأنهما عملاء إيرانيان بسبب هجمات حرق معادية للسامية"
+    },
+    "sentiment": "negative",
+    "source": "Elder of Ziyon",
+    "link": "https://elderofziyon.blogspot.com/2026/11/1127-links-pt1-danon-demands-un-apology.html",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T20:30:21-05:00",
+    "text": {
+     "en": "Israel says killed two 'terrorists' working at MSF clinic",
+     "he": "ישראל: חוסלו שני 'מחבלים' שפעלו במרפאת MSF",
+     "ar": "إسرائيل: قتلنا 'إرهابيين' اثنين كانا يعملان في عيادة MSF"
+    },
+    "sentiment": "negative",
+    "source": "Al Monitor",
+    "link": "https://www.al-monitor.com/originals/2026/11/israel-says-killed-two-terrorists-working-msf-clinic",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T20:22:20+00:00",
+    "text": {
+     "en": "Israeli attacks across Gaza kill four Palestinians",
+     "he": "ארבעה פלסטינים נהרגו בתקיפות ישראליות ברחבי עזה",
+     "ar": "مقتل أربعة فلسطينيين في غارات إسرائيلية على أنحاء غزة"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/israeli-attacks-across-gaza-kill-four-palestinians",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T19:23:20+00:00",
+    "text": {
+     "en": "Hamas says Israeli claim that it used Al-Ahli hospital as interrogation center is ‘ridiculous’",
+     "he": "חמאס: הטענה הישראלית כי השתמשה בבית החולים אל-אהלי כמרכז חקירות היא 'אבסורדית'",
+     "ar": "حماس: الادعاء الإسرائيلي باستخدام مستشفى الأهلي كمركز استجواب 'سخيف'"
+    },
+    "sentiment": "negative",
+    "source": "ME Monitor",
+    "link": "https://www.middleeastmonitor.com/20261127-hamas-says-israeli-claim-that-it-used-al-ahli-hospital-as-interrogation-center-is-ridiculous/",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T19:04:49+00:00",
+    "text": {
+     "en": "4 Palestinians killed, several injured in Israeli attacks across Gaza",
+     "he": "ארבעה פלסטינים נהרגו ופצועים בתקיפות ישראליות ברחבי עזה",
+     "ar": "مقتل أربعة فلسطينيين وإصابة آخرين في غارات إسرائيلية على أنحاء غزة"
+    },
+    "sentiment": "negative",
+    "source": "ME Monitor",
+    "link": "https://www.middleeastmonitor.com/20261127-4-palestinians-killed-several-injured-in-israeli-attacks-across-gaza/",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T18:18:21+00:00",
+    "text": {
+     "en": "Dutch court rules state not obliged to help 111 Palestinians in Gaza enter Netherlands",
+     "he": "בית משפט בהולנד: המדינה אינה מחויבת לסייע ל-111 פלסטינים מעזה להיכנס להולנד",
+     "ar": "محكمة هولندية: الدولة غير ملزمة بمساعدة 111 فلسطينياً من غزة على دخول هولندا"
+    },
+    "sentiment": "negative",
+    "source": "ME Monitor",
+    "link": "https://www.middleeastmonitor.com/20261127-dutch-court-rules-state-not-obliged-to-help-111-palestinians-in-gaza-enter-netherlands/",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T17:46:56+00:00",
+    "text": {
+     "en": "Israel says it killed alleged Hamas members despite Gaza ‘ceasefire’ - The National",
+     "he": "ישראל הודיעה שהרגה חברי חמאס לכאורה למרות 'הפסקת האש' בעזה - The National",
+     "ar": "إسرائيل تعلن مقتل أعضاء مزعومين في حماس رغم 'وقف إطلاق النار' في غزة - ذا ناشيونال"
+    },
+    "sentiment": "negative",
+    "source": "Google News - Gaza",
+    "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNN2EtOVM5eEc2WnFLSWZZSVdjd1U0QW84anMtUEthZGlvZlByc2lycEZ6a3JXX280Q2lNUWh5MkJDQlNmUE4yMjJEcGVFNXdsdXJpa0xYcU4tT1JHY2VueDMzdnROd29OZW5YZ3h3Q19pTHR4VkRtNDR5ajlwZE9WR1kyaVFwTUt4N3lGV3FIZ1VSZzd3TUVkRVRuUlJPRGEwNWtkQy1GU2NXN1VBZVBndUlvSmZ2eWh1eGhYMw?oc=5",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T15:57:16+00:00",
+    "text": {
+     "en": "ישראל נגד בכיר האו״ם: שורת טענות כוזבות נגד ישראל",
+     "he": "ישראל נגד בכיר האו\"ם: שורת טענות כוזבות נגד ישראל",
+     "ar": "إسرائيل ضد مسؤول أممي رفيع: سلسلة ادعاءات كاذبة ضد إسرائيل"
+    },
+    "sentiment": "negative",
+    "source": "Walla",
+    "link": "https://www.walla.co.il/news/israel/383963416",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T14:15:59+02:00",
+    "text": {
+     "en": "Liberals blame Israel's crimes in Gaza on the rise of religion and Kahanism. This military expert has another take",
+     "he": "השמאל מאשים את הפשעים הישראלים בעזה בעליית הדת והכחניזם. מומחה צבאי מציע הסבר אחר",
+     "ar": "الليبراليون يعزون جرائم إسرائيل في غزة إلى صعود الدين والحركة الكاهانية. خبير عسكري يرى غير ذلك"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz - Domestic",
+    "link": "https://www.haaretz.com/israel-news/israel-security/2026-11-27/ty-article-magazine/.highlight/the-great-sin-of-the-israeli-left-how-liberals-enabled-the-gaza-war/000001a2-12c1-dbd9-abeb-fef347530000",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T13:00:00+00:00",
+    "text": {
+     "en": "IDF Kills Hamas Terrorist Who Took Part in Hostage Handover Ceremony",
+     "he": "צה'ל חיסל מחבל חמאס שהשתתף בטקס העברת החטופים",
+     "ar": "الجيش الإسرائيلي يقتل إرهابياً من حماس شارك في مراسم تسليم الرهائن"
+    },
+    "sentiment": "negative",
+    "source": "JFeed",
+    "link": "https://www.jfeed.com/news-israel/idf-kills-hamas-terrorist-hostage-handover",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T12:32:32+00:00",
+    "text": {
+     "en": "Haitham al-Huwajari",
+     "he": "הית'ם אל-חוואג'רי",
+     "ar": "هيثم الحواجري"
+    },
+    "sentiment": "neutral",
+    "source": "ECFR (European Council on Foreign Relations)",
+    "link": "https://ecfr.eu/special/mapping_palestinian_politics/haitham-al-huwajari/",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T12:32:19+00:00",
+    "text": {
+     "en": "Mohannad Rajab",
+     "he": "מוהנד רג'ב",
+     "ar": "مهند رجب"
+    },
+    "sentiment": "neutral",
+    "source": "ECFR (European Council on Foreign Relations)",
+    "link": "https://ecfr.eu/special/mapping_palestinian_politics/mohannad-rajab/",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T12:31:58+00:00",
+    "text": {
+     "en": "Ali al-Amoudi",
+     "he": "עלי אל-עמודי",
+     "ar": "علي العمودي"
+    },
+    "sentiment": "neutral",
+    "source": "ECFR (European Council on Foreign Relations)",
+    "link": "https://ecfr.eu/special/mapping_palestinian_politics/ali-al-amoudi/",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T12:31:04+00:00",
+    "text": {
+     "en": "Nafiz Sobaih",
+     "he": "נאפיז סובאיח",
+     "ar": "نافيز صبايح"
+    },
+    "sentiment": "neutral",
+    "source": "ECFR (European Council on Foreign Relations)",
+    "link": "https://ecfr.eu/special/mapping_palestinian_politics/nafiz-sobaih/",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-27T12:15:00+00:00",
+    "text": {
+     "en": "'The great sin of the Israeli left': How liberals enabled the Gaza war - Haaretz",
+     "he": "'החטא הגדול של השמאל הישראלי': כיצד ליברלים אפשרו את מלחמת עזה - הארץ",
+     "ar": "'الخطيئة الكبرى لليسار الإسرائيلي': كيف مكّن الليبراليون حرب غزة - هآرتس"
+    },
+    "sentiment": "negative",
+    "source": "Google News Israel",
+    "link": "https://news.google.com/rss/articles/CBMipAJBVV95cUxQU2NmM1lsU3k3LUJaNzlPUE9nNG5EcHN5Szd6TVNjWWxhZ1pPcVI1VHI4RmFIQ3ZZdTdYcksycWlQbHZkUm9qeTdja05Fd0U2dkJHVFJzNFpLNm1VbmRrbmI1WXY0eGI4d2tzWGljRkdlbW94V0tVWF83cDFjdjNIdkg5T1dBeUktTnp5TjBxdlRjbUotc1VTRjRMNjh0TDdHdjdIeURrLWw2NXRZbW4xU0tSMEZLa1RtbDJoMktoZzVHUVVWTHpzWkhwSkpvWTlPZ0pzNnV1c01OdWVkQ0l3NXFlUHBxMGtoM3JXX2VhcmV0RFJEZkZWRjJfNnozVGpBdWQ4ejhQcExqdDBsOTBYWk5scEhzS3dFZVJCR1dpc0lYUmhO?oc=5",
+    "type": "opinion",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-26T20:35:23+00:00",
+    "text": {
+     "en": "Hamas weighs response after Israel kills 10 people in Gaza",
+     "he": "חמאס שוקל תגובה לאחר שישראל הרגה 10 בני אדם בעזה",
+     "ar": "حماس تدرس رداً بعد مقتل 10 أشخاص في غزة على يد إسرائيل"
+    },
+    "sentiment": "negative",
+    "source": "France24",
+    "link": "https://www.france24.com/en/hamas-weighs-response-after-israel-kills-10-people-in-gaza",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-26T20:33:07+00:00",
+    "text": {
+     "en": "Israeli strikes kill 16 schoolchildren so far this month, Gaza ministry says",
+     "he": "תקיפות ישראל הרגו 16 תלמידים עד כה החודש, לפי משרד בעזה",
+     "ar": "الغارات الإسرائيلية تقتل 16 طالباً حتى الآن هذا الشهر، بحسب وزارة في غزة"
+    },
+    "sentiment": "negative",
+    "source": "Guardian",
+    "link": "https://www.theguardian.com/world/2026/nov/26/gaza-ministry-schoolchildren-killed-this-month-israel-strikes",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 8.0,
+    "attestations": [
+     {
+      "source": "Google News Israel",
+      "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOZlN6a2xFT2M4ZmQ4U2lPTUgyZVh6ekpwSmVwak1rd2Y0Q1BwNW8tV1diOGFjS1VIaTFpTEZtLXQtRjRLSEpWTGFBNGdka004eWhaMkM3WVo0Y0ZKSVk3TndCZ0RMbzNBSkN1d2VsNWhidTZsbmw1REpnaU1rMXFZN1ZfR3RRdHJxNVBLbXR0eXY3bTJDb1dRQm1HZWx6aUw5cWRZMUwtYVZsVmc?oc=5"
+     }
+    ],
+    "cross_attestation_bonus": true,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-26T15:48:28+00:00",
+    "text": {
+     "en": "Qatari, Egyptian leaders discuss Gaza ‘ceasefire’ and regional security - Al Jazeera",
+     "he": "מנהיגי קטאר ומצרים דנו בהפסקת האש בעזה ובביטחון האזורי - אל-ג'זירה",
+     "ar": "قادة قطر ومصر يناقشون وقف إطلاق النار في غزة والأمن الإقليمي - الجزيرة"
+    },
+    "sentiment": "neutral",
+    "source": "Google News - Gaza",
+    "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxNUDZGNEhsaHlyZ29VazJ4bklBeWZtajhDQXhDcy1yeUgzaXV3S3ByVTNTcFpGcU5hQnVUalJpbnk0dE0zWVRxeHp0SmZpMmw1R3Z0YTR5Z0paUXF6WTBKYTdpNUpqOFQ3cGlyd0V0SEotaXQtZUp4MnYydEFIWF9XQjUyNkt6eEppUW80bDBNbUtBV3V1NHB2WFlfN2hwdmRweTRUOXdCRFlSeFh4b1c00gG0AUFVX3lxTE1CX2ttR2ktc0NMdE9aWmZ4RVVSTjduNnZMQWdkOWg0ZjloLXNnazZNT18yc2RWTG1mbHFOdGRnd3VkeTJ5Z2c1M0I3T0UzM0F4aWl1Uk1vdVBZSzRlVTVSVWozcGNqOUJQOU1OVjQyTjFkd1pTRDJYelJGcHRyTllRWVB0X09oc1hwdEZCOEF2YVF0bnJUZnNEdG9MYlV6bm9fV2Jwejc1d0EybGdidDNhWVRoRQ?oc=5",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-26T14:56:27+00:00",
+    "text": {
+     "en": "Israel intensifies assassinations in Gaza as US urges Netanyahu to proceed with ceasefire plan - CNN",
+     "he": "ישראל מגבירה חיסולים בעזה; ארה'ב דוחפת את נתניהו לקדם תוכנית הפסקת אש - CNN",
+     "ar": "إسرائيل تكثف الاغتيالات في غزة، وواشنطن تحض نتنياهو على المضي بخطة وقف إطلاق النار - CNN"
+    },
+    "sentiment": "negative",
+    "source": "Google News Israel",
+    "link": "https://news.google.com/rss/articles/CBMifkFVX3lxTE56RW9JUlN2bDJLSHRKcU1Wa3prb0pqZDZTYUF4NDQwQXlQWUVXSlMzeTZGWXQ4bnJ4MnlMSVRtZG1XQVBTWmIwcUNGVnBYRV82RHhjczNJc1p5V2p5VEd2NDIyTGVmQjV3NVRkT2VQS3JkV0N4VWJobHdVSzRSUQ?oc=5",
+    "type": "reporting",
+    "signal_score": 8,
+    "effective_signal": 8.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-26T14:30:19+00:00",
+    "text": {
+     "en": "Hamas interrogation center inside Gaza City hospital exposed by IDF, Shin Bet",
+     "he": "צה'ל והשב\"כ חשפו מרכז חקירות של חמאס בבית חולים בעיר עזה",
+     "ar": "الجيش الإسرائيلي والشاباك يكشفان مركز استجواب لحماس داخل مستشفى في مدينة غزة"
+    },
+    "sentiment": "negative",
+    "source": "Israel Hayom",
+    "link": "https://www.israelhayom.com/2026/11/26/hamas-interrogation-torture-facility-al-maamadani-hospital-gaza/",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-26T12:28:31+00:00",
+    "text": {
+     "en": "Israel threatens to displace one million Palestinians in Gaza unless Hamas disarms",
+     "he": "ישראל מאיימת להעתיק מיליון פלסטינים מעזה אם חמאס לא יתפרק מנשקו",
+     "ar": "إسرائيل تهدد بإزاحة مليون فلسطيني من غزة إذا لم تنزع حماس سلاحها"
+    },
+    "sentiment": "negative",
+    "source": "France24",
+    "link": "https://www.france24.com/en/middle-east/20261126-israel-threatens-to-displace-one-million-palestinians-in-gaza-unless-hamas-disarms",
+    "type": "reporting",
+    "signal_score": 8,
+    "effective_signal": 8.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-26T10:34:02+00:00",
+    "text": {
+     "en": "Josh Shapiro slams Biden, Trump for failing to put the brakes on Netanyahu",
+     "he": "גוש שפירו תקף את ביידן ואת טראמפ על כך שלא עצרו את נתניהו",
+     "ar": "جوش شابيرو يندد ببايدن وترامب لفشلهما في كبح جماح نتنياهو"
+    },
+    "sentiment": "negative",
+    "source": "The Forward",
+    "link": "https://forward.com/fast-forward/865087/josh-shapiro-slams-biden-trump-for-failing-to-put-the-brakes-on-netanyahu/",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-26T10:14:08+00:00",
+    "text": {
+     "en": "Hamas political official and wife among eight Palestinians killed in Israeli strikes on Gaza",
+     "he": "בכיר חמאס ואשתו בין שמונה פלסטינים שנהרגו בתקיפות ישראליות בעזה",
+     "ar": "مسؤول في حماس وزوجته من بين ثمانية فلسطينيين قُتلوا في غارات إسرائيلية على غزة"
+    },
+    "sentiment": "negative",
+    "source": "BBC ME",
+    "link": "https://www.bbc.co.uk/news/articles/cqvg2n4mzl1jo?at_medium=RSS&amp;at_campaign=rss",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-26T00:05:50+00:00",
+    "text": {
+     "en": "UN sacked Palestinian staff on back of unproven Israeli allegations, tribunal rules",
+     "he": "בית דין קובע: האו'ם פיטר עובדים פלסטינים על בסיס האשמות ישראליות שלא הוכחו",
+     "ar": "محكمة تحكم: الأمم المتحدة فصلت موظفين فلسطينيين بناءً على ادعاءات إسرائيلية غير مثبتة"
+    },
+    "sentiment": "negative",
+    "source": "Guardian",
+    "link": "https://www.theguardian.com/world/2026/nov/25/un-sacked-palestinian-staff-on-back-of-unproven-israel-allegations",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-25T23:06:06+00:00",
+    "text": {
+     "en": "Palestinian journalist killed by Israel in Gaza wins Rory Peck prize",
+     "he": "עיתונאי פלסטיני שנהרג בידי ישראל בעזה זכה בפרס רורי פק",
+     "ar": "صحفي فلسطيني قتلته إسرائيل في غزة يفوز بجائزة روري بيك"
+    },
+    "sentiment": "negative",
+    "source": "Guardian",
+    "link": "https://www.theguardian.com/media/2026/nov/25/palestinian-journalist-killed-by-israel-in-gaza-wins-rory-peck-prize",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-25T21:25:12+02:00",
+    "text": {
+     "en": "UN Human Rights chief: Israel's actions threaten Palestinians' 'continued existence as a group'",
+     "he": "ראש זכויות האדם באו'ם: פעולות ישראל מאיימות על 'המשך קיומה של אוכלוסיית הפלסטינים כקבוצה'",
+     "ar": "رئيس حقوق الإنسان في الأمم المتحدة: إجراءات إسرائيل تهدد 'استمرار وجود الفلسطينيين كمجموعة'"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz - ME",
+    "link": "https://www.haaretz.com/gaza/2026-11-25/ty-article/.premium/top-un-official-israels-actions-threaten-palestinians-continued-existence/000001a2-13e8-d809-adef-7becae440000",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-25T14:06:13+00:00",
+    "text": {
+     "en": "Israeli strike kills senior Hamas security official and family in Gaza City",
+     "he": "תקיפה ישראלית הרגה בכיר ביטחוני של חמאס ובני משפחתו בעיר עזה",
+     "ar": "غارة إسرائيلية تقتل مسؤولاً أمنياً كبيراً في حماس وعائلته في مدينة غزة"
+    },
+    "sentiment": "negative",
+    "source": "BBC ME",
+    "link": "https://www.bbc.co.uk/news/articles/cmd718zydz9qo?at_medium=RSS&amp;at_campaign=rss",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-25T12:00:00+00:00",
+    "text": {
+     "en": "Gaza’s widows raise their families alone: ‘We do our duties twice over, but where are our rights?’",
+     "he": "אלמנות מעזה מגדלות את משפחותיהן לבדן: 'אנו ממלאות את חובותינו פעמיים, אך איפה זכויותינו?'",
+     "ar": "أرامل غزة يربّين عائلاتهن بمفردهن: 'نحن نؤدي واجباتنا مضاعفة، لكن أين حقوقنا؟'"
+    },
+    "sentiment": "negative",
+    "source": "UN News",
+    "link": "https://news.un.org/feed/view/en/story/2026/11/1168875",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-25T00:01:00+00:00",
+    "text": {
+     "en": "Israel/OPT: Women and girls bear the crushing toll of Israel’s ongoing genocide in Gaza",
+     "he": "ישראל/השטחים הכבושים: נשים וילדות משלמות מחיר כבד ברצח העם המתמשך בעזה",
+     "ar": "إسرائيل/الأراضي الفلسطينية المحتلة: النساء والفتيات يدفعن الثمن الباهظ للإبادة الجماعية المستمرة في غزة"
+    },
+    "sentiment": "negative",
+    "source": "Amnesty",
+    "link": "https://www.amnesty.org/en/latest/news/2026/11/women-and-girls-bear-the-crushing-toll-of-israels-ongoing-genocide-in-gaza/",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-23T14:26:30+01:00",
+    "text": {
+     "en": "Gaza: Working alongside communities to prepare for winter rains",
+     "he": "עזה: שיתוף פעולה עם הקהילות להכנה לגשמי החורף",
+     "ar": "غزة: العمل جنباً إلى جنب مع المجتمعات المحلية للاستعداد لأمطار الشتاء"
+    },
+    "sentiment": "negative",
+    "source": "ICRC Middle East",
+    "link": "https://www.icrc.org/en/article/gaza-working-alongside-communities-prepare-winter-rains",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   },
+   {
+    "date": "2026-11-21T16:12:00+02:00",
+    "text": {
+     "en": "Gaza death toll rises to 74,736 as Israeli aggression continues",
+     "he": "מספר ההרוגים בעזה עלה ל-74,736 עם המשך האגרסיביות הישראלית",
+     "ar": "ارتفاع عدد القتلى في غزة إلى 74,736 مع استمرار العدوان الإسرائيلي"
+    },
+    "sentiment": "negative",
+    "source": "PNN",
+    "link": "https://english.pnn.ps/news/48401",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "20-point-gaza-peace-plan"
+   }
+  ],
+  "abraham-accords": [
+   {
+    "date": "2026-11-28T07:55:46+00:00",
+    "text": {
+     "en": "Iranian tennis player withdraws from ITF match to avoid Israeli opponent",
+     "he": "טניסאית איראנית פרשה ממשחק באיגוד הטניס הבינלאומי כדי להימנע ממפגש עם יריבה ישראלית",
+     "ar": "لاعبة تنس إيرانية تنسحب من مباراة تابعة للاتحاد الدولي للتنس لتجنب مواجهة منافسة إسرائيلية"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/iranian-tennis-player-withdraws-itf-match-avoid-israeli-opponent",
+    "type": "reporting",
+    "signal_score": 2,
+    "effective_signal": 2.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "abraham-accords"
+   },
+   {
+    "date": "2026-11-27T18:19:06+00:00",
+    "text": {
+     "en": "Normalisation with Israel is no path to regional peace - The New Arab",
+     "he": "נרמול עם ישראל אינו מוביל לשלום אזורי - הערב החדש",
+     "ar": "التطبيع مع إسرائيل ليس طريقاً للسلام الإقليمي - العربي الجديد"
+    },
+    "sentiment": "negative",
+    "source": "Google News - Abraham Accords",
+    "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPWTBfdGFCWC0zOURlOWxhS0locVlBUlFJWHhUVm0wZ0tKbWhJdHhMeWpmVzBMbWFsS0JzT0sxdU50OFVVYU9Rd3NiYVF5NUloVFF1QmhVNGV6V3dGNU1MenNaSkgzM19lNmx0Mm5xUmI1ejBpZ0dOV0hqeXZPRjlXMtIBhgFBVV95cUxNcmRMTmw1RHF4QmJvVEcyOGNRcFIzVWphOTI1MFp3VUNKNm5VREVzdjBTbWkwb3BNdmNjZmswUF9yaS1uRFZuUllWS2FHU1pZc19GMW44bWh0RU11X05ZOVhyOUthazFxNTFrRGxGMGRHcldEVWg4eWVsWmUzRUNIV0RXV3N1Zw?oc=5",
+    "type": "opinion",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "abraham-accords"
+   },
+   {
+    "date": "2026-11-27T16:00:08+00:00",
+    "text": {
+     "en": "Saudi crown prince stepped in to halt quiet American campaign to break up OPEC oil cartel, sources say",
+     "he": "יורש העצר הסעודי התערב כדי לעצור מהלך אמריקאי שקט לפירוק אופק, כך לפי מקורות",
+     "ar": "أمير السعودية يتدخل لوقف حملة أمريكية صامتة لتفكيك منظمة أوبك، بحسب مصادر"
+    },
+    "sentiment": "neutral",
+    "source": "The Independent - Iran",
+    "link": "https://www.independent.co.uk/news/world/americas/us-politics/trump-admin-venezuela-iraq-oil-ope-b3092708.html",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "abraham-accords"
+   },
+   {
+    "date": "2026-11-27T15:31:22+00:00",
+    "text": {
+     "en": "Turkey’s neo-Ottoman drive must be taken at face value",
+     "he": "יש לקחת ברצינות את המסע הנאו-עות'מאני של טורקיה",
+     "ar": "يجب أخذ المسعى العثماني الجديد لتركيا على محمل الجد"
+    },
+    "sentiment": "negative",
+    "source": "JNS",
+    "link": "https://www.jns.org/opinion/column/ben-cohen/turkeys-neo-ottoman-drive-must-be-taken-at-face-value",
+    "type": "opinion",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "abraham-accords"
+   },
+   {
+    "date": "2026-11-27T06:04:51+00:00",
+    "text": {
+     "en": "Inside Saudi Arabia, Houthi attacks test kingdom's image of security",
+     "he": "התקפות החות'ים בוחנות את תדמית הביטחון של ערב הסעודית",
+     "ar": "هجمات الحوثيين تختبر صورة الأمن في المملكة العربية السعودية"
+    },
+    "sentiment": "negative",
+    "source": "BBC ME",
+    "link": "https://www.bbc.co.uk/news/articles/c6ly7jgv7jzdo?at_medium=RSS&amp;at_campaign=rss",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "abraham-accords"
+   },
+   {
+    "date": "2026-11-24T08:58:11+00:00",
+    "text": {
+     "en": "Kazakhstan’s pharmaceutical ambitions could shape Israel’s next chapter in the Abraham Accords - Ynetnews",
+     "he": "שאיפות קזחסטן בתחום התרופות עשויות לעצב את הפרק הבא של ישראל בהסכמי אברהם - Ynetnews",
+     "ar": "طموحات كازاخستان الدوائية قد تشكل الفصل التالي لإسرائيل في اتفاقيات أبراهام - Ynetnews"
+    },
+    "sentiment": "positive",
+    "source": "Google News - Abraham Accords",
+    "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTFBoRS1seUNtbWIydG50T25mWk93dkFUR1BCdzk4UjBZSFNRanRTcWpwSDFnNWFHdjg5Z0RQcG13SWw0SDRpZV9yMEd3Q1FoWTBPTHVYcWlRbzZKYlNZMjhZSzVlSDFQdXdhWmkxN0p3?oc=5",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "abraham-accords"
+   }
+  ],
+  "geneva-initiative": [
+   {
+    "date": "2026-11-28T08:40:39+00:00",
+    "text": {
+     "en": "UN rapporteur Francesca Albanese to leave Costa Rica for Mexico after entry ban",
+     "he": "הדווחת של האו'ם פרנצ'סקה אלבנזה עוזבת את קוסטה ריקה למקסיקו לאחר איסור כניסה",
+     "ar": "المقررة الأممية فرانشيسكا ألبانيز تغادر كوستاريكا إلى المكسيك بعد منعها من الدخول"
+    },
+    "sentiment": "negative",
+    "source": "Times of Israel",
+    "link": "https://www.timesofisrael.com/un-rapporteur-francesca-albanese-to-leave-costa-rica-for-mexico-after-entry-ban/",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-28T08:13:54+00:00",
+    "text": {
+     "en": "Albanese spends second night at Costa Rica airport as Mark Ruffalo, Amnesty slam entry ban",
+     "he": "אלבניז שוהה בלילה השני בשדה התעופה בקוסטה ריקה; אמנסטי ומרק ראפאלו מגנים את איסור הכניסה",
+     "ar": "ألبانيز يقضي الليلة الثانية في مطار كوستاريكا؛ منظمة العفو الدولية ومارك رافالو يدينان حظر الدخول"
+    },
+    "sentiment": "negative",
+    "source": "JPost",
+    "link": "https://www.jpost.com/international/article-916364",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-28T08:05:18+00:00",
+    "text": {
+     "en": "UN’s Albanese leaves Costa Rica airport after constitutional court verdict",
+     "he": "אלבנזה מטעם האו'ם עזב שדה תעופה בקוסטה ריקה לאחר פסיקת בית המשפט לחוקה",
+     "ar": "المبعوث الأممي ألفارو ألبانيز يغادر مطار كوستاريكا بعد حكم المحكمة الدستورية"
+    },
+    "sentiment": "negative",
+    "source": "Al Jazeera",
+    "link": "https://www.aljazeera.com/news/2026/11/28/uns-albanese-leaves-costa-rica-airport-after-constitutional-court-verdict?traffic_source=rss",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-28T07:25:34+00:00",
+    "text": {
+     "en": "'Banana republic again': Former Costa Rican president slams Albanese ban",
+     "he": "'רפובליקת בננות שוב': נשיא קוסטה ריקה לשעבר תקף את איסור הכניסה של אלבנזה",
+     "ar": "'جمهورية موز ثانية': الرئيس الكوستاريكي السابق يندد بحظر دخول ألبانيز"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/banana-republic-again-former-costa-rican-president-slams-albanese-ban",
+    "type": "opinion",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-28T04:48:27+00:00",
+    "text": {
+     "en": "Albanese says Costa Rican police refuse to release her despite court order",
+     "he": "אלבנז: משטרת קוסטה ריקה מסרבת לשחררה למרות צו בית המשפט",
+     "ar": "ألبانيز: الشرطة الكوستاريكية ترفض إطلاق سراحها رغم أمر المحكمة"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/albanese-says-costa-rican-police-refuse-release-her-despite-court-order",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-28T04:46:16+00:00",
+    "text": {
+     "en": "UN chief frontrunner urged to speak out over Albanese detention",
+     "he": "מועמד מוביל לתפקיד מזכ\"ל האו\"ם קורא לממשלת אוסטרליה לפעול לשחרור העצור",
+     "ar": "مرشح بارز لمنصب الأمين العام للأمم المتحدة يحث ألبانيزي على التحدث بشأن احتجاز مواطن"
+    },
+    "sentiment": "negative",
+    "source": "Al Jazeera",
+    "link": "https://www.aljazeera.com/news/2026/11/28/un-chief-frontrunner-urged-to-speak-out-over-albanese-detention-2?traffic_source=rss",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-28T01:53:35+00:00",
+    "text": {
+     "en": "Denied entry, Francesca Albanese to leave Costa Rica after second night at airport",
+     "he": "פרנצ'סקה אלבנזה עוזבת את קוסטה ריקה לאחר שנדחתה כניסתה וישנה לילה שני בשדה התעופה",
+     "ar": "بعد رفض دخولها، فرانشيسكا ألبانيز تغادر كوستاريكا بعد قضائها الليلة الثانية في المطار"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/denied-entry-francesca-albanese-leave-costa-rica-after-second-night",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-28T00:12:20+00:00",
+    "text": {
+     "en": "Francesca Albanese seeks apology from Costa Rica after entry ban",
+     "he": "פרנצ'סקה אלבנזה דורשת התנצלות מקוסטה ריקה בעקבות איסור הכניסה",
+     "ar": "فرانشيسكا ألبانيز تطلب اعتذاراً من كوستاريكا بعد حظر دخولها"
+    },
+    "sentiment": "negative",
+    "source": "Al Jazeera",
+    "link": "https://www.aljazeera.com/video/newsfeed/2026/11/28/francesca-albanese-seeks-apology-from-costa-rica-after-entry-ban?traffic_source=rss",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T22:57:07+02:00",
+    "text": {
+     "en": "Costa Rica bars anti-Israel UN rapporteur Francesca Albanese from entering country",
+     "he": "קוסטה ריקה אסרה על כניסת הדיווחית של האו'ם פרנצ'סקה אלבנזי למדינה",
+     "ar": "كوستاريكا تمنع المقررة الأممية فرانشيسكا ألبانيز من دخول البلاد"
+    },
+    "sentiment": "negative",
+    "source": "Arutz Sheva",
+    "link": "https://www.israelnationalnews.com/news/437283",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T21:17:00+03:00",
+    "text": {
+     "en": "Costa Rica draws UN rebuke for barring special rapporteur on Palestine",
+     "he": "קוסטה ריקה סופגת גינוי מהאו\"ם על מניעת כניסת דווח מיוחד לפלסטין",
+     "ar": "كوستاريكا تتلقى إدانة من الأمم المتحدة لمنعها المقررة الخاصة بشأن فلسطين"
+    },
+    "sentiment": "negative",
+    "source": "Daily Sabah (Turkey)",
+    "link": "https://www.dailysabah.com/world/americas/costa-rica-draws-un-rebuke-for-barring-special-rapporteur-on-palestine",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T20:52:44+00:00",
+    "text": {
+     "en": "Eisenkot says Netanyahu dragging out coalition talks as deadline nears",
+     "he": "אייזנקוט: נתניהו גורר משא ומתן קואליציוני לקראת סיום האולטימטום",
+     "ar": "إيزنكوت: نتنياهو يماطل في محادثات الائتلاف مع اقتراب الموعد النهائي"
+    },
+    "sentiment": "neutral",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/eisenkot-says-netanyahu-dragging-out-coalition-talks-deadline-nears",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T19:52:32+02:00",
+    "text": {
+     "en": "Eisenkot says Netanyahu's Likud dragged out unity talks, vows to form government in 8 days",
+     "he": "אייזנקוט: ליכוד של נתניהו גרר את שיחות אחדות, מתחייב להקים ממשלה תוך 8 ימים",
+     "ar": "آيزنكوت: ليكود نتنياهو أطال أمد محادثات الوحدة، ويتعهد بتشكيل حكومة خلال 8 أيام"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz - Domestic",
+    "link": "https://www.haaretz.com/israel-news/israel-politics/2026-11-27/ty-article/.premium/eisenkot-says-likud-dragged-out-unity-talks-vows-to-form-government-in-8-days/000001a2-1d6d-d0a2-afb7-5f7f5caf0000",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T19:32:18+00:00",
+    "text": {
+     "en": "Israel’s Eisenkot vows to form government within 8 days despite deadlock with Likud",
+     "he": "אייזנקוט מתחייב להקים ממשלה תוך 8 ימים למרות הקיפאון עם הליכוד",
+     "ar": "إيزنكوت يتعهد بتشكيل حكومة خلال 8 أيام رغم الجمود مع الليكود"
+    },
+    "sentiment": "neutral",
+    "source": "ME Monitor",
+    "link": "https://www.middleeastmonitor.com/20261127-israels-eisenkot-vows-to-form-government-within-8-days-despite-deadlock-with-likud/",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T19:01:50+00:00",
+    "text": {
+     "en": "Costa Rica denies Francesa Albanese entry due to terror link alert",
+     "he": "קוסטה ריקה מונעת כניסה של פרנססקה אלבנזה בשל התראה על קשר לטרור",
+     "ar": "كوستاريكا ترفض دخول فرانسيسكا ألبانيز بسبب تحذير من صلات بالإرهاب"
+    },
+    "sentiment": "negative",
+    "source": "JNS",
+    "link": "https://www.jns.org/news/world/costa-rica-denies-francesa-albanese-entry-due-to-terror-link-alert",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T18:38:57+00:00",
+    "text": {
+     "en": "UN rapporteur Albanese in limbo at airport after being denied entry to Costa Rica",
+     "he": "הדווחת של האו\"ם אלבנזה תקועה בשדה תעופה לאחר שנמנע ממנה כניסה לקוסטה ריקה",
+     "ar": "المقررة الأممية ألبانيز عالقة في المطار بعد منعها من دخول كوستاريكا"
+    },
+    "sentiment": "negative",
+    "source": "The Independent - Gaza",
+    "link": "https://www.independent.co.uk/news/costa-rica-palestinian-san-jose-marco-rubio-israeli-b3092999.html",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T16:30:26-05:00",
+    "text": {
+     "en": "UN rapporteur warns Costa Rica will be held accountable over 'false' terrorism accusations",
+     "he": "דיווחן האו'ם מזהיר: קוסטה ריקה תישא באחריות על האשמות 'שקריות' בטרור",
+     "ar": "مقرر الأمم المتحدة يحذر من محاسبة كوستاريكا بسبب اتهامات 'زائفة' بالإرهاب"
+    },
+    "sentiment": "negative",
+    "source": "Al Monitor",
+    "link": "https://www.al-monitor.com/originals/2026/11/un-rapporteur-warns-costa-rica-will-be-held-accountable-over-false-terrorism",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T16:30:26-05:00",
+    "text": {
+     "en": "UN rapporteur halted at Costa Rica airport to leave Saturday",
+     "he": "דיווח: דווח כי הדווח של האו'ם נעצר בשדה התעופה בקוסטה ריקה לפני עזיבתו ביום שבת",
+     "ar": "مقرر الأمم المتحدة يُمنع من المغادرة عبر مطار كوستاريكا يوم السبت"
+    },
+    "sentiment": "negative",
+    "source": "Al Monitor",
+    "link": "https://www.al-monitor.com/originals/2026/11/un-rapporteur-halted-costa-rica-airport-leave-saturday",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T15:12:47+00:00",
+    "text": {
+     "en": "Netanyahu considers being second in rotation with Eisenkot to form unity gov't, sources tell 'Post'",
+     "he": "מקורות ל'פוסט': נתניהו שוקל להיות מספר 2 ברוטציה עם אייזנקוט להקמת ממשלת אחדות",
+     "ar": "مصادر لصحيفة 'جيروزاليم بوست': نتنياهو يفكر في أن يكون الثاني بالتناوب مع أيزنكوت لتشكيل حكومة وحدة"
+    },
+    "sentiment": "neutral",
+    "source": "JPost",
+    "link": "https://www.jpost.com/israel-news/politics-and-diplomacy/article-916326",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T13:46:30-05:00",
+    "text": {
+     "en": "Costa Rica bars UN rapporteur on Palestinian territory, drawing concern from rights chief",
+     "he": "קוסטה ריקה מנעה כניסה לדווחת האו\"ם לשטחים הפלסטיניים, מה שעורר דאגה בקרב ראש זכויות האדם",
+     "ar": "كوستاريكا تمنع مقررة الأمم المتحدة من دخول الأراضي الفلسطينية، مما يثير قلق مسؤول حقوق الإنسان"
+    },
+    "sentiment": "negative",
+    "source": "Al Monitor",
+    "link": "https://www.al-monitor.com/originals/2026/11/costa-rica-bars-un-rapporteur-palestinian-territory-drawing-concern-rights-chief",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-27T09:48:54+00:00",
+    "text": {
+     "en": "Mansour Abbas set to declare Hamas a terror group, paving Ra'am's way to Eisenkot's coalition",
+     "he": "מנצור עבאס צפוי להצהיר על חמאס כארגון טרור, מה שיפתח את הדרך לראעם בקואליציה של אייזנקוט",
+     "ar": "منصور عباس يستعد لإعلان حماس منظمة إرهابية، ممهداً الطريق أمام حزب 'راعم' في ائتلاف غابي أشكنازي (إيزنكوت)"
+    },
+    "sentiment": "neutral",
+    "source": "JPost",
+    "link": "https://www.jpost.com/israel-news/politics-and-diplomacy/article-916313",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-26T21:23:06+00:00",
+    "text": {
+     "en": "Judges in Israel Suggest Dropping Key Corruption Case Against Netanyahu",
+     "he": "שופטים בישראל מציעים לסגור תיק שחיתות מרכזי נגד נתניהו",
+     "ar": "قضاة في إسرائيل يقترحون إسقاط قضية فساد رئيسية ضد نتنياهو"
+    },
+    "sentiment": "neutral",
+    "source": "NYT ME",
+    "link": "https://www.nytimes.com/2026/11/25/world/middleeast/judges-israel-corruption-case-netanyahu.html",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-26T21:13:41.514000-05:00",
+    "text": {
+     "en": "11/26 Links Pt1: Melanie Phillips: Blaming the victims; Does the ICJ's Myanmar Verdict Threaten Israel?; Why the Islamic Republic Can't Make Peace; Reuters Promotes Anti-Israel Lies Even When It Knows the Truth",
+     "he": "קישורים ל-26 בנובמבר חלק 1: מלני פיליפס: האשמת הקורבנות; האם פסיקת בית הדין הבינלאומי לגבי מיאנמר מאיימת על ישראל?; מדוע הרפובליקה האסלאמית לא יכולה לעשות שלום; רויטרס מקדם שקרים אנטי-ישראליים גם כשהוא יודע את האמת",
+     "ar": "روابط 26 نوفمبر الجزء الأول: ميلاني فيليبس: إلقاء اللوم على الضحايا؛ هل يهدد حكم محكمة العدل الدولية بشأن ميانمار إسرائيل؟؛ لماذا لا تستطيع الجمهورية الإسلامية تحقيق السلام؛ رويترز تروج لأكاذيب معادية لإسرائيل حتى عندما تعرف الحقيقة"
+    },
+    "sentiment": "negative",
+    "source": "Elder of Ziyon",
+    "link": "https://elderofziyon.blogspot.com/2026/11/1126-links-pt1-melanie-phillips-blaming.html",
+    "type": "opinion",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-26T14:45:30+00:00",
+    "text": {
+     "en": "Report: White House promoting meeting between Trump, Eisenkot",
+     "he": "דיווח: הבית הלבן מקדם פגישה בין טראמפ לאייזנקוט",
+     "ar": "تقرير: البيت الأبيض يدفع لعقد لقاء بين ترامب وإيزنكوت"
+    },
+    "sentiment": "neutral",
+    "source": "Israel Hayom",
+    "link": "https://www.israelhayom.com/2026/11/26/white-house-trump-eisenkot-meeting/",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-25T18:12:36+00:00",
+    "text": {
+     "en": "Opposition Makes Progress Toward Ousting Netanyahu, Party Leader Says",
+     "he": "מנהיג מפלגת האופוזיציה: מתקדמים להדחת נתניהו",
+     "ar": "زعيم حزب المعارضة: تقدم نحو إزاحة نتنياهو"
+    },
+    "sentiment": "neutral",
+    "source": "NYT ME",
+    "link": "https://www.nytimes.com/2026/11/25/world/middleeast/israel-opposition-netanyahu-new-government.html",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-25T15:44:11+00:00",
+    "text": {
+     "en": "PTV. . #PTVNewsTonight | PH reaffirms its push for a two-state solution between Israel and Palestine - Facebook",
+     "he": "#חדשותPTV הלילה | הפיליפינים מאשרת מחדש את קידום פתרון שתי המדינות בין ישראל לפלסטין - פייסבוק",
+     "ar": "#أخبارPTV الليلة | الفلبين تؤكد مجدداً دعمها لحل الدولتين بين إسرائيل وفلسطين - فيسبوك"
+    },
+    "sentiment": "positive",
+    "source": "Google News - Two State",
+    "link": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxQZFQwazduZVZPRWF2TjB0dGNQNUtsclNNMUtfVWswYlQ3aG1ZdEs4TWllWkVVSmpsb3JGT201aTloN0FSOHZ3NlJxZkszR1Q5eHdnSl9velNCdURyUm5aTnNyNmlCLTFGOGR0WmJKTmUtVnFmbVlaTXJNTm9ZZEtvd0dLTHp0NXZteTVTMURUOE5DMURvb1NQZHJmX3BLRHBjZDh2YkFkN2lVVlRyaHhVTjFNVVlIUjZGX0lEUnNHUXdQOXFLSjZQVzEyN0toUERBdFE?oc=5",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-25T02:33:19+01:00",
+    "text": {
+     "en": "Israeli left-wing party halts coalition talks with Eisenkot",
+     "he": "מפלגת השמאל הישראלית הפסיקה שיחות קואליציה עם איזנקוט",
+     "ar": "حزب يساري إسرائيلي يوقف محادثات الائتلاف مع غانتس (إيزنكوت)"
+    },
+    "sentiment": "neutral",
+    "source": "Le Monde - ME",
+    "link": "https://www.lemonde.fr/en/international/article/2026/11/25/israeli-left-wing-party-halts-coalition-talks-with-eisenkot_6787818_4.html",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-24T14:11:15+00:00",
+    "text": {
+     "en": "Why the genocide verdict against Myanmar has big implications for Israel | Geoffrey Robertson",
+     "he": "מדוע פסק הדין לרצח עם נגד מיאנמר משפיע על ישראל | ג'פרי רוברטסון",
+     "ar": "لماذا يحمل حكم الإبادة الجماعية ضد ميانمار تداعيات كبيرة على إسرائيل | جيفري روبرتسون"
+    },
+    "sentiment": "neutral",
+    "source": "Guardian",
+    "link": "https://www.theguardian.com/commentisfree/2026/nov/24/genocide-verdict-myanmar-implications-israel-world",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   },
+   {
+    "date": "2026-11-23T12:00:00+00:00",
+    "text": {
+     "en": "Gaza war has undone 77 years of human development, UN warns",
+     "he": "האו'ם מזהיר: מלחמת עזה מחקה 77 שנות התפתחות אנושית",
+     "ar": "الأمم المتحدة تحذر: حرب غزة قضت على 77 عاماً من التنمية البشرية"
+    },
+    "sentiment": "negative",
+    "source": "UN News",
+    "link": "https://news.un.org/feed/view/en/story/2026/11/1168862",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "geneva-initiative"
+   }
+  ],
+  "india-middle-east-europe-economic-corridor": [
+   {
+    "date": "2026-11-28T06:34:33+00:00",
+    "text": {
+     "en": "UKMTO says five percent of ships attacked since 17 Aug sunk or lost",
+     "he": "ארגון UKMTO: חמישה אחוזים מהספינות שהותקפו מאז 17 באוגוסט טבעו או אבדו",
+     "ar": "منظمة UKMTO: خمسة بالمئة من السفن التي استُهدفت منذ 17 أغسطس غرقت أو فُقدت"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/ukmto-says-five-percent-ships-attacked-17-aug-sunk-or-lost",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "india-middle-east-europe-economic-corridor"
+   },
+   {
+    "date": "2026-11-27T12:12:23+00:00",
+    "text": {
+     "en": "From Corridor to Network: What the Hormuz Closure Has Done to IMEC - Mepei",
+     "he": "ממעבר לרשת: מה סגירת מצר הורמוז עשתה למסדרון IMEC - מייפי",
+     "ar": "من الممر إلى الشبكة: ماذا فعل إغلاق مضيق هرمز بمسار IMEC - ميباي"
+    },
+    "sentiment": "neutral",
+    "source": "Google News - IMEC",
+    "link": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNMm90c3FhV3hMd0RYQTZiOXlQeG1ZR0pEYWp6X3hrcDA3MEpZZ0NHR29HM0xLckJFU1ZJNkFWZFZxWFR1SXlHU05LaHBLTUxTVGxsMDZ2am92WENuY2ZqNWl6N2tqZWZzQWR5YnI1X1M1WEZ1ZUNjZGY4Mmsya3Q3eGNNeWFPMWIwY1cxMQ?oc=5",
+    "type": "analysis",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "india-middle-east-europe-economic-corridor"
+   },
+   {
+    "date": "2026-11-27T07:59:32+00:00",
+    "text": {
+     "en": "India-UAE relations at its historic peak – to achieve US$200 bn annual trade by 2032 – officials reaffirm at the ICAI Int’l Conference",
+     "he": "היחסים בין הודו ואיחוד האמירויות בשיאם ההיסטורי – שאיפה לסחר שנתי של 200 מיליארד דולר עד 2032 – בכירים מאשרים שוב בכנס הבינלאומי של ICAI",
+     "ar": "العلاقات الهندية الإماراتية في أوجها التاريخي – لتحقيق تجارة سنوية بقيمة 200 مليار دولار بحلول عام 2032 – مسؤولون يؤكدون ذلك في مؤتمر ICAI الدولي"
+    },
+    "sentiment": "positive",
+    "source": "ME News",
+    "link": "https://menews247.com/india-uae-relations-at-its-historic-peak-to-achieve-us200-bn-annual-trade-by-2032-officials-reaffirm-at-the-icai-intl-conference/",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "india-middle-east-europe-economic-corridor"
+   },
+   {
+    "date": "2026-11-27T07:01:00+00:00",
+    "text": {
+     "en": "Northern Israel promotes Haifa as a gateway to Europe on India-Middle East trade route as wars choke shipping - i24NEWS",
+     "he": "הצפון מקדם את חיפה כשער לאירופה במסחר עם הודו והמזרח התיכון, בעוד המלחמות חוסמות את הספנות - i24NEWS",
+     "ar": "شمال إسرائيل يروّج لحيفا كبوابة لأوروبا عبر طريق التجارة بين الهند والشرق الأوسط، بينما تضغط الحروب على الشحن - i24NEWS"
+    },
+    "sentiment": "positive",
+    "source": "Google News - IMEC",
+    "link": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxNVnZweGtCSWpSU2gzOGpfRTd2NjM3azl0TEdVWVlieXVVWjFnb0xDblpOaU9tQTh2dUNTZV8wOVVSUEpxRzZ0VW43WDUtREZhX0hRdDNJdmxma3JyRHZzbnMwSFMwVHB3b1RxVzUtS05ZMVJPY1Z2X1hxMFotMXpZVi12RHBQWEtyWk9LWHN1VU1QbTg5eFdrSjFMeHlQT3lGcE16Y1ZWbjdCRTY0WmhRT2p0a3lXRlpXQVloam5ObG5HcnNhSHM5aUZVS3VSZ0c4Mkh0UkRWQ3VBQll2STEzWVhyM1dSLWVyVVBuLTg0aw?oc=5",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "india-middle-east-europe-economic-corridor"
+   },
+   {
+    "date": "2026-11-25T13:44:00+00:00",
+    "text": {
+     "en": "Sharing Cargo X-Ray Images among IMEC Customs Authorities - The Times of Israel",
+     "he": "שיתוף תמונות רנטגן של מטענים בין רשויות מכס IMEC - טיימס אוף ישראל",
+     "ar": "مشاركة صور أشعة إكس للشحنات بين سلطات الجمارك في IMEC - تايمز أوف إسرائيل"
+    },
+    "sentiment": "neutral",
+    "source": "Google News - IMEC",
+    "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxQRmx5b0V1ZE5RM0JyZTFESElOWmxYeVNONTVNclJUb3BMdUp2cTVOVTBLWVFIM2hyWklEcVNNbXN1c2pZMUZuQ1UwYmtQdG81cDYzSTFyUVJaRjhrTHBmcXo3aGN6dmxYeTBfSFhaSTZWLThvcHhwLWthd1g3U2RIcjNpODczQ0V5WV85UjRKcTV4ZGlx?oc=5",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "india-middle-east-europe-economic-corridor"
+   },
+   {
+    "date": "2026-11-25T00:30:00+00:00",
+    "text": {
+     "en": "From Act East to IMEC: Linking ASEAN with India’s Emerging East-West Connectivity Strategy - India Narrative",
+     "he": "מ'מבט מזרחה' ל-IMEC: חיבור אסיאן עם אסטרטגיית החיבור המזרח-מערבי המתהווה של הודו - India Narrative",
+     "ar": "من 'التوجه شرقاً' إلى IMEC: ربط رابطة دول جنوب شرق آسيا (آسيان) باستراتيجية الهند الناشئة للاتصال بين الشرق والغرب - India Narrative"
+    },
+    "sentiment": "positive",
+    "source": "Google News - IMEC",
+    "link": "https://news.google.com/rss/articles/CBMixwFBVV95cUxPcXM0VGc2QUNNeHdfUnRmY29mYjQ1RkR3QzE3Mk11UmgtcGp3dmlyclBLRTU3U2txMTcxa2thcnNmWG5WdGlxaDFlQmdaZWNtNWNLU3Z6SUVQbzB1d1NoZGZfSk5yRC12ZnpnUWxXei1zUTFub0hjamh1dXFRdi1KRVNxQ3c1ZUh6aXFWMklfS1owTFZTXzRFT1lpYXdiaHBPU2FzZk5NY3ByOTdvLUw1MzlJSmtocElNM3hjQk95eTg1WEdTTDVn?oc=5",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "india-middle-east-europe-economic-corridor"
+   },
+   {
+    "date": "2026-11-24T08:00:00+00:00",
+    "text": {
+     "en": "Not Starting from Scratch: Lessons from the Chinese Experience for the IMEC Corridor - www.inss.org.il",
+     "he": "לא מתחילים מאפס: לקחים מהניסיון הסיני עבור מסדרון IMEC - www.inss.org.il",
+     "ar": "لا نبدأ من الصفر: دروس من التجربة الصينية لممر IMEC - www.inss.org.il"
+    },
+    "sentiment": "neutral",
+    "source": "Google News - IMEC",
+    "link": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFA4cllET3ZMOTJqMUM0amNDeEZsUFFsX3E4a21YQk83ejg5NnBiR3hZZDVOOUo1NHp6bHlzTzN2VlpIRE9fUWI4bjI0UDBSMHJxY2c4ZzRqUUc?oc=5",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "india-middle-east-europe-economic-corridor"
+   }
+  ],
+  "iran-us-peace-process": [
+   {
+    "date": "2026-11-28T09:10:43+02:00",
+    "text": {
+     "en": "Report: U.S. forces repelled drones nearing British airbase earlier this month",
+     "he": "דיווח: כוחות אמריקאים הדיחו רחפנים שנתקבו בבסיס אוויר בריטי בתחילת החודש",
+     "ar": "تقرير: القوات الأمريكية أسقطت طائرات مسيّرة كانت تقترب من قاعدة جوية بريطانية في وقت سابق من هذا الشهر"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz",
+    "link": "https://www.haaretz.com/world-news/europe/2026-11-28/ty-article/.premium/report-about-half-a-dozen-drones-repelled-near-u-k-base-earlier-this-month/000001a2-20d3-d62f-a5ff-efdb169f0000",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T08:59:00+02:00",
+    "text": {
+     "en": "Australia sanctions alleged Iranian agents suspected of directing antisemitic attacks",
+     "he": "אוסטרליה הטילה סנקציות על סוכנים איראנים לכאורה בחשד להכוונת תקיפות אנטישמיות",
+     "ar": "أستراليا تفرض عقوبات على عملاء إيرانيين مشتبه بهم بتوجيه هجمات معادية للسامية"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz - ME",
+    "link": "https://www.haaretz.com/world-news/asia-and-australia/2026-11-28/ty-article/australia-sanctions-iranian-agents-suspected-of-directing-antisemitic-attacks/000001a2-1e30-ded0-a5b6-de30a7550000",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T08:51:49+00:00",
+    "text": {
+     "en": "Trump officials move to military bases, Iran threats among concerns",
+     "he": "פקידים של טראמפ עוברים לבסיסים צבאיים; איומי איראן בין הדאגות",
+     "ar": "مسؤولو ترامب ينتقلون إلى قواعد عسكرية، والتهديدات الإيرانية ضمن المخاوف"
+    },
+    "sentiment": "negative",
+    "source": "Iran International",
+    "link": "https://www.iranintl.com/en/202611289049",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T08:30:21+00:00",
+    "text": {
+     "en": "Houthis report airstrikes in Yemen, Israeli strike kills 2 near Gaza clinic, and other Mideast news",
+     "he": "החותים מדווחים על תקיפות אוויר בתימן, שני הרוגים בתקיפה ישראלית ליד מרפאה בעזה וחדשות נוספות מהמזרח התיכון",
+     "ar": "الحوثيون يعلنون عن غارات جوية في اليمن، ومقتل شخصين بغارة إسرائيلية قرب عيادة في غزة، وأخبار أخرى من الشرق الأوسط"
+    },
+    "sentiment": "negative",
+    "source": "The Independent - Iran",
+    "link": "https://www.independent.co.uk/news/houthis-doctors-without-borders-sanaa-israeli-red-sea-b3093132.html",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T07:43:38+00:00",
+    "text": {
+     "en": "US counter-drone systems drove off swarm over UK base RAF Lakenheath, drones not recovered - report",
+     "he": "מערכות נגד רחפנים אמריקאיות הדפו התקפת להקה על בסיס חיל האוויר הבריטי לייקנהית'; הרחפנים לא אותרו - דיווח",
+     "ar": "أنظمة أمريكية مضادة للطائرات المسيرة تصد هجوماً بسرب فوق قاعدة راف لاكنهيث البريطانية، ولم يتم استعادة الطائرات - تقرير"
+    },
+    "sentiment": "negative",
+    "source": "JPost",
+    "link": "https://www.jpost.com/international/article-916365",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T07:39:40+00:00",
+    "text": {
+     "en": "Houthis strike Saudi oil infrastructure as Riyadh intensifies attacks on Yemen",
+     "he": "החות'ים תקפו תשתיות נפט בסעודיה, בעוד ריאד מגבירה את התקפותיה בתימן",
+     "ar": "الحوثيون يستهدفون منشآت نفطية سعودية بينما تكثف الرياض هجماتها على اليمن"
+    },
+    "sentiment": "negative",
+    "source": "Egypt Independent",
+    "link": "https://www.egyptindependent.com/houthis-strike-saudi-oil-infrastructure-as-riyadh-intensifies-attacks-on-yemen/",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T06:08:55+00:00",
+    "text": {
+     "en": "Iran's navy commander says country's maritime ports 'fully operational'",
+     "he": "מפקד חיל הים האיראני: נמלי המדינה 'פועלים במלואם'",
+     "ar": "قائد البحرية الإيرانية: موانئ البلاد 'تعمل بكامل طاقتها'"
+    },
+    "sentiment": "neutral",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/irans-navy-commander-says-countrys-maritime-ports-fully-operational",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T05:12:25+00:00",
+    "text": {
+     "en": "Centcom rejects Iran's claims on warship attack, Hormuz shipping charges",
+     "he": "פיקוד מרכז (CENTCOM) דוחה את טענות איראן לגבי תקיפת ספינת מלחמה והאשמות על מעבר בסחורות במיצרי הורמוז",
+     "ar": "القيادة المركزية الأمريكية ترفض ادعاءات إيران بشأن هجوم على سفينة حربية واتهامات تتعلق بالشحن في مضيق هرمز"
+    },
+    "sentiment": "neutral",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/centcom-rejects-irans-claims-warship-attack-hormuz-shipping-charges",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T04:37:31+00:00",
+    "text": {
+     "en": "Iran war live: Italy says drone in deadly Kuwait attack was made in Iran - Al Jazeera",
+     "he": "שידור חי על המלחמה באיראן: איטליה טוענת שהרחפן בתקיפה הקטלנית בכווית יוצר באיראן - 'אל-ג'זירה'",
+     "ar": "تغطية حية للحرب الإيرانية: إيطاليا تقول إن الطائرة المسيرة في الهجوم القاتل بالكويت صنعت في إيران - الجزيرة"
+    },
+    "sentiment": "negative",
+    "source": "Google News Israel",
+    "link": "https://news.google.com/rss/articles/CBMivwFBVV95cUxQYzBBRkZMZURBWnVObzlNUWJSQ2RMMmRtSUdWN1QwMVpaZExyRVNwOFBHRXRnTDhvaG1mR3dITTdJSUdVclFUcEwtQkx3RDYtVjA1LXpjZkFJcDdaTVR3RUQxZWZWTzRmSUdYRUNyWHNoc1dnM0JhQVhnM0NOaHNRa0hJLWQtSUJzalFCVUNRNWxDaVhYemRoYjV5MnZGSUw1ODY2ZE5NNkU5dHBSTFdFcGdhaUZjcFB5YXIyZ3dzc9IBxAFBVV95cUxPX0I3SFpIUU1YREVJdEV3MjFZd2VtcjRlQmFTd3lBYUxub295Qk5WX25vbEdMNlQ3clhNZmdRUjZOUGJab0Z3b1IwTlRuSEM4NmRyajJteUFWQnBQWTZrbWRPOW8wU2Eyb0Fxc0ZFNVVkV0Iwd3RXbkxtWEZjdGZRcEZUR1BveHg4RkF1MjNIMnE2Mkg2Si1vVnBaUTVqWkdFaUtJUUhXMmRSUFhMMTZjZllDQTRHa1ZSTE44WVJJMUZnX05F?oc=5",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T03:57:20+00:00",
+    "text": {
+     "en": "Iran cries wolf over nuclear treaty withdrawal",
+     "he": "איראן מעלה טענות שווא על פרישה מההסכם הגרעיני",
+     "ar": "إيران تثير الذعر بشأن الانسحاب من الاتفاق النووي"
+    },
+    "sentiment": "neutral",
+    "source": "Iran International",
+    "link": "https://www.iranintl.com/en/202611271353",
+    "type": "analysis",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T03:30:51+00:00",
+    "text": {
+     "en": "US base in Bahrain remains low-staffed months after Iranian drone, missile strikes - report",
+     "he": "דיווח: הבסיס האמריקאי בבחריין נותר עם כוח מצומצם חודשים לאחר התקפות הרחפנים והטילים האיראניים",
+     "ar": "تقرير: القاعدة الأمريكية في البحرين لا تزال تعاني من نقص في الموظفين بعد أشهر من هجمات الطائرات المسيرة والصواريخ الإيرانية"
+    },
+    "sentiment": "negative",
+    "source": "JPost",
+    "link": "https://www.jpost.com/middle-east/article-916352",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T02:56:03+00:00",
+    "text": {
+     "en": "Hezbollah-linked plot in Jordan points to wider Iranian ambitions, researcher says",
+     "he": "חוקר: קשר חזבאללה בירדן מעיד על שאיפות איראניות רחבות יותר",
+     "ar": "باحث: مؤامرة مرتبطة بحزب الله في الأردن تشير إلى طموحات إيرانية أوسع"
+    },
+    "sentiment": "negative",
+    "source": "Iran International",
+    "link": "https://www.iranintl.com/en/202611280241",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T01:46:25-05:00",
+    "text": {
+     "en": "US military repelled drones at UK airbase this month, FT reports",
+     "he": "צבא ארה'ב יירט כטב'מים בבסיס אווירי בבריטניה החודש, לפי דיווח של הפייננשל טיימס",
+     "ar": "الجيش الأمريكي أسقط طائرات مسيّرة في قاعدة جوية بريطانية هذا الشهر، حسب تقرير فاينانشال تايمز"
+    },
+    "sentiment": "negative",
+    "source": "Al Monitor",
+    "link": "https://www.al-monitor.com/originals/2026/11/us-military-repelled-drones-uk-airbase-month-ft-reports",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T01:11:47+00:00",
+    "text": {
+     "en": "OPEC+ set to keep oil output targets steady amid Iran war uncertainty",
+     "he": "אופק+: צפויה לשמור על יעדי הייצוב למרות אי-הוודאות במלחמה מול איראן",
+     "ar": "أوبك+: تعتزم الحفاظ على أهداف إنتاج النفط وسط عدم اليقين بشأن الحرب مع إيران"
+    },
+    "sentiment": "neutral",
+    "source": "Iran International",
+    "link": "https://www.iranintl.com/en/202611280097",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T00:42:12+00:00",
+    "text": {
+     "en": "Senior IRGC officials vow to break US blockade on Strait of Hormuz, claim Iran's ports are 'open'",
+     "he": "בכירים במשמרות המהפכה נשבעו לשבור את הסגר האמריקאי על מצר הורמוז וטענו שנמלי איראן 'פתוחים'",
+     "ar": "مسؤولون كبار في الحرس الثوري يتعهدون بكسر الحصار الأمريكي على مضيق هرمز ويدعون أن موانئ إيران 'مفتوحة'"
+    },
+    "sentiment": "negative",
+    "source": "JPost",
+    "link": "https://www.jpost.com/middle-east/iran-news/article-916347",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T00:24:08+00:00",
+    "text": {
+     "en": "Saudi civil defence says danger has passed in Eastern Province, Al Kharj",
+     "he": "ההגנה האזרחית בסעודיה: הסכנה חלפה במחוז המזרחי, אל-חרג'",
+     "ar": "الدفاع المدني السعودي: الخطر زال في المنطقة الشرقية، الخرج"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/saudi-civil-defence-says-danger-has-passed-eastern-province-al-kharj",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T00:21:42+00:00",
+    "text": {
+     "en": "IDF says Gaza strike killed two terrorists working for Doctors Without Borders",
+     "he": "צה'ל: תקיפה בעזה הרגה שני מחבלים שעבדו עבור רופאים ללא גבולות",
+     "ar": "الجيش الإسرائيلي: غارة على غزة قتلت عنصرين يعملان لدى أطباء بلا حدود"
+    },
+    "sentiment": "negative",
+    "source": "Times of Israel",
+    "link": "https://www.timesofisrael.com/liveblog-november-28-2026/",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T00:06:49+00:00",
+    "text": {
+     "en": "IRGC says two oil tankers catch fire after hitting naval mines",
+     "he": "משמרות המהפכה: שתי מכליות נפט עלו באש לאחר פגיעת מוקשים ימיים",
+     "ar": "الحرس الثوري: حريق في ناقلة نفط بعد اصطدامها بألغام بحرية"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/irgc-says-two-oil-tankers-catch-fire-after-hitting-naval-mines",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-28T00:00:00+00:00",
+    "text": {
+     "en": "Iran war live: Italy says drone in deadly Kuwait attack was made in Iran",
+     "he": "מלחמת איראן בשידור חי: איטליה טוענת שהרחפן בתקיפה הקטלנית בכווית יוצר באיראן",
+     "ar": "تغطية حية لحرب إيران: إيطاليا تقول إن الطائرة المسيرة في الهجوم القاتل بالكويت صنعت في إيران"
+    },
+    "sentiment": "negative",
+    "source": "Al Jazeera",
+    "link": "https://www.aljazeera.com/news/liveblog/2026/11/28/iran-war-live-italy-says-drone-in-deadly-kuwait-attack-was-made-in-iran?traffic_source=rss",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T23:47:40+00:00",
+    "text": {
+     "en": "Drone that killed two Italians in Kuwait was Iranian-made, says Italy's foreign minister",
+     "he": "שר החוץ האיטלקי: הרכב ללא טייס שהרג שני איטלקים בכווית היה מתוצרת איראן",
+     "ar": "وزير الخارجية الإيطالي: الطائرة المسيرة التي قتلت إيطاليين اثنين في الكويت إيرانية الصنع"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/drone-killed-two-italians-kuwait-was-iranian-made-says-italys-foreign",
+    "type": "reporting",
+    "signal_score": 8,
+    "effective_signal": 8.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T22:32:25+02:00",
+    "text": {
+     "en": "Iran threatens action in air and at sea as it vows to break US blockade",
+     "he": "איראן מאיימת בפעולה אווירית וימית ומצהירה כי תפר את המצור האמריקאי",
+     "ar": "إيران تهدد بإجراءات جوية وبحرية وتتعهد بكسر الحصار الأمريكي"
+    },
+    "sentiment": "negative",
+    "source": "Arutz Sheva",
+    "link": "https://www.israelnationalnews.com/news/437282",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T22:22:02+00:00",
+    "text": {
+     "en": "US military says it disabled merchant ship trying to breach Iran blockade",
+     "he": "הצבא האמריקאי הודיע כי שיתק ספינת סוחר שניסתה לפרוץ את המצור על איראן",
+     "ar": "الجيش الأمريكي يعلن شل حركة سفينة تجارية حاولت اختراق حصار إيران"
+    },
+    "sentiment": "negative",
+    "source": "Al Jazeera",
+    "link": "https://www.aljazeera.com/news/2026/11/27/us-military-says-it-disabled-merchant-ship-trying-to-breach-iran-blockade?traffic_source=rss",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T21:30:06+02:00",
+    "text": {
+     "en": "Watch: US military disables cargo ship attempting to breach naval blockade on Iran",
+     "he": "צפו: הצבא האמריקאי משבית ספינת מטען שניסתה לפרוץ את המצור הימי על איראן",
+     "ar": "بالفيديو: الجيش الأمريكي يعطل سفينة شحن حاولت اختراق الحصار البحري على إيران"
+    },
+    "sentiment": "negative",
+    "source": "Arutz Sheva",
+    "link": "https://www.israelnationalnews.com/news/437280",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T21:19:54+00:00",
+    "text": {
+     "en": "Life on the blacklist: 'When sanctions hit, I realized we must be doing something right'",
+     "he": "חיים ברשימה השחורה: 'כשהסנקציות פגעו, הבנתי שאנחנו עושים משהו נכון'",
+     "ar": "الحياة على القائمة السوداء: 'عندما ضربت العقوبات، أدركنا أننا نفعل شيئاً صحيحاً'"
+    },
+    "sentiment": "negative",
+    "source": "Israel Hayom",
+    "link": "https://www.israelhayom.com/2026/11/27/life-on-the-blacklist-when-sanctions-hit-i-realized-we-must-be-doing-something-right/",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T20:59:00+00:00",
+    "text": {
+     "en": "A dark, cold office: Pezeshkian's austerity gesture backfires",
+     "he": "משרד חשוך וקר: מחוות הצנע של פזשכיאן חוזרת נגדו",
+     "ar": "مكتب مظلم وبارد: مبادرة التقشف التي أطلقها بزشكيان تنقلب ضده"
+    },
+    "sentiment": "negative",
+    "source": "Iran International",
+    "link": "https://www.iranintl.com/en/202611277333",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T19:49:00+00:00",
+    "text": {
+     "en": "US disables first ship since Iran vowed to break blockade",
+     "he": "ארה'ב השביתה לראשונה ספינה מאז שאיראן הודיעה כי תפר את הסגר",
+     "ar": "الولايات المتحدة تعطل أول سفينة منذ إعلان إيران كسر الحصار"
+    },
+    "sentiment": "negative",
+    "source": "Iran International",
+    "link": "https://www.iranintl.com/en/202611274132",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T18:00:06+00:00",
+    "text": {
+     "en": "The woman who survived the horrors of Iran's Evin Prison: 'I was no longer the same person'",
+     "he": "האישה ששרדה את זוועות כלא אווין באיראן: 'לא הייתי עוד אותה אדם'",
+     "ar": "المرأة التي نجت من أهوال سجن إيفين الإيراني: 'لم أعد الشخص نفسه'"
+    },
+    "sentiment": "neutral",
+    "source": "Israel Hayom",
+    "link": "https://www.israelhayom.com/2026/11/27/the-woman-who-survived-the-horrors-of-irans-evin-prison-i-was-no-longer-the-same-person/",
+    "type": "analysis",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T16:49:09+00:00",
+    "text": {
+     "en": "Son slams government inaction as British couple approach two years in Iran prison",
+     "he": "הבן מבקר את חוסר פעולת הממשלה בזוג הבריטי שכלוא באיראן כבר שנתיים",
+     "ar": "ابن ينتقد تقاعس الحكومة بينما يقترب زوجان بريطانيان من عامين في سجن إيراني"
+    },
+    "sentiment": "negative",
+    "source": "The Independent - Iran",
+    "link": "https://www.independent.co.uk/news/uk/home-news/lindsay-craig-foreman-iran-prison-foreign-secretary-b3092232.html",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T16:30:26-05:00",
+    "text": {
+     "en": "US military fires on ship violating Iran blockade",
+     "he": "הצבא האמריקאי ירה על ספינה שהפרה את המצור על איראן",
+     "ar": "الجيش الأمريكي يطلق النار على سفينة تنتهك حصار إيران"
+    },
+    "sentiment": "negative",
+    "source": "Al Monitor",
+    "link": "https://www.al-monitor.com/originals/2026/11/us-military-fires-ship-violating-iran-blockade",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T15:20:07+01:00",
+    "text": {
+     "en": "British Swimmer Braves Strait Of Hormuz To Warn Of Iran War's Environmental Toll",
+     "he": "שחיין בריטי חוצה את מיצרי הורמוז כדי להזהיר מפגיעת המלחמה באיראן בסביבה",
+     "ar": "سباح بريطاني يعبر مضيق هرمز للتحذير من الأثر البيئي لحرب إيران"
+    },
+    "sentiment": "negative",
+    "source": "Radio Free Europe - Iran",
+    "link": "https://www.rferl.org/a/british-swimmer-braves-strait-of-hormuz-to-warn-of-iran-war-s-environmental-toll/33907016.html",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T15:14:56+02:00",
+    "text": {
+     "en": "Netanyahu's stance on Iran remarkably aligns with his interests. His rivals are relying on the IDF chief",
+     "he": "עמדת נתניהו כלפי איראן תואמת באופן מובהק לאינטרסים שלו. יריביו מסתמכים על הרמטכ'ל",
+     "ar": "موقف نتنياهو من إيران يتوافق بشكل ملحوظ مع مصالحه. خصومه يعتمدون على رئيس الأركان"
+    },
+    "sentiment": "neutral",
+    "source": "Haaretz - Domestic",
+    "link": "https://www.haaretz.com/israel-news/israel-security/2026-11-27/ty-article-magazine/.premium/netanyahus-iran-stance-remarkably-jibes-with-his-interests-enter-the-idf-chief/000001a2-1bfd-d62f-a5ff-dffd9c610000",
+    "type": "analysis",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T14:01:30+00:00",
+    "text": {
+     "en": "Swedish MPs push to sanction Iranian officials' families and expel Iran's spies",
+     "he": "חברי פרלמנט שוודיים דוחפים להטיל סנקציות על משפחות פקידים איראנים ולגרש מרגלים איראנים",
+     "ar": "نواب سويديون يدفعون لفرض عقوبات على عائلات مسؤولين إيرانيين وطرد جواسيس إيران"
+    },
+    "sentiment": "negative",
+    "source": "Iran International",
+    "link": "https://www.iranintl.com/en/202611272858",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T13:46:30-05:00",
+    "text": {
+     "en": "US disables ship trying to leave Iran, as Tehran vows to confront blockade",
+     "he": "ארה\"ב השביתה ספינה שניסתה לעזוב את איראן, בעוד טהרן נשבעת להתעמת עם המצור",
+     "ar": "واشنطن تعطل سفينة تحاول مغادرة إيران، وطهران تتعهد بمواجهة الحصار"
+    },
+    "sentiment": "negative",
+    "source": "Al Monitor",
+    "link": "https://www.al-monitor.com/originals/2026/11/us-disables-ship-trying-leave-iran-tehran-vows-confront-blockade",
+    "type": "reporting",
+    "signal_score": 8,
+    "effective_signal": 8.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T13:16:00+00:00",
+    "text": {
+     "en": "Iranian Lawmaker Denies Tehran Is Developing Chemical Weapons After Katz Warning",
+     "he": "ח\"כ איראני מכחיש שטהראן מפתחת נשק כימי בעקבות אזהרת כץ",
+     "ar": "نائب إيراني ينفي تطوير طهران أسلحة كيميائية بعد تحذير كاتس"
+    },
+    "sentiment": "neutral",
+    "source": "JFeed",
+    "link": "https://www.jfeed.com/middleeast/iran-lawmaker-denies-chemical-weapons-katz",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T13:08:46-05:00",
+    "text": {
+     "en": "U.S. military says it disabled another ship that attempted to breach naval blockade on Iranian ports",
+     "he": "הצבא האמריקאי הודיע שהשבית ספינה נוספת שניסתה לפרוץ את המצור הימי על נמלי איראן",
+     "ar": "الجيش الأمريكي يعلن أنه عطل سفينة أخرى حاولت اختراق الحصار البحري على الموانئ الإيرانية"
+    },
+    "sentiment": "neutral",
+    "source": "Washington Times - Iran",
+    "link": "https://www.washingtontimes.com/news/2026/nov/27/us-military-says-disabled-another-ship-attempted-breach-naval/",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T12:17:57-05:00",
+    "text": {
+     "en": "How foreign navies could reshape Iran’s grip on Hormuz after the war",
+     "he": "כיצד יכולות חילות ים זרים לשנות את אחיזת איראן במיצר הורמוז לאחר המלחמה",
+     "ar": "كيف يمكن للبحريات الأجنبية إعادة تشكيل قبضة إيران على مضيق هرمز بعد الحرب"
+    },
+    "sentiment": "neutral",
+    "source": "Al Monitor",
+    "link": "https://www.al-monitor.com/originals/2026/11/how-foreign-navies-could-reshape-irans-grip-hormuz-after-war",
+    "type": "analysis",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T11:41:54+00:00",
+    "text": {
+     "en": "Iran war live: IRGC says tanker hit in Hormuz, drone downed in southeast - Al Jazeera",
+     "he": "עדכונים שוטפים על המלחמה עם איראן: משמר המהפמה מדווח על פגיעה במכלית בהורמוז והשמדת כטב''ם בדרום-מזרח - אל-ג'זירה",
+     "ar": "تغطية مباشرة للحرب مع إيران: الحرس الثوري يعلن إصابة ناقلة نفط في هرمز وإسقاط طائرة مسيّرة في الجنوب الشرقي - الجزيرة"
+    },
+    "sentiment": "negative",
+    "source": "Google News Israel",
+    "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPZ2RxcE5iYnBZYlRaUVlCWlItc3RheVVQaUxibTBva203bG9lVVhCbTFEOFI1bHhrUzBTalBNX1R1QW01ai1IWFBTQkdKa0dGVTgwaTVaRDR5ZWVHOWlKWkdxN21qa3JzclhuTlJUUjA3NnhwN1pDQXVOLUh4Q203dmhVaFR1VzVHTGNmaVFUSDN1UUNrem5ITzFlbTg5ekpsTjlBYk1kckFOSkJQdS00YllVTnNPbWU20gG-AUFVX3lxTE5EdzdTTDR0WkNDT0hEeDZHenktRk9fWjIzVl91WFo1RUxCWFZHUHVtS3F4SkVRWU8tTE9EeHFlZ3VLdHg3MnlNSlVrVktUV0FwTy1WOV9TY1JWaDUwRF9aQThHbTZZS0o0RlljdTJuV05DOHhSSkZaTDNJZEl1WEpvMWVDdFlnSnBPb2JTOXFpb2lvR0hfMFV0M1VmeFFmZl80UEotdWhzSHh6TWtwU2FxeE1BZENfRndsdlFhQ2c?oc=5",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T10:37:26+00:00",
+    "text": {
+     "en": "Iraq shuts more border crossings with Iran under US pressure to seal land routes",
+     "he": "עיראק סגרה מעברי גבול נוספים עם איראן בלחץ אמריקאי לסגירת מסלולים יבשתיים",
+     "ar": "العراق يغلق معابر حدودية إضافية مع إيران تحت الضغط الأمريكي لإغلاق الطرق البرية"
+    },
+    "sentiment": "negative",
+    "source": "Iran International",
+    "link": "https://www.iranintl.com/en/202611277238",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T10:11:16-05:00",
+    "text": {
+     "en": "Mehdi Mahmoudian, Iranian screenwriter, arrested under 'anti-government propaganda' charges",
+     "he": "מהדי מחמודיאן, התסריטאי האיראני, נעצר באשמת 'תעמולה נגד המשטר'",
+     "ar": "اعتقال مهدي محموديان، كاتب السيناريو الإيراني، بتهم 'الدعاية المناهضة للحكومة'"
+    },
+    "sentiment": "negative",
+    "source": "Washington Times - Iran",
+    "link": "https://www.washingtontimes.com/news/2026/nov/27/mehdi-mahmoudian-iranian-screenwriter-arrested-anti-government/",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T05:15:59+00:00",
+    "text": {
+     "en": "How the Arab Gulf States are Searching for a Way Out of the Iran War",
+     "he": "כיצד מדינות המפרץ הערביות מחפשות דרך לצאת מהמלחמה עם איראן",
+     "ar": "كيف تبحث دول الخليج العربية عن مخرج من حرب إيران"
+    },
+    "sentiment": "negative",
+    "source": "Juan Cole - Iran",
+    "link": "https://www.juancole.com/2026/11/arab-states-searching.html",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-27T04:31:32+00:00",
+    "text": {
+     "en": "Trump Says Iran War Will End ‘Whenever’ He Wants: Crypto Bettors Bet on the Date - Benzinga",
+     "he": "טראמפ: מלחמת איראן תסתיים 'מתי שארצה'; מהמרים בקריפטו מהמרים על התאריך - בנזינגה",
+     "ar": "ترامب: حرب إيران ستنتهي 'متى أريد'؛ مراهنو العملات الرقمية يتوقعون الموعد - بنزينغا"
+    },
+    "sentiment": "neutral",
+    "source": "Google News - Iran",
+    "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQRGRSX1FKdElKMjl5eDNLNW9nX1dwR3FsZ3VoVUNyc2ZLN1pneHpnUFR4SHA4MHVVOFZQUHFaQ0l1OWh6UkZKOGZYRnJBTkRyWk01VFkyem1UZWdDMXZhaHpqMHdQSHdqa0xPMWxyOG1DS1ZXZG1fSURmR0NUTG1mQjExelBPa09PMjYxekVVeTZXdG82OENwMFB2Nkg0c1Y5cFpRSjFPSWQ3WEdzY2V5ZWk0RWdveThzRU1VamVNWE9FSTdqeWc?oc=5",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-26T21:17:53+00:00",
+    "text": {
+     "en": "Two Italians killed in strike in Kuwait, as Iran denies responsibility",
+     "he": "שני איטלקים נהרגו בתקיפה בכווית; איראן מכחישה אחריות",
+     "ar": "مقتل إيطاليين في هجوم بالكويت، وطهران تنفي المسؤولية"
+    },
+    "sentiment": "negative",
+    "source": "BBC ME",
+    "link": "https://www.bbc.co.uk/news/articles/c39w9y5dx4k5o?at_medium=RSS&amp;at_campaign=rss",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-26T19:40:43-05:00",
+    "text": {
+     "en": "Trump phones troops during Thanksgiving: 'We have a victory at hand' over Iran",
+     "he": "טראמפ שוחח עם חיילים בחג ההודיה: 'יש לנו ניצחון על איראן'",
+     "ar": "ترامب يتصل بالجنود خلال عيد الشكر: 'لدينا نصر وشيك على إيران'"
+    },
+    "sentiment": "positive",
+    "source": "Washington Times - Iran",
+    "link": "https://www.washingtontimes.com/news/2026/nov/26/trump-phones-troops-thanksgiving-victory-hand-iran/",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-26T19:33:06+00:00",
+    "text": {
+     "en": "Two Italians Killed in Iranian Drone Attack on Kuwait, Officials Say",
+     "he": "שני איטלקים נהרגו בתקיפת כטב\"ם איראנית בכווית, כך לפי גורמים רשמיים",
+     "ar": "مقتل إيطاليين اثنين في هجوم بطائرة إيرانية مسيّرة على الكويت، حسبما قال مسؤولون"
+    },
+    "sentiment": "negative",
+    "source": "NYT ME",
+    "link": "https://www.nytimes.com/2026/11/26/world/middleeast/italians-killed-iran-drone-attack-kuwait.html",
+    "type": "reporting",
+    "signal_score": 8,
+    "effective_signal": 8.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-26T17:55:18+00:00",
+    "text": {
+     "en": "From Bennett's dilemma to Israel's unfinished war with Iran",
+     "he": "מהדילמה של בנט למלחמתה הלא-גמורה של ישראל באיראן",
+     "ar": "من معضلة بينيت إلى الحرب الإسرائيلية غير المنتهية مع إيران"
+    },
+    "sentiment": "negative",
+    "source": "Israel Hayom",
+    "link": "https://www.israelhayom.com/2026/11/26/from-bennetts-dilemma-to-israels-unfinished-war-with-iran/",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-26T15:11:46+02:00",
+    "text": {
+     "en": "Two Italians killed in Iranian drone attack on Kuwait's 'vital site'",
+     "he": "שני איטלקים נהרגו בתקיפת רחפן איראני על 'אתר חיוני' בכווית",
+     "ar": "مقتل إيطاليين اثنين في هجوم بطائرة إيرانية مسيّرة على 'موقع حيوي' في الكويت"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz - ME",
+    "link": "https://www.haaretz.com/middle-east-news/2026-11-26/ty-article/.premium/kuwait-army-says-four-hurt-in-iranian-attack-on-vital-site/000001a2-17f8-dfd9-a5b7-1ffc56950000",
+    "type": "reporting",
+    "signal_score": 7,
+    "effective_signal": 7.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-26T11:41:24+02:00",
+    "text": {
+     "en": "Experts say Israel's defense minister is exaggerating Iran's chemical weapons threat",
+     "he": "מומחים: שר הביטחון מגזים באיום הנשק הכימי של איראן",
+     "ar": "خبراء: وزير الدفاع الإسرائيلي يبالغ في تهديد الأسلحة الكيميائية الإيرانية"
+    },
+    "sentiment": "neutral",
+    "source": "Haaretz - ME",
+    "link": "https://www.haaretz.com/israel-news/israel-security/2026-11-26/ty-article/.premium/israeli-experts-say-defense-minister-is-inflating-irans-chemical-weapons-threat/000001a2-1694-de28-a3fb-d79e08480000",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-26T10:44:57+01:00",
+    "text": {
+     "en": "Former US Admiral Sees Washington's 'Adversaries Working Together'",
+     "he": "אדמירל אמריקאי לשעבר: 'היריבים של וושינגטון פועלים יחד'",
+     "ar": "أميرال أمريكي سابق يرى أن 'خصوم واشنطن يتعاونون'"
+    },
+    "sentiment": "negative",
+    "source": "Radio Free Europe - Iran",
+    "link": "https://www.rferl.org/a/united-states-military-iran-russia-china/33906062.html",
+    "type": "analysis",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-26T10:22:33+01:00",
+    "text": {
+     "en": "Retired Rear Admiral: US 'Ignored The Lessons' From Ukraine's Battlefield",
+     "he": "אלוף-משנה במילואים: ארה'ב 'התעלמה מהלקחים' משדה הקרב באוקראינה",
+     "ar": "أميرال متقاعد: الولايات المتحدة 'تجاهلت الدروس' من ساحة المعركة في أوكرانيا"
+    },
+    "sentiment": "negative",
+    "source": "Radio Free Europe - Iran",
+    "link": "https://www.rferl.org/a/retired-us-rear-admiral-mark-montgomery-sees-coordinated-challenge-from-russia-iran-and-their-allies/33906216.html",
+    "type": "analysis",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-26T10:14:51+00:00",
+    "text": {
+     "en": "An Equestrian Club as Cover for a Covert Hezbollah Infrastructure in Jordan: Another Manifestation of Iran’s Strategic Effort in the Jordanian Arena",
+     "he": "מועדון רכיבה ככיסוי לתשתית חזבאללה בסתר בירדן: ביטוי נוסף למאמץ האסטרטגי של איראן בזירה הירדנית",
+     "ar": "نادي الفروسية غطاء للبنية التحتية السرية لحزب الله في الأردن: تجلٍّ آخر للجهود الاستراتيجية الإيرانية في الساحة الأردنية"
+    },
+    "sentiment": "negative",
+    "source": "Alma",
+    "link": "https://israel-alma.org/an-equestrian-club-as-cover-for-a-covert-hezbollah-infrastructure-in-jordan-another-manifestation-of-irans-strategic-effort-in-the-jordanian-arena/",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-25T18:50:54+00:00",
+    "text": {
+     "en": "Analysis: Iran's regional strategy at stake as proxy network weakens - upi",
+     "he": "ניתוח: האסטרטגיה האזורית של איראן בסכנה עם התחלשות רשת הפרוקסי - יופי",
+     "ar": "تحليل: استراتيجية إيران الإقليمية على المحك مع ضعف شبكة الوكلاء - يو بي آي"
+    },
+    "sentiment": "neutral",
+    "source": "Google News - Lebanon",
+    "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxQYmtFYVcyLW9MOUJlQ1cxSDBfMG1oNjQ0eUN6amxCX09pSXFMdVFFM0ZGVXBGXzk0a2hXelk0SnlOdzZPdlEyRXRxb0JjRF9ueV9GUjBBM3dIcEtfT1JqTElMeVh6SjRlMnNQbGxtVHBlS0VLOFlLVXE3dkx0ZWZKeU90QVpJYU9UdkxtMEIxY3hEQmxFYXAwU3RvY1lnZUNJRjdFVUgybzBSd2930gGyAUFVX3lxTE1tWWZQUlJ0N3dFRmZoeHYtcmNycUVnMFdXMlBPazVyWkh0U0RyMkFGdjVvNS1hRkJZenoxbW1xb3I5cTg4SXNVZFJWd2Raa3JCZjRPUjAtemlDQnRubFk5ZV9yN05jdm1BT3Z3OVRUUEprcmg2b0xadTZMZUQ1cFhibGR1cEhYRDY3X3k2VGZKazFqX1YtM0dfRFNSYWdsMUcyT3JqT0RaS01oT1FjbTdTZ2c?oc=5",
+    "type": "analysis",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-25T12:14:56-05:00",
+    "text": {
+     "en": "Senate GOP open to deal with Dems to restrict Iran war funding in exchange for more defense money",
+     "he": "הרפובליקנים בסנאט פתוחים להסכם עם הדמוקרטים כדי להגביל מימון מלחמה באיראן בתמורה לתקציבי ביטחון נוספים",
+     "ar": "الجمهوريون في مجلس الشيوخ منفتحون على اتفاق مع الديمقراطيين لتقييد تمويل الحرب ضد إيران مقابل زيادة ميزانية الدفاع"
+    },
+    "sentiment": "neutral",
+    "source": "Washington Times - Iran",
+    "link": "https://www.washingtontimes.com/news/2026/nov/25/senate-gop-open-deal-dems-restrict-iran-war-funding-exchange-defense/",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-25T05:06:30+00:00",
+    "text": {
+     "en": "Trump-Xi-Putin Shenzhen Summit Left the Gulf Out of Its Peace Declaration",
+     "he": "פסגת טראמפ-שי-פוטין בשנזן השאירה את מדינות המפרץ מחוץ להצהרת השלום",
+     "ar": "قمة ترامب وشي وبوتين في شينزن استبعدت دول الخليج من إعلان السلام"
+    },
+    "sentiment": "negative",
+    "source": "Juan Cole - Iran",
+    "link": "https://www.juancole.com/2026/11/shenzhen-summit-declaration.html",
+    "type": "analysis",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-24T11:52:06-05:00",
+    "text": {
+     "en": "Iranian female singer receives 74 lashes for performing without hijab",
+     "he": "זמרת איראנית קיבלה 74 מלקות על הופעה ללא כיסוי ראש",
+     "ar": "مغنية إيرانية تتلقى 74 جلدة لأدائها دون حجاب"
+    },
+    "sentiment": "negative",
+    "source": "Washington Times - Iran",
+    "link": "https://www.washingtontimes.com/news/2026/nov/24/iranian-female-singer-receives-74-lashes-performing-without-hijab/",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-24T09:55:48+01:00",
+    "text": {
+     "en": "'Society Is Being Crushed': An Iranian Artist Reflects On Life In Tehran",
+     "he": "'החברה נרמסת': אמנית איראנית משקפת את החיים בטהראן",
+     "ar": "'المجتمع تحت الضغط': فنانة إيرانية تتأمل الحياة في طهران"
+    },
+    "sentiment": "negative",
+    "source": "Radio Free Europe - Iran",
+    "link": "https://www.rferl.org/a/iran-parastou-forouhar-tehran-war-sanctions/33904150.html",
+    "type": "analysis",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-24T00:31:03+01:00",
+    "text": {
+     "en": "US targets Iran's alleged 'shadow banking' network with new sanctions",
+     "he": "ארה\"ב הטילה סנקציות חדשות על רשת הבנקאות הסמויה לכאורה של איראן",
+     "ar": "الولايات المتحدة تستهدف شبكة 'المصرفية الموازية' المزعومة لإيران بعقوبات جديدة"
+    },
+    "sentiment": "negative",
+    "source": "Le Monde - ME",
+    "link": "https://www.lemonde.fr/en/international/article/2026/11/24/us-targets-iran-s-alleged-shadow-banking-network-with-new-sanctions_6787387_4.html",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-23T18:17:58-05:00",
+    "text": {
+     "en": "America's war with Iran has gone underground",
+     "he": "המלחמה של אמריקה באיראן עברה למחתרת",
+     "ar": "حرب أمريكا مع إيران انتقلت إلى العمل السري"
+    },
+    "sentiment": "negative",
+    "source": "Washington Times - Iran",
+    "link": "https://www.washingtontimes.com/news/2026/nov/23/americas-war-iran-gone-underground/",
+    "type": "analysis",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-23T14:57:00-05:00",
+    "text": {
+     "en": "Marco Rubio meets with Qatari prime minister amid diplomatic slowdown in Iran",
+     "he": "מרקו רוביו נפגש עם ראש ממשלת קטאר על רקע האטה דיפלומטית בנושא איראן",
+     "ar": "ماركو روبيو يلتقي رئيس الوزراء القطري وسط تباطؤ دبلوماسي بشأن إيران"
+    },
+    "sentiment": "neutral",
+    "source": "Washington Times - Iran",
+    "link": "https://www.washingtontimes.com/news/2026/nov/23/marco-rubio-meets-qatari-prime-minister-amid-diplomatic-slowdown-iran/",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-23T12:05:47+01:00",
+    "text": {
+     "en": "Iran Braces For Winter Gas Shortages As War Damage Deepens Energy Crisis",
+     "he": "איראן מתכוננת למחסור בגז בחורף כשהנזק מהמלחמה מעמיק את משבר האנרגיה",
+     "ar": "إيران تستعد لنقص الغاز في الشتاء مع تعميق أضرار الحرب لأزمة الطاقة"
+    },
+    "sentiment": "negative",
+    "source": "Radio Free Europe - Iran",
+    "link": "https://www.rferl.org/a/iran-gas-shortages-winter-energy-crisis-war/33904024.html",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-23T10:46:46+00:00",
+    "text": {
+     "en": "Indoctrinating Hezbollah’s Next Generation: The Al-Mahdi Scouts’ Children’s Magazine",
+     "he": "השטיפה המוחית של הדור הבא בחזבאללה: מגזין הילדים של 'גדודי אל-מהדי'",
+     "ar": "غسل أجيال حزب الله القادمة: مجلة أطفال كشافة المهدي"
+    },
+    "sentiment": "negative",
+    "source": "Alma",
+    "link": "https://israel-alma.org/indoctrinating-hezbollahs-next-generation-the-al-mahdi-scouts-childrens-magazine/",
+    "type": "analysis",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-23T05:15:56+00:00",
+    "text": {
+     "en": "How International Law Views the Congressional Vote on the Iran War",
+     "he": "כיצד רואה המשפט הבינלאומי את ההצבעה בקונגרס על מלחמה באיראן",
+     "ar": "كيف ينظر القانون الدولي إلى تصويت الكونغرس على حرب إيران"
+    },
+    "sentiment": "negative",
+    "source": "Juan Cole - Iran",
+    "link": "https://www.juancole.com/2026/11/international-views-congressional.html",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-22T00:00:21+01:00",
+    "text": {
+     "en": "Iran To Ration Electricity Amid Warnings Power Grid Battered by US, Israeli Strikes",
+     "he": "איראן תנהל מכסות חשמל על רקע אזהרות כי רשת החשמל נפגעה בתקיפות אמריקאיות וישראליות",
+     "ar": "إيران تقنّن الكهرباء تحذيراً من تضرر الشبكة بسبب الغارات الأمريكية والإسرائيلية"
+    },
+    "sentiment": "negative",
+    "source": "Radio Free Europe - Iran",
+    "link": "https://www.rferl.org/a/iran-electricity-ration-bread-trump-/33903259.html",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   },
+   {
+    "date": "2026-11-21T05:15:24+00:00",
+    "text": {
+     "en": "NYT Reporting on Iranian Dams risks Justifying War Crimes: Normalizing Violence",
+     "he": "דיווח הניו יורק טיימס על סכרים באיראן מסכן הצדקה לפשעי מלחמה: נרמול האלימות",
+     "ar": "تقرير نيويورك تايمز عن سدود إيران يهدد بتبرير جرائم الحرب: تطبيع العنف"
+    },
+    "sentiment": "negative",
+    "source": "Juan Cole - Iran",
+    "link": "https://www.juancole.com/2026/11/reporting-justifying-normalizing.html",
+    "type": "analysis",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "iran-us-peace-process"
+   }
+  ],
+  "israeli-annexation-of-the-west-bank": [
+   {
+    "date": "2026-11-28T07:22:56+02:00",
+    "text": {
+     "en": "Settlers cracked his skull and smashed cars. The attack was filmed. No one was arrested",
+     "he": "מתנחלים פצעו אותו קשה בראשו וניפצו רכבים. התקיפה צולמה. איש לא נעצר",
+     "ar": "مستوطنون كسروا جمجمته وحطموا سيارات. الهجوم صُوّر. لم يُعتقل أحد"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz - Domestic",
+    "link": "https://www.haaretz.com/israel-news/twilight-zone/2026-11-28/ty-article-magazine/.highlight/settlers-cracked-his-skull-the-attack-was-filmed-no-one-was-arrested/000001a2-207c-d62f-a5ff-ef7df42d0000",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-28T05:35:41+00:00",
+    "text": {
+     "en": "US activist returning from West Bank tour detained by Israeli police, UCPiP says",
+     "he": "פעיל אמריקאי ששב מסיור בגדה המערבית נעצר בידי משטרת ישראל, לפי ארגון UCPiP",
+     "ar": "الشرطة الإسرائيلية تحتجز ناشطاً أمريكياً عائداً من جولة في الضفة الغربية، وفق منظمة UCPiP"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/us-activist-returning-west-bank-tour-detained-israeli-police-ucpip-says",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-28T03:22:20+02:00",
+    "text": {
+     "en": "U.S. activist Mel Duncan detained by Israeli police after West Bank tour",
+     "he": "פעיל אמריקאי מל דאנקן נעצר בידי משטרת ישראל לאחר סיור בגדה המערבית",
+     "ar": "الناشط الأمريكي ميل دانكان يحتجزه الشرطة الإسرائيلية بعد جولة في الضفة الغربية"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz - Domestic",
+    "link": "https://www.haaretz.com/israel-news/israel-crime/2026-11-28/ty-article/.premium/u-s-activist-mel-duncan-detained-by-israeli-police-after-west-bank-tour/000001a2-1de0-ded0-a5b6-dde006650000",
+    "type": "reporting",
+    "signal_score": 3,
+    "effective_signal": 3.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-28T02:59:26+00:00",
+    "text": {
+     "en": "Israeli defence minister rejects army chief's call to detain violent settlers, report says",
+     "he": "דיווח: שר הביטחון דחה את קריאת הרמטכ'ל לעצור מתנחלים אלימים",
+     "ar": "تقرير: وزير الدفاع الإسرائيلي يرفض دعوة رئيس الأركان لاعتقال المستوطنين العنيفين"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/israeli-defence-minister-rejects-army-chiefs-call-detain-violent",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-28T00:29:27+00:00",
+    "text": {
+     "en": "Israeli Forces Arrest American Human Rights Worker Mel Duncan in the West Bank - The Intercept",
+     "he": "כוחות ישראליים עצרו את פעיל זכויות האדם האמריקאי מל דאנקן בגדה המערבית - 'אינטרספט'",
+     "ar": "قوات إسرائيلية تعتقل الناشط الأمريكي في حقوق الإنسان ميل دانكان في الضفة الغربية - ذا إنترسبت"
+    },
+    "sentiment": "negative",
+    "source": "Google News Israel",
+    "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE9WVFhJSmlrZVdKMnJlS3lUWU9fYlk5b055dDM4QkhMYW52Q2JDR1NkU1ZxOVBJMlpVZDNNTGV4X185VTVjYmhSeEtoT1AwRFBpUWVaZlBhQThFcUpVbkpadWpFUHVsQkstZWNJZ2VIcVBXTzFNTTNsOTlQOA?oc=5",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-27T23:25:38+00:00",
+    "text": {
+     "en": "Katz, senior IDF officers said resisting proposed steps for curbing settler violence",
+     "he": "קץ ובכירי צה'ל אמרו שהתנגדו לצעדים מוצעים להגבלת אלימות המתנחלים",
+     "ar": "قال كاتس وضباط كبار في جيش الدفاع إنهم عارضوا خطوات مقترحة للحد من عنف المستوطنين"
+    },
+    "sentiment": "negative",
+    "source": "Times of Israel",
+    "link": "https://www.timesofisrael.com/katz-senior-idf-officers-said-resisting-proposed-steps-for-curbing-settler-violence/",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-27T22:10:15+00:00",
+    "text": {
+     "en": "Several Palestinians beaten and detained in Israeli raids across occupied West Bank",
+     "he": "פלסטינים רבים הוכו ונעצרו בפשיטות ישראליות ברחבי הגדה המערבית הכבושה",
+     "ar": "اعتداء على فلسطينيين واحتجازهم خلال مداهمات إسرائيلية في أنحاء الضفة الغربية المحتلة"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/several-palestinians-beaten-and-detained-israeli-raids-across-occupied",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-27T21:11:27+00:00",
+    "text": {
+     "en": "Israeli real estate company holds 'Black Friday' land sale in Brooklyn",
+     "he": "חברת נדל\"ן ישראלית מקיימת מבצע 'בלאק פריידי' למכירת קרקעות בברוקלין",
+     "ar": "شركة عقارات إسرائيلية تقيم عرض 'الجمعة السوداء' لبيع أراضٍ في بروكلين"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/israeli-real-estate-company-holds-black-friday-land-sale-brooklyn",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [
+     {
+      "source": "Middle East Eye",
+      "link": "https://www.middleeasteye.net/news/israeli-real-estate-company-holds-black-friday-sale-brooklyn"
+     }
+    ],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-27T15:44:15+01:00",
+    "text": {
+     "en": "'Netanyahu is the key figure in the rift between Israel and American public opinion'",
+     "he": "'נתניהו הוא הדמות המרכזית בפער בין ישראל לדעת הקהל האמריקאית'",
+     "ar": "'نتنياهو هو الشخصية الرئيسية في الشرخ بين إسرائيل والرأي العام الأمريكي'"
+    },
+    "sentiment": "negative",
+    "source": "Le Monde - ME",
+    "link": "https://www.lemonde.fr/en/opinion/article/2026/11/27/netanyahu-is-the-key-figure-in-the-rift-between-israel-and-american-public-opinion_6789961_23.html",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-27T13:29:11+02:00",
+    "text": {
+     "en": "Israel closes East Jerusalem school for 'incitement,' leaving students with no alternative",
+     "he": "ישראל סגרה בית ספר במזרח ירושלים בטענה ל'הסתה'; תלמידים נותרו ללא מסגרת חלופית",
+     "ar": "إسرائيل تغلق مدرسة في القدس الشرقية بتهمة 'التحريض'، وتترك الطلاب دون بديل"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz - ME",
+    "link": "https://www.haaretz.com/israel-news/israel-politics/2026-11-27/ty-article/.premium/israel-closes-east-jerusalem-school-for-incitement-forsaking-students/000001a2-1c7e-d809-adef-7ffe2e990000",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-27T06:00:57+00:00",
+    "text": {
+     "en": "‘Systematic assault’: paramedics blocked and attacked by Israeli settlers and soldiers in West Bank",
+     "he": "'מתקפה שיטתית': חובשים נחסמו ונפגעו על ידי מתנחלים וחיילים ישראלים בגדה המערבית",
+     "ar": "'اعتداء منهجي': مسعفون يتعرضون للحصار والهجوم من قبل مستوطنين وجنود إسرائيليين في الضفة الغربية"
+    },
+    "sentiment": "negative",
+    "source": "Guardian",
+    "link": "https://www.theguardian.com/world/2026/nov/27/paramedics-blocked-attacked-by-settlers-west-bank",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-26T10:19:00+02:00",
+    "text": {
+     "en": "UN: More than 1,500 Palestinians displaced in Jordan Valley since start of 2026",
+     "he": "האו'ם: יותר מ-1,500 פלסטינים הועתקו מעמק הירדן מאז תחילת 2026",
+     "ar": "الأمم المتحدة: نزوح أكثر من 1,500 فلسطيني في غور الأردن منذ بداية عام 2026"
+    },
+    "sentiment": "negative",
+    "source": "PNN",
+    "link": "https://english.pnn.ps/news/48403",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-26T02:10:13+02:00",
+    "text": {
+     "en": "A dangerous illusion of action: Can a High Court ruling on Jewish terror actually change something?",
+     "he": "אשליה מסוכנת של פעולה: האם פסיקת בג'ץ לגבי טרור יהודי באמת יכולה לשנות משהו?",
+     "ar": "وهم خطير بالعمل: هل يمكن لقرار المحكمة العليا بشأن الإرهاب اليهودي أن يغير شيئاً فعلاً؟"
+    },
+    "sentiment": "negative",
+    "source": "Haaretz - ME",
+    "link": "https://www.haaretz.com/israel-news/israel-politics/2026-11-26/ty-article/.premium/high-court-ruling-on-jewish-terror-risks-creating-a-dangerous-illusion-of-action/000001a2-143d-dddf-a7ff-9ebfb8090000",
+    "type": "opinion",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-25T23:02:06.704000-05:00",
+    "text": {
+     "en": "11/25 Links Pt2: Democrats’ push for sanctions could force Israel into fateful choice; The ‘Ethnostate’ Debate Bait; Why Jews are abandoning Britain; How the New York Times Framed the Gaza War",
+     "he": "25/11 קישורים חלק 2: לחץ הדמוקרטים לסנקציות עשוי להכריח את ישראל לבחירה גורלית; הפיתיון ב'דיון על מדינת לאום'; מדוע יהודים נוטשים את בריטניה; כיצד העיתון ניו יורק טיימס תיאר את המלחמה בעזה",
+     "ar": "25/11 روابط الجزء 2: ضغط الديمقراطيين لفرض عقوبات قد يجبر إسرائيل على خيار مصيري؛ فخ 'النقاش حول الدولة القومية'؛ لماذا يهاجر اليهود من بريطانيا؛ كيف صاغت صحيفة نيويورك تايمز تغطية حرب غزة"
+    },
+    "sentiment": "negative",
+    "source": "Elder of Ziyon",
+    "link": "https://elderofziyon.blogspot.com/2026/11/1125-links-pt2-democrats-push-for.html",
+    "type": "opinion",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-25T12:00:00+00:00",
+    "text": {
+     "en": "Türk warns of widening risk of atrocity crimes against Palestinians",
+     "he": "טורקיה מזהירה מהתרחבות סיכוני פשעי זוועה נגד הפלסטינים",
+     "ar": "تركيا تحذر من اتساع مخاطر ارتكاب جرائم فظيعة ضد الفلسطينيين"
+    },
+    "sentiment": "negative",
+    "source": "UN News",
+    "link": "https://news.un.org/feed/view/en/story/2026/11/1168879",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-24T18:02:53+00:00",
+    "text": {
+     "en": "Israel attempts to jail Palestinian student at Hebrew University without trial",
+     "he": "ישראל מנסה לכלוא סטודנט פלסטיני באוניברסיטה העברית ללא משפט",
+     "ar": "إسرائيل تحاول سجن طالب فلسطيني في الجامعة العبرية دون محاكمة"
+    },
+    "sentiment": "negative",
+    "source": "Guardian",
+    "link": "https://www.theguardian.com/world/2026/nov/24/israel-jail-palestinian-student-mahdi-tounsi-hebrew-university-without-trial",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-24T10:53:51+00:00",
+    "text": {
+     "en": "Israel redraws Hebron map raising fears of West Bank annexation - The New Arab",
+     "he": "ישראל משנה את מפת חברון ומעלה חששות לסיפוח הגדה המערבית - אל ערבי אל ג'דיד",
+     "ar": "إسرائيل تعيد رسم خريطة الخليل مما يثير مخاوف من ضم الضفة الغربية - العربي الجديد"
+    },
+    "sentiment": "negative",
+    "source": "Google News - West Bank",
+    "link": "https://news.google.com/rss/articles/CBMikwFBVV95cUxOcm9yYzFOeXgwSjlUUDEwSTNTdmlmM3Z0YUo1Qnl3YzNoNmtnMEY5Tzd6a0dTb2NWcjFNVHZtSmhXVnJzSGRhNmlLVGZpYWwzYVB1WVA2Um1XNzRteDJZUXJsemt0NnhaV3BsOGFhS3p4RVpIdTlrYndqM040OTg4dlVFQzJHUWo2SWFIM2QwbG80bjjSAZgBQVVfeXFMT0g2VjYwV2lDY2RGZklyc0JZYV9zVWVqOGJ3eUFrQjU5UkFqaVo5RG4tbFBCSk5rLWhNNUVER3dNMW10RzZTNGNpdGZQZ0xTcTB1VGN3RzZ2djNLbENoNGtLZlhxT0tySG5fdlFCRzlWWnEwVkFXVTZjTjBFWXhMSzYzWU9RLVBGQmlnaVBHYjcxRThLZUFRRUE?oc=5",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-24T10:06:00+02:00",
+    "text": {
+     "en": "Al-Jab’a’s Olive Trees Await Their Owners as Farmers Struggle to Reach Their Land",
+     "he": "עצי הזיתים של אל-ג'אבעה ממתינים לבעליהם בעוד החקלאים מתקשים להגיע לאדמותיהם",
+     "ar": "أشجار الزيتون في الجبعة تنتظر أصحابها وسط معاناة المزارعين للوصول إلى أراضيهم"
+    },
+    "sentiment": "negative",
+    "source": "PNN",
+    "link": "https://english.pnn.ps/news/48402",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-23T17:47:07+00:00",
+    "text": {
+     "en": "Israeli settlers' move into a Palestinian neighborhood brings deadly violence to Jericho's doorstep",
+     "he": "כניסת מתנחלים ישראלים לשכונה פלסטינית מביאה אלימות קטלנית לפתחו של יריחו",
+     "ar": "توسع المستوطنين الإسرائيليين في حي فلسطيني يجلب عنفاً مميتاً إلى مشارف أريحا"
+    },
+    "sentiment": "negative",
+    "source": "LA Times - Israel-Hamas",
+    "link": "https://www.latimes.com/world-nation/story/2026-11-23/israeli-settlers-move-into-palestinian-neighborhood-brings-deadly-violence-to-jerichos-doorstep",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   },
+   {
+    "date": "2026-11-22T15:02:00+00:00",
+    "text": {
+     "en": "Opinion | Sanctioning People for Building Homes in the West Bank - WSJ",
+     "he": "דעה | הטלת סנקציות על בוני בתים בגדה המערבית - וול סטריט ג'ורנל",
+     "ar": "رأي | فرض عقوبات على من يبنون منازل في الضفة الغربية - وول ستريت جورنال"
+    },
+    "sentiment": "negative",
+    "source": "Google News - Two State",
+    "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNWC1iOTdNdjEzcUpZMzcxT3hIazV4TDE2aElSeVF6ZFpjR0ZBM0hlV21UMXJlRkRDeFFXX0Jsb1A0MEtjTEJ6RHNUeTBlVUlBRHpoSEp6b0pqRVlpb05NdmF4cTBrNVVVVXY0MmVGWTM2NHJINThPa3R4MFp1akNSOVpYa3Bxd3RseHM4NEJPT0NEOG9PLXc?oc=5",
+    "type": "opinion",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "israeli-annexation-of-the-west-bank"
+   }
+  ],
+  "lebanon-hezbollah-conflict": [
+   {
+    "date": "2026-11-28T06:52:40+00:00",
+    "text": {
+     "en": "Israeli jets carry out air raid on Lebanese town in Nabatieh, NNA reports",
+     "he": "מטוסים קרביים ישראלים מבצעים תקיפה אווירית בעיר לבנונית בנבטיה, לפי סוכנות הידיעות הלבנונית (NNA)",
+     "ar": "طائرات حربية إسرائيلية تشن غارة جوية على بلدة لبنانية في النبطية، حسب الوكالة الوطنية للإعلام (NNA)"
+    },
+    "sentiment": "negative",
+    "source": "Middle East Eye",
+    "link": "https://www.middleeasteye.net/live-blog/live-blog-update/israeli-jets-carry-out-air-raid-lebanese-town-nabatieh-nna-reports",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-28T01:22:37+00:00",
+    "text": {
+     "en": "Lebanese PM says proposal in works to keep UNIFIL operating beyond mandate expiry",
+     "he": "ראש ממשלת לבנון: מתגבשת הצעה להאריך את פעילות כוח האו\"ם בלבנון מעבר לתום המנדט",
+     "ar": "رئيس الوزراء اللبناني: مقترح قيد الإعداد للحفاظ على استمرار عمل قوة الأمم المتحدة المؤقتة في لبنان بعد انتهاء ولايتها"
+    },
+    "sentiment": "neutral",
+    "source": "Times of Israel",
+    "link": "https://www.timesofisrael.com/lebanese-pm-says-proposal-in-works-to-keep-unifil-operating-beyond-mandate-expiry/",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-28T01:22:37+00:00",
+    "text": {
+     "en": "Lebanese PM says proposal in works to keep UNIFIL operating beyond year’s end",
+     "he": "ראש ממשלת לבנון: מתגבשת הצעה להמשיך את פעילות כוח האו'ם (UNIFIL) מעבר לסוף השנה",
+     "ar": "رئيس الوزراء اللبناني: مقترح قيد الإعداد لإبقاء قوة اليونيفيل عاملة بعد نهاية العام"
+    },
+    "sentiment": "neutral",
+    "source": "Times of Israel",
+    "link": "https://www.timesofisrael.com/lebanese-pm-says-proposal-in-works-to-keep-unifil-operating-beyond-mandate-expiry/",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-27T22:54:23+00:00",
+    "text": {
+     "en": "IDF says Hezbollah exploits Lebanese fishing boats to monitor naval forces - The Jerusalem Post",
+     "he": "צה\"ל: חיזבאללה מנצל סירות דיג לבנוניות למעקב אחר כוחות ימיים - ג'רוזלם פוסט",
+     "ar": "الجيش الإسرائيلي: حزب الله يستغل قوارب صيد لبنانية لمراقبة القوات البحرية - جيروزاليم بوست"
+    },
+    "sentiment": "negative",
+    "source": "Google News - Lebanon",
+    "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTFBLS0NwRV9JdW9yLUwtM3JxVmd0UzVJb3R1TVFfSjMyMTVxbnNjYkdnN0FJYWtVZ2lQWWl5V0t5ZlhJUzdGVk00RTlmMGlyVVpEMmZJbVBnbmpKdDFpN1dsTTJlTU5mTS1fVmY1bUVn?oc=5",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-27T22:41:30+02:00",
+    "text": {
+     "en": "Lebanese prime minister says proposal underway to have UN peacekeepers stay on",
+     "he": "ראש ממשלת לבנון: מתקיימת הצעה להשאיר את כוחות השלום של האו\"ם",
+     "ar": "رئيس الوزراء اللبناني: هناك مقترح قيد الدراسة لإبقاء قوات حفظ السلام التابعة للأمم المتحدة"
+    },
+    "sentiment": "neutral",
+    "source": "Haaretz - ME",
+    "link": "https://www.haaretz.com/middle-east-news/lebanonnews/2026-11-27/ty-article/lebanese-prime-minister-says-proposal-underway-to-have-un-peacekeepers-stay-on/000001a2-1e30-d402-a5b3-9f7eada60000",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-27T18:33:47+00:00",
+    "text": {
+     "en": "Lebanon proposes extending UNIFIL duties during withdrawal to prevent security vacuum",
+     "he": "לבנון מציעה להאריך את תפקיד כוחות יוניפייל במהלך הנסיגה כדי למנוע חוסר ביטחון",
+     "ar": "لبنان يقترح تمديد مهام قوة اليونيفيل خلال الانسحاب لمنع فراغ أمني"
+    },
+    "sentiment": "neutral",
+    "source": "ME Monitor",
+    "link": "https://www.middleeastmonitor.com/20261127-lebanon-proposes-extending-unifil-duties-during-withdrawal-to-prevent-security-vacuum/",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-27T16:26:29+00:00",
+    "text": {
+     "en": "Not just tents: how Hezbollah built a fortified compound inside Israeli territory - Ynetnews",
+     "he": "לא רק אוהלים: כך הקים חיזבאללה מתחם מבוצר בתוך שטח ישראל - ידיעות אחרונות",
+     "ar": "ليست مجرد خيام: كيف بنى حزب الله مجمعاً محصناً داخل الأراضي الإسرائيلية - يديعوت أحرونوت"
+    },
+    "sentiment": "negative",
+    "source": "Google News - Lebanon",
+    "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5CTlBGMkhnSFlxeWIzbzJmWW1vMmpCR0lIVUJzWk9GY0ItdmdXZ0ljbUZfWV9saG5yNjMwZUVTMkEyUGFMTXF6ZFVTcmRqTmxIN1pjeUl3?oc=5",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-27T16:18:50+00:00",
+    "text": {
+     "en": "UN peacekeepers prepare to leave south Lebanon without a plan for what comes next",
+     "he": "כוחות השלום של האו'ם נערכים לעזוב את דרום לבנון ללא תוכנית ליום שאחרי",
+     "ar": "حفظ السلام التابعون للأمم المتحدة يستعدون لمغادرة جنوب لبنان دون خطة لما بعد ذلك"
+    },
+    "sentiment": "neutral",
+    "source": "Times of Israel",
+    "link": "https://www.timesofisrael.com/un-peacekeepers-prepare-to-leave-south-lebanon-without-plan-for-what-comes-next/",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-27T15:10:31+00:00",
+    "text": {
+     "en": "AP Exclusive: Lebanon's prime minister says a proposal is underway to have UN peacekeepers stay on",
+     "he": "בלעדיו של AP: ראש ממשלת לבנון: מתקיימת הצעה להשאיר את כוחות השלום של האו'ם במדינה",
+     "ar": "حصري لـ AP: رئيس الوزراء اللبناني يقول إن هناك مقترحاً قائماً لإبقاء قوات حفظ السلام التابعة للأمم المتحدة"
+    },
+    "sentiment": "neutral",
+    "source": "The Independent - Iran",
+    "link": "https://www.independent.co.uk/news/lebanon-unifil-iran-israel-hezbollah-b3092874.html",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-27T14:24:10+00:00",
+    "text": {
+     "en": "Lebanon facing uncertain future as UN peacekeepers prepare to depart",
+     "he": "לבנון מתמודדת עם עתיד לא ברור לקראת עזיבת כוחות השלום של האו'ם",
+     "ar": "لبنان يواجه مستقبلاً غامضاً مع استعداد قوات حفظ السلام الأممية للمغادرة"
+    },
+    "sentiment": "negative",
+    "source": "The Conversation - ME",
+    "link": "https://theconversation.com/lebanon-facing-uncertain-future-as-un-peacekeepers-prepare-to-depart-297693",
+    "type": "analysis",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-27T13:24:14+00:00",
+    "text": {
+     "en": "IDF Says Hezbollah Is Using Civilian Fishing Boats to Spy on Israeli Navy",
+     "he": "צה'ל אומר שחיזבאללה משתמש בספינות דיג אזרחיות לריגול אחרי הצי הישראלי",
+     "ar": "الجيش الإسرائيلي يقول إن حزب الله يستخدم قوارب صيد مدنية للتجسس على البحرية الإسرائيلية"
+    },
+    "sentiment": "negative",
+    "source": "JFeed",
+    "link": "https://www.jfeed.com/middleeast/idf-hezbollah-fishing-boats-spying-navy",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-27T06:14:52+02:00",
+    "text": {
+     "en": "Who will guard Lebanon's border after the UN peacekeepers leave?",
+     "he": "מי ישמור על הגבול בלבנון לאחר עזיבת כוחות השלום של האו'ם?",
+     "ar": "من سيحمي الحدود اللبنانية بعد انسحاب قوات حفظ السلام التابعة للأمم المتحدة؟"
+    },
+    "sentiment": "neutral",
+    "source": "Haaretz - ME",
+    "link": "https://www.haaretz.com/middle-east-news/lebanonnews/2026-11-27/ty-article/.premium/who-will-guard-lebanons-border-after-unifil-leaves/000001a2-190c-d58f-afea-5b2f02e80000",
+    "type": "analysis",
+    "signal_score": 6,
+    "effective_signal": 8.0,
+    "attestations": [
+     {
+      "source": "Google News - Lebanon",
+      "link": "https://news.google.com/rss/articles/CBMigAJBVV95cUxPb0tRSDhRaDlJekw5Ynk5VTl0TkxTT3ZxTmpaZkJYSm5DM3ZlSl9ya2YtWk0zTUNxRVFlWW1QTFMwT0pMVjd2SGIwQ0lCY1BrWVU1aU5saWU5YkNOYlFFX1A4bk9ULUw1Ni15VHFTT0JoYkZObWlpZmVjNDllYW1wdGM5QmswQWo0Nl9IWHJNUzZqZmZ5aG5UODFCcjhzQkpfZjRZR2c2LXdQODVmd3dwcWllZFMzenhCUmJQVjZaZzctRDZJNll4RnhhZktWdW1fZTdIV1pTQ1pEMG1rT1BIRGZScHpyRzBKbU9jbXRNQVBfNXNlU1JyTGVzRm5Wd1ZT?oc=5"
+     }
+    ],
+    "cross_attestation_bonus": true,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-27T05:58:37+00:00",
+    "text": {
+     "en": "Israel uses south Lebanon Christian villages to try to divide and conquer - Al Jazeera",
+     "he": "ישראל מנצלת כפרים נוצריים בדרום לבנון כדי לפלג ולשלוט - אל-ג'זירה",
+     "ar": "إسرائيل تستغل القرى المسيحية جنوب لبنان لتقسيم الناس وإخضاعهم - الجزيرة"
+    },
+    "sentiment": "negative",
+    "source": "Google News - Lebanon",
+    "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxONTN0RGlFWFoyNnZEdG5QUjBxUENGOHVxb18xelQyOHY4dFZvUUo5ZjFYNHRIZC1WakJTT1pOQUZ4OXdBOUl1WUlWY0wzemV1V2VwaXFsajZpOGczVVpxQ2wxeEhfLUlKcUc2UWUzcDkySW9FUkJaaUVWSWMyVTVkQlJkQ0VzTVVVUExBTXhReTJGdlV0YVh5WVhyeFpxZ2UyUGQ3a1MtR0hVOEhCaVpZX1dGOXU4aGJDTHfSAb8BQVVfeXFMUFNMMTFMeHA0Q0s3V05uSENZVFVHRkRNNlB5UlFoOGxCalhyYV9HOWRtYXJ5UlJTak9iT0R3RG43LUxYekdDdkQtRUhmckdncUtXWk1yUXlrNVdkazd5LWRyMGZ3UWRKYUlrWUZURjVlSENwLWpLRFhuX0g5ZmlNLTdmY3pwQ3RBR2k5NVZRZ0RFS1hKTGtnWWp3Y2hPa01Dbmw2UUNoZHJnTk1xSlVlQXBucjVzRktXNmtZTlJfT3c?oc=5",
+    "type": "opinion",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-26T21:38:00+00:00",
+    "text": {
+     "en": "Air Force strikes Hezbollah rockets, launchers in eastern Lebanon — IDF - The Times of Israel",
+     "he": "חיל האוויר תקף רקטות ומשגרים של חיזבאללה במזרח לבנון - צה'ל - טיימס אוף ישראל",
+     "ar": "القوات الجوية تدمر صواريخ ومنصات إطلاق لحزب الله في شرق لبنان - الجيش الإسرائيلي - تايمز أوف إسرائيل"
+    },
+    "sentiment": "negative",
+    "source": "Google News - Lebanon",
+    "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxPTHExY19XVXdGLTNTSUlZWl9vdUZndVZnazJlNkJFUnF0M0p0bkNNcUt6MjY4M3YzSVBEaVpsOGp0Vml5UmgzTWtlUzZ6Z01BbUZVejVXTC13S2g0NHNxQUFhaHUybTgzRGNmRTZ2anozN1dRRkp1MHVNUzJFUWk0LTM0dTVBUVdsWjEyelhFV1NnZkVkMDZXdno4OXRrRDhM0gGmAUFVX3lxTE1POHRxbTRUbXhOekw5SXBaUFQ2VDB2dWZaWWh0WnBjanlSbEpma2NFZnQ0VzhXSEhqWEcwWk15aVJwS1pMUk1hams3cWVQWkpQY0NDWENqZjhqdWpIT2VHdlk0TThOSUxQaHRmS1RVbWNoRUF4Z2RzQllsUkpGN3VORVFwazZQRHJ2UmVESG5uZlRMUVNmZGVCWHlUZHBNZW1QbTNkdVE?oc=5",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-26T19:17:05+02:00",
+    "text": {
+     "en": "Israel and Lebanon to resume talks as IDF withdrawal plan stalls",
+     "he": "ישראל ולבנון יחדשו שיחות לאחר שהתוכנית לנסיגת צה'ל תקועה",
+     "ar": "إسرائيل ولبنان يستأنفان المحادثات مع تعثر خطة انسحاب الجيش الإسرائيلي"
+    },
+    "sentiment": "neutral",
+    "source": "Haaretz - ME",
+    "link": "https://www.haaretz.com/israel-news/israel-security/2026-11-26/ty-article/.premium/lebanon-and-israel-to-hold-eighth-round-of-peace-talks-before-years-end/000001a2-17b6-d58f-afea-57bff4e00000",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-26T14:40:00+00:00",
+    "text": {
+     "en": "Hezbollah has restored '50% of its capabilities' - Naharnet",
+     "he": "חיזבאללה שיקם 50% מיכולותיו הצבאיות - נהארנט",
+     "ar": "حزب الله يستعيد 50% من قدراته - النهارنت"
+    },
+    "sentiment": "neutral",
+    "source": "Google News - Lebanon",
+    "link": "https://news.google.com/rss/articles/CBMijAFBVV95cUxQY2w2ZW1rX0NGZGhvZ1czM1p0RC1LVldOV3ZwZU96ZDFBLXhyeUVacXdHNnQwcFVkelVUWU1HbXdBOTZ0eGl5bnQ0V2I5S2VWbDNFemg3NlkwUUVMZjhSVkFvV2lVOGtuamFFaG1IX28yX0dCNTV6SkdvNG5oWmhtU0FfV3BVUE1aMWRCZw?oc=5",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-26T13:35:12+00:00",
+    "text": {
+     "en": "The Turkish axis – Monthly review: Syria, Lebanon, Hamas, and the region (October 1 to November 25, 2026)",
+     "he": "הציר הטורקי – סקירה חודשית: סוריה, לבנון, חמאס והאזור (1 באוקטובר עד 25 בנובמבר 2026)",
+     "ar": "المحور التركي – مراجعة شهرية: سوريا، لبنان، حماس والمنطقة (1 أكتوبر إلى 25 نوفمبر 2026)"
+    },
+    "sentiment": "negative",
+    "source": "Alma",
+    "link": "https://israel-alma.org/the-turkish-axis-monthly-review-syria-lebanon-hamas-and-the-region-october-1-to-november-25-2026/",
+    "type": "analysis",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-25T21:18:13+00:00",
+    "text": {
+     "en": "“We Do Not Work For Iran, Iran Works For Us” Hezbollah Leader Declares - i24NEWS",
+     "he": "מנהיג חיזבאללה: 'אנחנו לא עובדים עבור איראן, איראן עובדת עבורנו' - i24NEWS",
+     "ar": "زعيم حزب الله: 'نحن لا نعمل لصالح إيران، بل إيران تعمل لصالحنا' - i24NEWS"
+    },
+    "sentiment": "negative",
+    "source": "Google News - Lebanon",
+    "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQUmtjbUg3OWI5X21HcmgtNjNiTVJ5Qm1EOHMyZ3ZxdjhtNWtoWkVjcEVObGw0Z1p3OXltcHNYQ0hMSkxSOE1TMm12VXZkZ3h2a0N6MG12ZURndi1pNmVBYlJHWUQ4cUMtV0stUldmckhqeERHbE5xSmRrdUw4RGdKSll2Y1k1NVQzN1lEdE1EUmt6c21mQkRIQ0VVUnFnQXZBTF94cnJKUVBCS2JWbVl0R0dBUldvUQ?oc=5",
+    "type": "reporting",
+    "signal_score": 5,
+    "effective_signal": 5.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-25T09:52:57+00:00",
+    "text": {
+     "en": "Hezbollah Against Israel",
+     "he": "חיזבאללה מול ישראל",
+     "ar": "حزب الله ضد إسرائيل"
+    },
+    "sentiment": "negative",
+    "source": "Alma",
+    "link": "https://israel-alma.org/hezbollah-against-israel/",
+    "type": "analysis",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-24T13:31:24+00:00",
+    "text": {
+     "en": "The El-Irschad Association in Berlin and Hezbollah’s Civilian Activities Outside Lebanon",
+     "he": "עמותת אל-ארשאד בברלין ופעילותו האזרחית של חיזבאללה מחוץ ללבנון",
+     "ar": "جمعية الإرشاد في برلين والأنشطة المدنية لحزب الله خارج لبنان"
+    },
+    "sentiment": "neutral",
+    "source": "Alma",
+    "link": "https://israel-alma.org/the-el-irschad-association-in-berlin-and-hezbollahs-civilian-activities-outside-lebanon/",
+    "type": "reporting",
+    "signal_score": 4,
+    "effective_signal": 4.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-24T13:26:40+00:00",
+    "text": {
+     "en": "14 Interdicted Arms Shipments and an Active Supply Route: Hezbollah’s Military Buildup Continues",
+     "he": "14 משלוחי נשק נתפסו ומסלול אספקה פעיל: חיזבאללה ממשיך להתחמש",
+     "ar": "مصادرة 14 شحنة أسلحة ومسار إمداد نشط: حزب الله يواصل تعزيز ترسانته العسكرية"
+    },
+    "sentiment": "negative",
+    "source": "Alma",
+    "link": "https://israel-alma.org/14-interdicted-arms-shipments-and-an-active-supply-route-hezbollahs-military-buildup-continues/",
+    "type": "analysis",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   },
+   {
+    "date": "2026-11-23T09:44:28+00:00",
+    "text": {
+     "en": "Hezbollah Precision Guided Missile Manufacturing Site on Syrian Border",
+     "he": "אתר ייצור טילים מונחים מדויקים של חיזבאללה בגבול סוריה",
+     "ar": "موقع تصنيع صواريخ موجهة بدقة لحزب الله على الحدود السورية"
+    },
+    "sentiment": "negative",
+    "source": "Alma",
+    "link": "https://israel-alma.org/hezbollah-precision-guided-missile-manufacturing-site-on-syrian-border/",
+    "type": "reporting",
+    "signal_score": 6,
+    "effective_signal": 6.0,
+    "attestations": [],
+    "cross_attestation_bonus": false,
+    "solutionId": "lebanon-hezbollah-conflict"
+   }
+  ]
+ }
+}
