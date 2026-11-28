@@ -744,6 +744,94 @@ def fetch_rss(url, source, max_items):
     return articles
 
 
+# ── title hygiene at ingest ────────────────────────────────────────────────
+# RSS titles are not event descriptions. They are publisher chrome: rolling live
+# blogs, video labels, link digests, and Google-News style " - Outlet" suffixes.
+# 16% of published events carried an outlet suffix and 9 were live blogs / link
+# roundups / TV tickers, which also made cross-source resolution harder because the
+# same story had five different strings attached to it.
+_SECTION_PREFIX = re.compile(
+    r"^\s*(?:live|live updates|live blog|developing|breaking|watch|video|report|"
+    r"analysis|opinion|preview|exclusive|update|updated|podcast)\s*[:|\u2013-]\s*", re.I)
+_ROLLING_LIVE = re.compile(r"^\s*[^.:;!?]{0,28}?\blive\b\s*[:|]\s*", re.I)
+_TICKER_PREFIX = re.compile(r"^\s*[A-Z][A-Za-z]{1,6}\.\s*[.\u00b7]\s*(?:#\S+\s*)*[|\uff5c]?\s*")
+_HASHTAG = re.compile(r"#\w{2,}")
+_LINK_DIGEST = re.compile(
+    r"^\s*\d{1,2}[/-]\d{1,2}\s+links?\b|\blinks?\s+pt\s*\d?\b|\broundup\b|"
+    r"^\s*(?:quick\s+)?links\s*[:|]", re.I)
+_OUTLET_SUFFIX = re.compile(r"\s[-\u2013\u2014|]\s?([A-Za-z0-9' .,&()#-]{2,34})\s*$")
+
+
+def _norm_name(value):
+    v = re.sub(r"[^a-z0-9 ]", " ", (value or "").lower())
+    v = re.sub(r"\s+", " ", v).strip()
+    return v[4:] if v.startswith("the ") else v
+
+
+_OUTLET_NAMES = None
+
+# Outlets that show up as Google-News " - Outlet" suffixes but are not among our 72
+# feeds, so they are not in rss-feeds.json / source-profiles.json.
+_EXTRA_OUTLETS = {
+    "wsj", "wall street journal", "nyt", "new york times", "bbc", "bbc news", "cnn",
+    "ft", "financial times", "reuters", "ap", "associated press", "politico",
+    "politico europe", "axios", "bloomberg", "business insider", "daily mail",
+    "mail on sunday", "breitbart", "jpost", "jerusalem post", "ynet", "maariv",
+    "israel today", "interface news", "middle east eye", "memo", "arab news",
+    "asharq al awsat", "al arabia", "sky news", "sky news arabia", "pbs", "npr",
+    "cbs news", "nbc news", "abc news", "fox news", "us news world report",
+    "independent", "the i", "new arab", "middle east monitor", "the guardian",
+    "daily telegraph", "times of london", "la times", "washington post", "newsweek",
+    "time", "forbes", "espn", "fifa", "uefa",
+}
+
+
+def _outlet_names():
+    """Publisher names we can strip from the end of a headline, from our own config."""
+    global _OUTLET_NAMES
+    if _OUTLET_NAMES is None:
+        names = set(_EXTRA_OUTLETS)
+        try:
+            for key in load_source_profiles():
+                names.add(_norm_name(key))
+        except Exception:
+            pass
+        try:
+            for _name, _url, ft in load_rss_feeds():
+                names.add(_norm_name(ft or _name))
+                names.add(_norm_name(_name))
+        except Exception:
+            pass
+        _OUTLET_NAMES = {n for n in names if len(n) >= 2}
+    return _OUTLET_NAMES
+
+
+def _clean_title(title):
+    """Strip publisher chrome. Returns "" for link digests and ticker fragments."""
+    t = (title or "").strip()
+    if not t or _LINK_DIGEST.search(t):
+        return ""
+    t = _TICKER_PREFIX.sub("", t)
+    t = _ROLLING_LIVE.sub("", t).strip()
+    for _ in range(3):
+        stripped = _SECTION_PREFIX.sub("", t).strip()
+        if stripped == t:
+            break
+        t = stripped
+    names = _outlet_names()
+    for _ in range(2):
+        mt = _OUTLET_SUFFIX.search(t)
+        if not mt:
+            break
+        tail = _norm_name(mt.group(1))
+        if not tail or tail not in names:
+            break
+        t = t[:mt.start()].strip()
+    t = _HASHTAG.sub(" ", t)
+    t = re.sub(r"\s{2,}", " ", t).strip(" -–—|:. ")
+    return t
+
+
 def fetch_all_feeds(age_hours=None, skip_seen=False):
     feeds = load_rss_feeds()
     print(f"\U0001f4e1 Fetching {len(feeds)} RSS feeds...")
@@ -770,6 +858,7 @@ def fetch_all_feeds(age_hours=None, skip_seen=False):
     all_articles = []
     no_date = 0
     too_old = 0
+    junk_titles = 0
     for a in fetched:
         date_str = a.get("date")
         if not date_str:
@@ -784,6 +873,11 @@ def fetch_all_feeds(age_hours=None, skip_seen=False):
         except Exception:
             no_date += 1
             continue
+        cleaned = _clean_title(a.get("title", ""))
+        if not cleaned:
+            junk_titles += 1
+            continue
+        a["title"] = cleaned
         all_articles.append(a)
 
     # Dedupe: first by link (exact same article), then by title
@@ -803,7 +897,8 @@ def fetch_all_feeds(age_hours=None, skip_seen=False):
         unique.append(a)
 
     print(f"  → {len(unique)} unique articles ({len(fetched) - len(unique)} filtered: "
-          f"{too_old} too old, {no_date} no date, {len(all_articles) - len(unique)} dupes)")
+          f"{too_old} too old, {no_date} no date, {junk_titles} link digests/tickers, "
+          f"{len(all_articles) - len(unique)} dupes)")
     if skip_seen and _seen:
         fresh = [a for a in unique if _article_key(a) not in _seen]
         print(f"  ♻️ {len(unique) - len(fresh)} already classified in an earlier run (skipped), "
