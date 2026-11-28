@@ -2793,6 +2793,10 @@ def build_output(clustered_events, cat_map, narratives, ai_phases=None, stakehol
             # detail, but `summary` is not read by the frontend at all: every run quietly
             # deleted one event per solution from the archive (97 -> 96 -> 95 ...).
             "events": events_list,
+            # Tier counts belong to the data, not only to the publish view: the admin panel
+            # and the test environment read app/data.json directly.
+            "initiativeCount": sum(1 for ev in events_list if ev.get("tier") == "initiative"),
+            "contextCount": sum(1 for ev in events_list if ev.get("tier") != "initiative"),
             "narrative": narrative,
             "confidence": _evidence_confidence(events),
             "core": cat.get("core", False),
@@ -3116,6 +3120,8 @@ def _merge_with_existing(data, existing, ai_phases=None, narratives=None, stakeh
                 sol["events"].extend(new_sol.get("events", []))
         sol["events"], merged = _dedupe_events(sol.get("events", []), source_profiles)
         merged_total += merged
+        sol["initiativeCount"] = sum(1 for ev in sol["events"] if ev.get("tier") == "initiative")
+        sol["contextCount"] = len(sol["events"]) - sol["initiativeCount"]
     if merged_total:
         print(f"  🔗 Event resolution on merge: {merged_total} repeat report(s) folded into existing events")
     

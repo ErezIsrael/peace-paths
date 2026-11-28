@@ -37,7 +37,7 @@ ROOT = os.path.dirname(HERE)
 SOLUTIONS_URL = "https://peace-paths.pages.dev/data.json"
 ARCHIVE_URL = "https://peace-paths.pages.dev/events/{}.json"
 
-TRACKER_PREFIX = re.compile(r"^\s*(?:[{|\[(-]?\s*)?(live|live updates|live blog|watch|report|"
+TRACKER_PREFIX = re.compile(r"^\s*[-\[({|]?\s*(live|live updates|live blog|watch|report|"
                             r"video|analysis|opinion|preview|breaking|developing)\s*[:||-]", re.I)
 OUTLET_SUFFIX = re.compile(r"\s[-–—|]\s?[A-Za-z0-9' .&,#-]{2,30}$")
 ROUNDUP = re.compile(r"\b\d{1,2}/\d{1,2}\s+links\b|links pt\d|\broundup\b", re.I)
