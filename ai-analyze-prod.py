@@ -2819,25 +2819,148 @@ def upload_to_cloudflare(data):
 # Merge with Existing Data
 # ═══════════════════════════════════════════════════════════════════════
 
-def _merge_with_existing(data, existing, ai_phases=None, narratives=None, stakeholders=None):
+def _ev_plain_text(ev):
+    """English text of a stored event (older entries may only have `title`)."""
+    t = ev.get("text", "")
+    if isinstance(t, dict):
+        return t.get("en") or t.get("he") or ""
+    return t or ev.get("title") or ""
+
+
+def _ev_doc(ev):
+    raw = _ev_plain_text(ev)
+    snip = ev.get("snippet") or ""
+    blob = f"{raw} . {snip[:200]}"
+    return {"toks": set(_event_tokens(blob)), "ents": _event_entities(blob),
+            "norm": _normalize_title(raw)}
+
+
+def _hours_between(d1, d2):
+    a, b = _parse_event_date(d1), _parse_event_date(d2)
+    if not a or not b:
+        return 0.0
+    return abs((a - b).total_seconds()) / 3600
+
+
+def _doc_sim(a, b, wt):
+    """Same similarity rule as cluster_events, applied to stored events."""
+    ta, tb = a["toks"], b["toks"]
+    if not ta or not tb:
+        return 0.0
+    if _title_similarity(a["norm"], b["norm"]) >= 0.8:
+        return 1.0
+    small, big = (ta, tb) if len(ta) <= len(tb) else (tb, ta)
+    if len(small) >= 4 and small <= big:
+        return 1.0
+    inter = ta & tb
+    if not inter:
+        return 0.0
+    score = sum(wt(t) for t in inter) / sum(wt(t) for t in ta | tb)
+    if a["ents"] and b["ents"] and not (a["ents"] & b["ents"]):
+        score *= 0.5
+    return score
+
+
+def _absorb_event(host, incoming, source_profiles=None):
+    """Fold a repeat report of an event that is already in the archive into it.
+
+    This is where cross-source confirmation comes from: before this, two outlets
+    describing one development were two events, so 6 of 199 published events had an
+    attestation and the feature the UI was built for never fired.
+    """
+    src = incoming.get("source", "")
+    if src:
+        known = {host.get("source", "")} | {a.get("source", "") for a in host.get("attestations", [])}
+        if src not in known:
+            host.setdefault("attestations", []).append({
+                "source": src,
+                "link": incoming.get("link", ""),
+                "signal_score": incoming.get("signal_score", 5),
+                "source_weight": incoming.get("source_weight", 2),
+            })
+    # Keep whatever confirmation the absorbed report had already gathered.
+    for att in incoming.get("attestations", []) or []:
+        known = {host.get("source", "")} | {a.get("source", "") for a in host.get("attestations", [])}
+        if att.get("source") and att.get("source") not in known:
+            host.setdefault("attestations", []).append(dict(att))
+    # A development labelled 'initiative' by any report is initiative content.
+    if incoming.get("tier") == "initiative" and host.get("tier") != "initiative":
+        host["tier"] = "initiative"
+    if (incoming.get("effective_signal") or 0) > (host.get("effective_signal") or 0):
+        for key in ("signal_score", "effective_signal", "sentiment", "type"):
+            if key in incoming:
+                host[key] = incoming[key]
+    # Keep the earliest coverage — that is when the development happened.
+    inc_date, host_date = incoming.get("date") or "", host.get("date") or ""
+    if inc_date and host_date and inc_date < host_date:
+        host["date"] = inc_date
+    host["cluster_size"] = (host.get("cluster_size") or 1) + 1
+    leans = set()
+    for name in [host.get("source", "")] + [a.get("source", "") for a in host.get("attestations", [])]:
+        if source_profiles and name in source_profiles:
+            leans.add(source_profiles[name].get("lean", "unknown"))
+    if len(leans) >= 2 and not host.get("cross_attestation_bonus"):
+        host["cross_attestation_bonus"] = True
+        host["effective_signal"] = round((host.get("effective_signal") or 0) + 2, 1)
+
+
+ARCHIVE_SIM_THRESHOLD = 0.55      # stricter than clustering: a false merge deletes an event
+ARCHIVE_DEDUP_WINDOW_HOURS = 24 * 8
+
+
+def _dedupe_events(events, source_profiles=None, threshold=ARCHIVE_SIM_THRESHOLD,
+                   window_hours=ARCHIVE_DEDUP_WINDOW_HOURS):
+    """Resolve one development once per archive, oldest coverage as the survivor."""
+    if len(events) < 2:
+        return events, 0
+    docs = [_ev_doc(e) for e in events]
+    df = collections.Counter()
+    for d in docs:
+        df.update(d["toks"])
+    n = max(len(docs), 1)
+
+    def wt(term):
+        return 1.0 / (1.0 + df[term] / n)
+
+    order = sorted(range(len(events)), key=lambda i: events[i].get("date") or "")
+    used = [False] * len(events)
+    kept, merged = [], 0
+    for i in order:
+        if used[i]:
+            continue
+        used[i] = True
+        for j in order:
+            if used[j]:
+                continue
+            if _hours_between(events[i].get("date"), events[j].get("date")) > window_hours:
+                continue
+            if _doc_sim(docs[i], docs[j], wt) >= threshold:
+                used[j] = True
+                _absorb_event(events[i], events[j], source_profiles)
+                merged += 1
+        kept.append(events[i])
+    kept.sort(key=lambda e: e.get("date") or "", reverse=True)
+    return kept, merged
+
+
+def _merge_with_existing(data, existing, ai_phases=None, narratives=None, stakeholders=None,
+                         source_profiles=None):
     """Merge new events into existing solutions, preserving narrative.longTerm."""
     
-    # Merge events
+    # Merge events. This used to dedupe on the exact English headline, which meant the
+    # same development reported by five outlets in five phrasings became five events -
+    # 9% of the published archive was repeat rows and the real number on the card was
+    # unknowable. Now: append, then resolve with the same rule clustering uses.
+    merged_total = 0
     for sol in existing.get("solutions", []):
         sol_id = sol["id"]
-        # Extract plain text for comparison (text may be {en,he,ar} dict or string)
-        def _text_key(e):
-            t = e.get("text", "")
-            return t["en"] if isinstance(t, dict) else t
-        existing_texts = {_text_key(e) for e in sol.get("events", [])}
-
         for new_sol in data["solutions"]:
             if new_sol["id"] == sol_id:
-                for ev in new_sol.get("events", []):
-                    key = _text_key(ev)
-                    if key not in existing_texts:
-                        sol["events"].append(ev)
-                        existing_texts.add(key)
+                sol["events"].extend(new_sol.get("events", []))
+        sol["events"], merged = _dedupe_events(sol.get("events", []), source_profiles)
+        merged_total += merged
+    if merged_total:
+        print(f"  🔗 Event resolution on merge: {merged_total} repeat report(s) folded into existing events")
     
     # Add new solutions
     existing_ids = {s["id"] for s in existing["solutions"]}
@@ -3194,7 +3317,8 @@ def main():
     # 9. Merge or overwrite
     if mode == "fast" and existing_data:
         print(f"→ Merging {len(classified_pairs)} events into existing data")
-        data = _merge_with_existing(data, existing_data, ai_phases=ai_phases, narratives=narratives, stakeholders=stakeholders)
+        data = _merge_with_existing(data, existing_data, ai_phases=ai_phases, narratives=narratives,
+                                    stakeholders=stakeholders, source_profiles=source_profiles)
 
     _write_heartbeat(os.getpid(), mode, "translating")
     # 9.5 Translate untranslated text fields
