@@ -1939,6 +1939,16 @@ def detect_shifts(current_solutions, previous_solutions):
             }
             shifts.append({
                 "solutionId": cur["id"],
+                # Structured fields: the UI renders this as a phase chip in its own
+                # words. `desc` stays only so a browser holding an older app.js still
+                # shows something - new frontends must not print it, a log sentence
+                # translated into Hebrew is not editorial content.
+                "type": "phase",
+                "fromPhaseIndex": prev.get("phaseIndex"),
+                "toPhaseIndex": cur.get("phaseIndex"),
+                "phaseCount": len(cur.get("phases") or []),
+                "from": pp,
+                "to": cp,
                 "desc": shift_desc,
                 "direction": "positive" if cur["phaseIndex"] > prev["phaseIndex"] else "negative",
                 "date": now,
@@ -2012,16 +2022,63 @@ def parse_date(date_str):
 
 
 def compute_direction(events):
+    """Direction of a tracker, from the developments of the initiative itself.
+
+    It used to be a sentiment count over every row in the bucket, and 75% of those rows
+    were negative war reporting - so all seven trackers read "stalling" on every run and
+    the momentum banner said the same thing whatever happened in the news.
+    """
     if not events:
         return "stable"
-    pos = sum(1 for e in events if e.get("sentiment") == "positive")
-    neg = sum(1 for e in events if e.get("sentiment") == "negative")
-    ratio = pos / (pos + neg) if (pos + neg) > 0 else 0.5
-    if ratio > 0.65:
+    initiative = [e for e in events if e.get("tier") == "initiative"]
+    trust_initiative = len(initiative) >= 3
+    pool = initiative if trust_initiative else events
+    pos = neg = 0.0
+    for e in pool:
+        weight = e.get("effective_signal") or e.get("signal_score") or 5
+        if e.get("sentiment") == "positive":
+            pos += weight
+        elif e.get("sentiment") == "negative":
+            neg += weight
+    if pos + neg == 0:
+        return "stable"
+    ratio = pos / (pos + neg)
+    # Wider dead zone when we are judging war coverage instead of the initiative.
+    hi, lo = (0.62, 0.38) if trust_initiative else (0.70, 0.30)
+    if ratio > hi:
         return "advancing"
-    elif ratio < 0.35:
+    if ratio < lo:
         return "stalling"
     return "stable"
+
+
+def _evidence_confidence(events):
+    """How much the tracker's own evidence supports its story.
+
+    This used to be `len(events) > 5`, which returned "high" for all seven trackers -
+    including one whose six events were five-and-a-half off topic. Volume is not
+    evidence: how many outlets confirm the developments, how many distinct outlets there
+    are, and how much of the bucket is the initiative itself all matter more.
+    """
+    if not events:
+        return "low"
+    n = len(events)
+    att = sum(1 for e in events if e.get("attestations"))
+    sources = {e.get("source") for e in events if e.get("source")}
+    initiative = sum(1 for e in events if e.get("tier") == "initiative")
+    score = 0
+    score += 2 if n >= 10 else (1 if n >= 4 else 0)
+    score += 2 if len(sources) >= 5 else (1 if len(sources) >= 3 else 0)
+    score += 2 if att and att / n >= 0.15 else (1 if att else 0)
+    score += 2 if initiative / n >= 0.30 else (1 if initiative else 0)
+    return "high" if score >= 6 else "medium" if score >= 3 else "low"
+
+
+_DEVELOPMENTS_LABEL = {"en": "developments", "he": "התפתחויות", "ar": "تطورات"}
+
+
+def _developments_metric(events):
+    return {"label": dict(_DEVELOPMENTS_LABEL), "value": str(len(events))}
 
 
 def _post_llm(body, timeout=180, retries=3, backoff=30):
@@ -2730,14 +2787,14 @@ def build_output(clustered_events, cat_map, narratives, ai_phases=None, stakehol
             "phases": cat.get("phases", ["Emerged", "Developing", "Maturing", "Resolved"]),
             "phaseIndex": min(phase_index, len(cat.get("phases", [])) - 1),
             "direction": direction,
-            "keyMetric": {"label": _make_trilingual("Events"), "value": str(len(events))},
+            "keyMetric": _developments_metric(events),
             "summary": summary,
             # The summary event stays in the list. Dropping it here looked like a display
             # detail, but `summary` is not read by the frontend at all: every run quietly
             # deleted one event per solution from the archive (97 -> 96 -> 95 ...).
             "events": events_list,
             "narrative": narrative,
-            "confidence": "high" if len(events) > 5 else "medium" if len(events) > 2 else "low",
+            "confidence": _evidence_confidence(events),
             "core": cat.get("core", False),
             "stakeholders": stakeholders.get(sol_id, []) if stakeholders else [],
         })
@@ -2846,6 +2903,11 @@ def _publish_view(data):
         if evs:
             archives[sol["id"]] = evs
         sol["eventCount"] = len(evs)
+        initiative = sum(1 for ev in evs if ev.get("tier") == "initiative")
+        sol["initiativeCount"] = initiative
+        sol["contextCount"] = len(evs) - initiative
+        if sol.get("keyMetric"):
+            sol["keyMetric"]["value"] = str(len(evs))
         # Compat floor: an app.js copy cached before this change still builds its
         # feed from solutions[].events.
         sol["events"] = evs[:EVENTS_INLINE_PER_SOLUTION]
@@ -3071,7 +3133,7 @@ def _merge_with_existing(data, existing, ai_phases=None, narratives=None, stakeh
             sol["phaseIndex"] = min(ai_phases[sol["id"]], len(sol["phases"]) - 1)
         
         sol["direction"] = compute_direction(sol["events"])
-        sol["keyMetric"] = {"label": _make_trilingual("Events"), "value": str(len(sol["events"]))}
+        sol["keyMetric"] = _developments_metric(sol["events"])
         # summary: extract English text if trilingual dict
         if sol["events"]:
             _sev = sol["events"][0]
@@ -3093,7 +3155,7 @@ def _merge_with_existing(data, existing, ai_phases=None, narratives=None, stakeh
             # Fast mode: keep existing narrative intact
             sol["narrative"] = existing_narrative
         
-        sol["confidence"] = "high" if len(sol["events"]) >= 5 else "medium" if len(sol["events"]) >= 3 else "low"
+        sol["confidence"] = _evidence_confidence(sol["events"])
         if stakeholders and sol["id"] in stakeholders:
             sol["stakeholders"] = stakeholders[sol["id"]]
     
