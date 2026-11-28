@@ -96,7 +96,7 @@ except ImportError:
     pass
 
 # ─── Version ─────────────────────────────────────────────────────────
-SCRIPT_VERSION = "2.4.0-keyword-prior"
+SCRIPT_VERSION = "2.5.0-scope-tiers"
 
 # ─── Paths ───────────────────────────────────────────────────────────
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
