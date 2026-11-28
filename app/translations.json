@@ -96,7 +96,15 @@
     "lastActivity": "last activity:",
     "allEvents": "All events",
     "loadingArchive": "Loading archive…",
-    "archiveError": "The archive is unavailable right now."
+    "archiveError": "The archive is unavailable right now.",
+    "initiativeUpdates": "initiative updates",
+    "contextOnly": "context events",
+    "contextBadge": "context",
+    "initiativeWord": "about the initiative",
+    "contextWord": "around it",
+    "phaseForward": "phase advanced",
+    "phaseBackward": "phase regressed",
+    "attestedBy": "also reported by other outlets"
   },
   "he": {
     "siteTitle": "נתיבי השלום",
@@ -195,7 +203,15 @@
     "lastActivity": "פעילות אחרונה:",
     "allEvents": "כל האירועים",
     "loadingArchive": "טוען ארכיון…",
-    "archiveError": "הארכיון אינו זמין כרגע."
+    "archiveError": "הארכיון אינו זמין כרגע.",
+    "initiativeUpdates": "התפתחויות ביוזמה",
+    "contextOnly": "אירועי הקשר",
+    "contextBadge": "הקשר",
+    "initiativeWord": "ביוזמה עצמה",
+    "contextWord": "סביבה",
+    "phaseForward": "השלב התקדם",
+    "phaseBackward": "השלב נסוג",
+    "attestedBy": "דווח גם על ידי כלי תקשורת נוספים"
   },
   "ar": {
     "siteTitle": "مسارات السلام",
@@ -294,6 +310,14 @@
     "lastActivity": "آخر نشاط:",
     "allEvents": "جميع الأحداث",
     "loadingArchive": "جارٍ تحميل الأرشيف…",
-    "archiveError": "الأرشيف غير متاح الآن."
+    "archiveError": "الأرشيف غير متاح الآن.",
+    "initiativeUpdates": "تطورات المبادرة",
+    "contextOnly": "أحداث محيطة",
+    "contextBadge": "سياق",
+    "initiativeWord": "عن المبادرة نفسها",
+    "contextWord": "حولها",
+    "phaseForward": "تقدّمت المرحلة",
+    "phaseBackward": "تراجعت المرحلة",
+    "attestedBy": "ورد أيضًا في وسائل إعلام أخرى"
   }
 }

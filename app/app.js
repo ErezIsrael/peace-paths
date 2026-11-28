@@ -8,7 +8,7 @@ const MOMENTUM_CONFIG_KEYS = {
   stalling: 'momentumStalling',
 };
 
-const APP_VERSION = 'v0.7.3';
+const APP_VERSION = 'v0.8.0';
 
 // Escape untrusted (feed-derived) text before interpolating into innerHTML
 function esc(s) {
@@ -390,6 +390,7 @@ function renderActivityFeed() {
     item.innerHTML = `
       <span class="activity-time">${formatTime(ev.date)}</span>
       <span class="activity-solution">${esc(ev.solutionName)}</span>
+      ${ev.tier === 'context' ? `<span class="lc-tier-chip">${esc(t('contextBadge'))}</span>` : ''}
       ${ev.link ? `<a href="${esc(ev.link)}" target="_blank" rel="noopener" class="activity-link">${evText}</a>` : `<span class="activity-text">${evText}</span>`}
     `;
     container.appendChild(item);
@@ -513,14 +514,26 @@ function archiveEventRow(ev) {
   const title = getLangText(ev.text, '') || (ev.text && ev.text.en ? sanitizeText(ev.text.en) : '');
   if (!title) return '';
   const when = ev.date ? formatTime(ev.date) : '';
+  const attN = (ev.attestations || []).length;
   const inner = `
     <span class="lc-event-date">${esc(when)}</span>
     ${typeBadge(ev.type || 'reporting')}
     <span class="lc-signal">${esc(ev.effective_signal || ev.signal_score || '?')}</span>
+    ${ev.tier === 'context' ? `<span class="lc-tier-chip">${esc(t('contextBadge'))}</span>` : ''}
     ${ev.link ? `<a href="${esc(ev.link)}" target="_blank" rel="noopener" class="lc-event-title">${esc(title)}</a>` : `<span class="lc-event-title">${esc(title)}</span>`}
+    ${attN ? `<span class="lc-attestations" title="${esc(t('attestedBy'))}">+${attN}</span>` : ''}
     <span class="lc-source">${esc(ev.source || '')}</span>
   `;
   return `<div class="lc-event-item">${inner}</div>`;
+}
+
+// The archive mixes the initiative's own developments with the war around it; the split
+// belongs at the top of the list, not buried in a tooltip.
+function archiveTierNote(list) {
+  const init = list.filter(ev => ev.tier === 'initiative').length;
+  const ctx = list.length - init;
+  if (!init || !ctx) return '';
+  return `<div class="lc-archive-note">${init} ${esc(t('initiativeWord'))} · ${ctx} ${esc(t('contextWord'))}</div>`;
 }
 
 function buildArchiveLayer(solution) {
@@ -540,7 +553,7 @@ function buildArchiveLayer(solution) {
   body.innerHTML = `<div class="lc-archive-note" role="status">${esc(t('loadingArchive'))}</div>`;
 
   let loaded = eventArchive.get(solution.id);
-  if (loaded) body.innerHTML = loaded.map(archiveEventRow).join('');
+  if (loaded) body.innerHTML = archiveTierNote(loaded) + loaded.map(archiveEventRow).join('');
 
   btn.addEventListener('click', async () => {
     if (body.dataset.loaded) return;
@@ -550,7 +563,7 @@ function buildArchiveLayer(solution) {
       return;
     }
     body.dataset.loaded = '1';
-    body.innerHTML = list.map(ev => archiveEventRow({ ...ev, solutionId: solution.id })).join('');
+    body.innerHTML = archiveTierNote(list) + list.map(ev => archiveEventRow({ ...ev, solutionId: solution.id })).join('');
   });
 
   layer.append(btn, body);
@@ -604,14 +617,37 @@ function buildLayeredCard(solution) {
   const freshEvents = (solution.events || []).length;
   const hasFreshEvents = freshEvents > 0;
   const archivedItems = (n.keyEvents || []).length + (n.keyOpinions || []).length;
-  // Show fresh count; if none, show archived count with indicator
-  let countDisplay = freshEvents ? `${freshEvents}` : (archivedItems ? `${archivedItems} ${t('archived')}` : (kv.value || '—'));
+  // What the number in the header means. The pipeline now separates developments of the
+  // initiative itself from the war/politics around it, and the old raw row count was being
+  // read as progress: "63 events" for one tracker and "7" for another measured how much
+  // their feeds publish. When a tracker has only context, say so instead of implying progress.
+  const totalEvents = solution.eventCount != null ? solution.eventCount : freshEvents;
+  const initiativeEvents = solution.initiativeCount;
+  let countDisplay, countLabel;
+  if (initiativeEvents != null && initiativeEvents > 0) {
+    countDisplay = String(initiativeEvents);
+    countLabel = t('initiativeUpdates');
+  } else if (initiativeEvents != null && totalEvents > 0) {
+    countDisplay = String(totalEvents);
+    countLabel = t('contextOnly');
+  } else if (totalEvents > 0) {
+    // A payload published before tiers existed: the count is honest but unlabelled, so
+    // keep the pipeline's own word for it rather than implying these are context rows.
+    countDisplay = String(totalEvents);
+    countLabel = getLangText(kv.label, kv.label || '');
+  } else if (archivedItems) {
+    countDisplay = `${archivedItems} ${t('archived')}`;
+    countLabel = getLangText(kv.label, kv.label || '');
+  } else {
+    countDisplay = kv.value || '—';
+    countLabel = getLangText(kv.label, kv.label || '');
+  }
   const solutionName = getLangText(solution.name) || (typeof solution.name === 'object' && solution.name.en ? sanitizeText(solution.name.en) : '');
   const dirLabel = getDirectionLabel(solution.direction);
   header.innerHTML = `
     <span class="lc-icon">${esc(solution.icon)}</span>
     <h3 class="lc-name">${esc(solutionName)}</h3>
-    <span class="lc-metric">${esc(countDisplay)} <small>${esc(getLangText(kv.label, kv.label || ''))}</small></span>
+    <span class="lc-metric">${esc(countDisplay)} <small>${esc(countLabel)}</small></span>
     <span class="lc-direction ${solution.direction}">${esc(dirLabel)}</span>
   `;
   wrapper.appendChild(header);
@@ -625,11 +661,22 @@ function buildLayeredCard(solution) {
     const shiftsDiv = document.createElement('div');
     shiftsDiv.className = 'lc-shifts';
     n.shifts.slice(0, 3).forEach(s => {
-      const desc = getLangText(s.desc, '');
-      if (!desc) return; // Skip shifts with no translation for current language
+      // A phase shift carries structured fields now. Its `desc` is a pipeline log line
+      // ("Phase changed: X to Y") that used to be machine-translated into the Hebrew and
+      // Arabic editorial text, and it contradicted the direction chip next to it. The
+      // progress track under the header already shows where the phase is, so the badge
+      // only has to say which way it moved.
+      let text;
+      if (s.type === 'phase') {
+        text = t(s.direction === 'positive' ? 'phaseForward' : 'phaseBackward');
+      } else {
+        const desc = getLangText(s.desc, '');
+        if (!desc) return; // Skip shifts with no translation for current language
+        text = `${t('shiftDetected')}: ${desc}`;
+      }
       const badge = document.createElement('span');
       badge.className = `lc-shift-badge ${s.direction}`;
-      badge.textContent = `${t('shiftDetected')}: ${desc}`;
+      badge.textContent = text;
       shiftsDiv.appendChild(badge);
     });
     wrapper.appendChild(shiftsDiv);
